@@ -7,7 +7,7 @@ const DB = require("../common/database");
 const dayjs = require('dayjs')
 
 /* GET users listing. */
-router.get('/users', async (req, res, next) => {
+router.get('/users', async (req, res) => {
     try{
         const [users] = await DB.execute({
             psmt: `select user_id,username,email,student_id,type,company,generation from USER where canceled_at IS NULL`,
@@ -35,7 +35,7 @@ router.get('/users', async (req, res, next) => {
                             case "sub":
                                 return "부관리자";
                             case "primary":
-                                return "부관리자";
+                                return "관리자";
                             default:
                                 return "unknown";
                         }
@@ -93,7 +93,7 @@ router.get("/:userId", async (req, res) => {
                     case "sub":
                         return "부관리자";
                     case "primary":
-                        return "부관리자";
+                        return "관리자";
                     default:
                         return "unknown";
                 }
