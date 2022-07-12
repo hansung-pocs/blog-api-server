@@ -5,14 +5,15 @@ const DB = require("../common/database");
 const dayjs = require('dayjs');
 
 //공지사항 추가
-router.post('/notices',async (req,res,next) =>{
-    const userId = req.body.user_id;
+router.post('/', async (req,res,next) =>{
+    const userId = Number(req.body.userId);
     try{
-        const [type] = await DB.execute({
+        const user = await DB.execute({
             psmt: `select type from USER where user_id = ?`,
             binding: [userId]
         });
-        if(type == '일반유저'){
+
+        if(user[0].type == null){
             res.status(400).json({success: "false", message: '권한이 없습니다.'})
         }
         next();
@@ -24,45 +25,41 @@ router.post('/notices',async (req,res,next) =>{
         });
     }
 }, async (req,res) =>{
-    const title = req.body.title;
-    const content = req.body.content;
-    const userId = req.body.user_id;
-    const created_at = dayjs().format("YY-MM-DD");
+    const title = JSON.stringify(req.body.title);
+    const content = JSON.stringify(req.body.content);
+    const userId = Number(req.body.userId);
     try{
-        const [notice] = await DB.execute({
-            psmt: `insert into NOTICE (title, content, user_id, created_at) VALUES(?,?,?,?)`,
-            binding: [title,userId,content,created_at]
+        const notice = await DB.execute({
+            psmt: `insert into NOTICE (title, content, user_id, created_at) VALUES(?,?,?,NOW())`,
+            binding: [title,content,userId]
         });
         res.status(201).json({id: userId, success: 'true'});
-    } catch (e){}
+    } catch (e){
         console.log(e);
         res.status(500).json({
             ok: false,
             message: "알 수 없는 오류가 발생했습니다."
         });
-    })
+    }
+})
 
 //공지사항 목록조회
-router.get('/notices',async (req,res) => {
+router.get('/',async (req,res) => {
     try{
-        const [notices] = await DB.execute({
+        const notices = await DB.execute({
             psmt: `select title, created_at from NOTICE`,
             binding: []
         });
 
-        console.log("users: %j",notices);
+        console.log("notices: %j",notices);
         if(!notices){
             res.status(404).json({ok: false, message: "잘못된 요청입니다."});
         }
 
         for(let i in notices){
-            res.json({
-                notices: [{
-                    title: notices[i].title,
-                    createdAt: notices[i].created_at
-                }]
-            });
+            notices[i].created_at = dayjs(notices[i].created_at).format("YY-MM-DD")
         }
+        res.json({notices : notices});
     }catch (e){
         console.log(e);
         res.status(500).json({
@@ -73,7 +70,7 @@ router.get('/notices',async (req,res) => {
 })
 
 //공지사항 상세조회
-router.get('/notices/:noticeId', async (req,res) => {
+router.get('/:noticeId', async (req,res) => {
     const noticeId = req.params.noticeId;
     try{
         const [notice] = await DB.execute({
@@ -87,12 +84,12 @@ router.get('/notices/:noticeId', async (req,res) => {
         }
 
         res.json({
-            title: notice[0].title,
-            content: notice[0].content,
-            createdAt: dayjs(notice[0].created_at).format("YY-MM-DD"),
+            title: notice.title,
+            content: notice.content,
+            createdAt: dayjs(notice.created_at).format("YY-MM-DD"),
             user :{
-                id : notice[0].user_id,
-                name : notice[0].username,
+                id : notice.user_id,
+                name : notice.username,
             }
         });
     }catch (e){
@@ -103,3 +100,5 @@ router.get('/notices/:noticeId', async (req,res) => {
         });
     }
 })
+
+module.exports = router;

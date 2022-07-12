@@ -7,9 +7,9 @@ const DB = require("../common/database");
 const dayjs = require('dayjs')
 
 /* GET users listing. */
-router.get('/users', async (req, res) => {
+router.get('/', async (req, res) => {
     try{
-        const [users] = await DB.execute({
+        const users = await DB.execute({
             psmt: `select user_id,username,email,student_id,type,company,generation from USER where canceled_at IS NULL`,
             binding: []
         });
@@ -19,32 +19,7 @@ router.get('/users', async (req, res) => {
             res.status(404).json({ok: false, message: "잘못된 요청입니다."});
         }
 
-        for(let i in users){
-            res.json({
-                users : [{
-                    id: users[i].user_id,
-                    name: users[i].username,
-                    email: users[i].email,
-                    studentId: users[i].student_id,
-                    type: ((type) => {
-                        if (!type) {
-                            return "일반유저";
-                        }
-
-                        switch (type) {
-                            case "sub":
-                                return "부관리자";
-                            case "primary":
-                                return "관리자";
-                            default:
-                                return "unknown";
-                        }
-                    })(users[i].type),
-                    company: users[i].company,
-                    generation: users[i].generation
-                }]
-            })
-        }
+        res.json({users : users});
     }catch (e){
         console.error(e);
 
@@ -78,7 +53,6 @@ router.get("/:userId", async (req, res) => {
 
         res.json({
             ok: true,
-
             id: user.user_id,
             name: user.name,
             student_id: user.student_id,
