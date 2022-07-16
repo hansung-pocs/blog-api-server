@@ -8,10 +8,11 @@ const dayjs = require('dayjs')
 
 /* GET users listing. */
 router.get('/', async (req, res) => {
+    let option = req.params.option;
     try{
         const users = await DB.execute({
             psmt: `select user_id,username,email,student_id,type,company,generation from USER where canceled_at IS NULL`,
-            binding: []
+            binding: [option]
         });
 
         console.log("users: %j",users);
@@ -75,6 +76,40 @@ router.get("/:userId", async (req, res) => {
 
             applyDate: dayjs(user.createdAt).format("YY-MM-DD"),
         })
+    } catch (e) {
+        console.error(e);
+        res.status(500).json({
+            ok: false,
+            message: "알 수 없는 오류가 발생했습니다."
+        });
+    }
+});
+
+//유저 이름 검색
+router.get("/name/:username", async (req, res) => {
+    const username = decodeURIComponent(req.params.username);
+
+    try {
+        const user = await DB.execute({
+            psmt: `select user_id,username,student_id,type,created_at from USER where canceled_at IS NULL and username = ?`,
+            binding: [username]
+        });
+        //console.log("user: ", JSON.stringify(user)와 동일
+        console.log("user: %j", user);
+
+        if (!user) {
+            return res.status(404).json({
+                ok: false,
+                message: "해당 유저를 찾을 수 없습니다.",
+            });
+        }
+
+        for(let i in user){
+            user[i].created_at = dayjs(user[i].created_at).format("YY-MM-DD")
+        }
+
+        res.json({user : user});
+
     } catch (e) {
         console.error(e);
         res.status(500).json({
