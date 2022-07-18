@@ -55,7 +55,7 @@ router.get("/:userId", async (req, res) => {
         res.json({
             ok: true,
             id: user.user_id,
-            name: user.name,
+            username: user.username,
             student_id: user.student_id,
 
             //즉시실행함수
@@ -74,7 +74,7 @@ router.get("/:userId", async (req, res) => {
                 }
             })(user.type),
 
-            applyDate: dayjs(user.createdAt).format("YY-MM-DD"),
+            created_at: dayjs(user.created_at).format("YY-MM-DD"),
         })
     } catch (e) {
         console.error(e);
