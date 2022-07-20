@@ -28,10 +28,11 @@ router.post('/', async (req,res,next) =>{
     const title = JSON.stringify(req.body.title);
     const content = JSON.stringify(req.body.content);
     const userId = Number(req.body.userId);
+    const category = JSON.stringify(req.body.category);
     try{
         const notice = await DB.execute({
-            psmt: `insert into NOTICE (title, content, user_id, created_at) VALUES(?,?,?,NOW())`,
-            binding: [title,content,userId]
+            psmt: `insert into NOTICE (title, content, user_id, created_at, category) VALUES(?,?,?,NOW(),?)`,
+            binding: [title,content,userId,category]
         });
         res.status(201).json({id: userId, success: 'true'});
     } catch (e){
@@ -47,7 +48,7 @@ router.post('/', async (req,res,next) =>{
 router.get('/',async (req,res) => {
     try{
         const notices = await DB.execute({
-            psmt: `select title, created_at from NOTICE`,
+            psmt: `select notice_id, title, created_at, updated_at, category from NOTICE`,
             binding: []
         });
 
@@ -57,7 +58,8 @@ router.get('/',async (req,res) => {
         }
 
         for(let i in notices){
-            notices[i].created_at = dayjs(notices[i].created_at).format("YY-MM-DD")
+            notices[i].created_at = dayjs(notices[i].created_at).format("YY-MM-DD");
+            notices[i].updated_at = dayjs(notices[i].updated_at).format("YY-MM-DD");
         }
         res.json({notices : notices});
     }catch (e){
@@ -74,7 +76,7 @@ router.get('/:noticeId', async (req,res) => {
     const noticeId = req.params.noticeId;
     try{
         const [notice] = await DB.execute({
-            psmt: `select title, content, n.created_at, u.user_id, username from NOTICE n, USER u WHERE u.user_id = n.user_id and notice_id = ?`,
+            psmt: `select title, content, n.created_at, u.user_id, username, email, type from NOTICE n, USER u WHERE u.user_id = n.user_id and notice_id = ?`,
             binding: [noticeId]
         });
 
@@ -86,10 +88,14 @@ router.get('/:noticeId', async (req,res) => {
         res.json({
             title: notice.title,
             content: notice.content,
-            createdAt: dayjs(notice.created_at).format("YY-MM-DD"),
+            created_at: dayjs(notice.created_at).format("YY-MM-DD"),
+            updated_at: dayjs(notice.updated_at).format("YY-MM-DD"),
+            category: notice.category,
             user :{
-                id : notice.user_id,
-                name : notice.username,
+                user_id : notice.user_id,
+                username : notice.username,
+                email : notice.email,
+                type : notice.type,
             }
         });
     }catch (e){
