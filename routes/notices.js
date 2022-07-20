@@ -135,8 +135,8 @@ router.put('/:notice_id/edit', async (req,res,next) =>{
     const user_id = Number(req.body.user_id);
     try{
         const notice = await DB.execute({
-            psmt: `update NOTICE set title = ?, content = ?, category = ?, updated_at = NOW() where notice_id = ?`,
-            binding: [title,content,category,notice_id]
+            psmt: `update NOTICE set title = ?, content = ?, category = ?, user_id = ?, updated_at = NOW() where notice_id = ?`,
+            binding: [title,content,category,user_id,notice_id]
         });
         res.status(201).json({id: user_id, success: 'true'});
     } catch (e){
@@ -148,4 +148,5 @@ router.put('/:notice_id/edit', async (req,res,next) =>{
     }
 })
 
+//공지사항 삭제
 module.exports = router;
