@@ -8,12 +8,43 @@ const dayjs = require('dayjs')
 
 /* GET users listing. */
 router.get('/', async (req, res) => {
-    let option = req.params.option;
     try{
         const users = await DB.execute({
             psmt: `select user_id,username,email,student_id,type,company,generation from USER where canceled_at IS NULL`,
-            binding: [option]
+            binding: []
         });
+
+        console.log("users: %j",users);
+        if(!users){
+            res.status(404).json({ok: false, message: "잘못된 요청입니다."});
+        }
+
+        res.json({users : users});
+    }catch (e){
+        console.error(e);
+
+        res.status(500).json({
+            ok: false,
+            message: "알 수 없는 오류가 발생했습니다."
+        });
+    }
+});
+
+router.get('/:option', async (req, res) => {
+    let option = req.params.option;
+    let users = new Array();
+    try{
+        if(option == "generation"){
+            users = await DB.execute({
+                psmt: `select user_id,username,email,student_id,type,company,generation from USER where canceled_at IS NULL order by generation`,
+                binding: []
+            });
+        }else if(option == "studentId"){
+            users = await DB.execute({
+                psmt: `select user_id,username,email,student_id,type,company,generation from USER where canceled_at IS NULL order by student_id`,
+                binding: []
+            });
+        }
 
         console.log("users: %j",users);
         if(!users){
