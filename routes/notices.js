@@ -107,4 +107,45 @@ router.get('/:noticeId', async (req,res) => {
     }
 })
 
+//공지사항 수정
+router.put('/:notice_id/edit', async (req,res,next) =>{
+    const user_id = Number(req.body.user_id);
+    try{
+        const user = await DB.execute({
+            psmt: `select type from USER where user_id = ?`,
+            binding: [user_id]
+        });
+
+        if(user[0].type == null){
+            res.status(400).json({success: "false", message: '권한이 없습니다.'})
+        }
+        next();
+    }catch(e){
+        console.error(e);
+        res.status(500).json({
+            ok: false,
+            message: "알 수 없는 오류가 발생했습니다."
+        });
+    }
+}, async (req,res) =>{
+    const title = JSON.stringify(req.body.title);
+    const content = JSON.stringify(req.body.content);
+    const category = JSON.stringify(req.body.category);
+    const notice_id = Number(req.params.notice_id);
+    const user_id = Number(req.body.user_id);
+    try{
+        const notice = await DB.execute({
+            psmt: `update NOTICE set title = ?, content = ?, category = ?, updated_at = NOW() where notice_id = ?`,
+            binding: [title,content,category,notice_id]
+        });
+        res.status(201).json({id: user_id, success: 'true'});
+    } catch (e){
+        console.log(e);
+        res.status(500).json({
+            ok: false,
+            message: "알 수 없는 오류가 발생했습니다."
+        });
+    }
+})
+
 module.exports = router;
