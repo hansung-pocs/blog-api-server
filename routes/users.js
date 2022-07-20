@@ -10,13 +10,17 @@ const dayjs = require('dayjs')
 router.get('/', async (req, res) => {
     try{
         const users = await DB.execute({
-            psmt: `select user_id,username,email,student_id,type,company,generation from USER where canceled_at IS NULL`,
+            psmt: `select user_id,username,email,student_id,type,company,generation,github,created_at from USER where canceled_at IS NULL`,
             binding: []
         });
 
         console.log("users: %j",users);
         if(!users){
             res.status(404).json({ok: false, message: "잘못된 요청입니다."});
+        }
+
+        for(let i in users){
+            users[i].created_at = dayjs(users[i].created_at).format("YY-MM-DD")
         }
 
         res.json({users : users});
@@ -30,18 +34,19 @@ router.get('/', async (req, res) => {
     }
 });
 
-router.get('/:option', async (req, res) => {
+// 유저 기수/힉번 정렬
+router.get('/sort/:option', async (req, res) => {
     let option = req.params.option;
     let users = new Array();
     try{
         if(option == "generation"){
             users = await DB.execute({
-                psmt: `select user_id,username,email,student_id,type,company,generation from USER where canceled_at IS NULL order by generation`,
+                psmt: `select user_id,username,email,student_id,type,company,generation,github,created_at from USER where canceled_at IS NULL order by generation`,
                 binding: []
             });
-        }else if(option == "studentId"){
+        }else if(option == "student_id"){
             users = await DB.execute({
-                psmt: `select user_id,username,email,student_id,type,company,generation from USER where canceled_at IS NULL order by student_id`,
+                psmt: `select user_id,username,email,student_id,type,company,generation,github,created_at from USER where canceled_at IS NULL order by student_id`,
                 binding: []
             });
         }
@@ -49,6 +54,10 @@ router.get('/:option', async (req, res) => {
         console.log("users: %j",users);
         if(!users){
             res.status(404).json({ok: false, message: "잘못된 요청입니다."});
+        }
+
+        for(let i in users){
+            users[i].created_at = dayjs(users[i].created_at).format("YY-MM-DD")
         }
 
         res.json({users : users});
@@ -63,15 +72,12 @@ router.get('/:option', async (req, res) => {
 });
 
 //유저 상세 조회
-router.get("/:userId", async (req, res) => {
-    const userId = req.params.userId;
-
+router.get("/:user_id", async (req, res) => {
+    const user_id = Number(req.params.user_id);
     try {
-        //DB.execute의 결과가 [{user_id:123}]; 이런식이라서
-        //구조분해할당으로 바로 꺼낸다.
-        const [user] = await DB.execute({
-            psmt: `select * from USER where user_id = ?`,
-            binding: [userId]
+        const user = await DB.execute({
+            psmt: `select user_id,username,email,student_id,type,company,generation,github,created_at from USER where user_id=?`,
+            binding: [user_id]
         });
         //console.log("user: ", JSON.stringify(user)와 동일
         console.log("user: %j", user);
@@ -83,30 +89,13 @@ router.get("/:userId", async (req, res) => {
             });
         }
 
-        res.json({
-            ok: true,
-            id: user.user_id,
-            username: user.username,
-            student_id: user.student_id,
 
-            //즉시실행함수
-            type: ((type) => {
-                if (!type) {
-                    return "일반유저";
-                }
+        for(let i in user){
+            user[i].created_at = dayjs(user[i].created_at).format("YY-MM-DD")
+        }
 
-                switch (type) {
-                    case "sub":
-                        return "부관리자";
-                    case "primary":
-                        return "관리자";
-                    default:
-                        return "unknown";
-                }
-            })(user.type),
+        res.json({user : user});
 
-            created_at: dayjs(user.created_at).format("YY-MM-DD"),
-        })
     } catch (e) {
         console.error(e);
         res.status(500).json({
@@ -117,30 +106,25 @@ router.get("/:userId", async (req, res) => {
 });
 
 //유저 이름 검색
-router.get("/name/:username", async (req, res) => {
+router.get("/search/:username", async (req, res) => {
     const username = decodeURIComponent(req.params.username);
-
     try {
         const user = await DB.execute({
-            psmt: `select user_id,username,student_id,type,created_at from USER where canceled_at IS NULL and username = ?`,
+            psmt: `select user_id,username,email,student_id,type,company,generation,github,created_at from USER where canceled_at IS NULL and username = ?`,
             binding: [username]
         });
         //console.log("user: ", JSON.stringify(user)와 동일
         console.log("user: %j", user);
-
         if (!user) {
             return res.status(404).json({
                 ok: false,
                 message: "해당 유저를 찾을 수 없습니다.",
             });
         }
-
         for(let i in user){
             user[i].created_at = dayjs(user[i].created_at).format("YY-MM-DD")
         }
-
         res.json({user : user});
-
     } catch (e) {
         console.error(e);
         res.status(500).json({

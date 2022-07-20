@@ -6,11 +6,11 @@ const dayjs = require('dayjs');
 
 //공지사항 추가
 router.post('/', async (req,res,next) =>{
-    const userId = Number(req.body.userId);
+    const user_id = Number(req.body.user_id);
     try{
         const user = await DB.execute({
             psmt: `select type from USER where user_id = ?`,
-            binding: [userId]
+            binding: [user_id]
         });
 
         if(user[0].type == null){
@@ -27,14 +27,14 @@ router.post('/', async (req,res,next) =>{
 }, async (req,res) =>{
     const title = JSON.stringify(req.body.title);
     const content = JSON.stringify(req.body.content);
-    const userId = Number(req.body.userId);
+    const user_id = Number(req.body.user_id);
     const category = JSON.stringify(req.body.category);
     try{
         const notice = await DB.execute({
             psmt: `insert into NOTICE (title, content, user_id, created_at, category) VALUES(?,?,?,NOW(),?)`,
-            binding: [title,content,userId,category]
+            binding: [title,content,user_id,category]
         });
-        res.status(201).json({id: userId, success: 'true'});
+        res.status(201).json({id: user_id, success: 'true'});
     } catch (e){
         console.log(e);
         res.status(500).json({
