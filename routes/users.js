@@ -16,20 +16,29 @@ router.get('/', async (req, res) => {
 
         console.log("users: %j",users);
         if(!users){
-            res.status(404).json({ok: false, message: "잘못된 요청입니다."});
+            res.status(404).json({
+                    message: "잘못된 요청입니다.",
+                    servertime: new Date()
+                });
         }
 
         for(let i in users){
             users[i].created_at = dayjs(users[i].created_at).format("YY-MM-DD")
         }
 
-        res.json({users : users});
+        res.status(200).json({
+            message: "유저 목록 조회 완료",
+            servertime: new Date(),
+            data: {
+                users
+            }
+        });
     }catch (e){
         console.error(e);
 
         res.status(500).json({
-            ok: false,
-            message: "알 수 없는 오류가 발생했습니다."
+            message: "알 수 없는 오류가 발생했습니다.",
+            servertime: new Date()
         });
     }
 });
@@ -53,20 +62,29 @@ router.get('/sort/:option', async (req, res) => {
 
         console.log("users: %j",users);
         if(!users){
-            res.status(404).json({ok: false, message: "잘못된 요청입니다."});
+            res.status(404).json({
+                message: "잘못된 요청입니다.",
+                servertime: new Date()
+            });
         }
 
         for(let i in users){
             users[i].created_at = dayjs(users[i].created_at).format("YY-MM-DD")
         }
 
-        res.json({users : users});
+        res.status(200).json({
+            message: "유저 목록 정렬 완료",
+            servertime: new Date(),
+            data: {
+                users
+            }
+        });
     }catch (e){
         console.error(e);
 
         res.status(500).json({
-            ok: false,
-            message: "알 수 없는 오류가 발생했습니다."
+            message: "알 수 없는 오류가 발생했습니다.",
+            servertime: new Date()
         });
     }
 });
@@ -83,9 +101,9 @@ router.get("/:user_id", async (req, res) => {
         console.log("user: %j", user);
 
         if (!user) {
-            return res.status(404).json({
-                ok: false,
+            res.status(404).json({
                 message: "해당 유저를 찾을 수 없습니다.",
+                servertime: new Date()
             });
         }
 
@@ -94,13 +112,19 @@ router.get("/:user_id", async (req, res) => {
             user[i].created_at = dayjs(user[i].created_at).format("YY-MM-DD")
         }
 
-        res.json({user : user});
+        res.status(200).json({
+            message: "유저 상세 조회",
+            servertime: new Date(),
+            data: {
+                user
+            }
+        });
 
     } catch (e) {
         console.error(e);
         res.status(500).json({
-            ok: false,
-            message: "알 수 없는 오류가 발생했습니다."
+            message: "알 수 없는 오류가 발생했습니다.",
+            servertime: new Date()
         });
     }
 });
@@ -116,20 +140,28 @@ router.get("/search/:username", async (req, res) => {
         //console.log("user: ", JSON.stringify(user)와 동일
         console.log("user: %j", user);
         if (!user) {
-            return res.status(404).json({
-                ok: false,
+            res.status(404).json({
                 message: "해당 유저를 찾을 수 없습니다.",
+                servertime: new Date()
             });
         }
         for(let i in user){
             user[i].created_at = dayjs(user[i].created_at).format("YY-MM-DD")
         }
-        res.json({user : user});
+
+        res.status(200).json({
+            message: "유저 이름으로 검색",
+            servertime: new Date(),
+            data: {
+                user
+            }
+        });
+
     } catch (e) {
         console.error(e);
         res.status(500).json({
-            ok: false,
-            message: "알 수 없는 오류가 발생했습니다."
+            message: "알 수 없는 오류가 발생했습니다.",
+            servertime: new Date()
         });
     }
 });
