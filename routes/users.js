@@ -39,7 +39,7 @@ router.get('/', async (req, res) => {
                     default:
                         return "unknown";
                 }
-            })(usersDB[i].type),
+            })(usersDB[i].type);
             usersObj.company = usersDB[i].company;
             usersObj.generation = usersDB[i].generation;
             usersObj.github = usersDB[i].github;
@@ -106,7 +106,7 @@ router.get('/sort', async (req, res) => {
                     default:
                         return "unknown";
                 }
-            })(usersDB[i].type),
+            })(usersDB[i].type);
                 usersObj.company = usersDB[i].company;
             usersObj.generation = usersDB[i].generation;
             usersObj.github = usersDB[i].github;
@@ -168,7 +168,7 @@ router.get("/detail", async (req, res) => {
                     default:
                         return "unknown";
                 }
-            })(userDB[i].type),
+            })(userDB[i].type);
                 userObj.company = userDB[i].company;
             userObj.generation = userDB[i].generation;
             userObj.github = userDB[i].github;
@@ -228,7 +228,7 @@ router.get("/search", async (req, res) => {
                     default:
                         return "unknown";
                 }
-            })(userDB[i].type),
+            })(userDB[i].type);
                 userObj.company = userDB[i].company;
             userObj.generation = userDB[i].generation;
             userObj.github = userDB[i].github;
@@ -270,7 +270,7 @@ router.put('/edit', async (req,res) => {
 
         res.status(201).json({
             message: "유저 정보 수정 완료",
-            servertime: new Date(),
+            servertime: new Date()
         });
 
     } catch (e){

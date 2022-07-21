@@ -127,7 +127,7 @@ router.get('/detail', async (req,res) => {
                     user_id : postDB.user_id,
                     username : postDB.username,
                     email : postDB.email,
-                    type : postDB.type,
+                    type : postDB.type
                 }
             }
         });
@@ -178,7 +178,7 @@ router.put('/edit', async (req,res,next) =>{
 
         res.status(201).json({
             message: "공지사항 수정 완료",
-            servertime: new Date(),
+            servertime: new Date()
         });
 
     } catch (e){
@@ -223,7 +223,7 @@ router.put('/delete', async (req,res,next) =>{
 
         res.status(201).json({
             message: "공지사항 삭제 완료",
-            servertime: new Date(),
+            servertime: new Date()
         });
 
     } catch (e){
