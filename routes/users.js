@@ -166,4 +166,33 @@ router.get("/search/:username", async (req, res) => {
     }
 });
 
+//유저 프로필 수정
+router.put('/:user_id/edit', async (req,res) => {
+    const password = req.body.password;
+    const username = req.body.username;
+    const email = req.body.email;
+    const company = req.body.company;
+    const github = req.body.github;
+    const user_id = req.params.user_id;
+    try{
+        const notice = await DB.execute({
+            psmt: `update USER set password = ?, username = ?, email = ?, company = ?, github = ?, updated_at = NOW() where user_id = ?`,
+            binding: [password,username,email,company,github,user_id]
+        });
+
+        res.status(201).json({
+            message: "유저 정보 수정 완료",
+            servertime: new Date(),
+        });
+
+    } catch (e){
+        console.log(e);
+        res.status(500).json({
+            message: "알 수 없는 오류가 발생했습니다.",
+            servertime: new Date()
+        });
+    }
+})
+
+
 module.exports = router;

@@ -94,12 +94,12 @@ router.get('/',async (req,res) => {
 })
 
 //공지사항 상세조회
-router.get('/:noticeId', async (req,res) => {
-    const noticeId = req.params.noticeId;
+router.get('/:notice_id', async (req,res) => {
+    const notice_id = req.params.notice_id;
     try{
         const [notice] = await DB.execute({
             psmt: `select title, content, n.created_at, u.user_id, username, email, type from NOTICE n, USER u WHERE u.user_id = n.user_id and notice_id = ?`,
-            binding: [noticeId]
+            binding: [notice_id]
         });
 
         console.log("users: %j",notice);
@@ -138,7 +138,7 @@ router.get('/:noticeId', async (req,res) => {
 })
 
 //공지사항 수정
-router.patch('/:notice_id/edit', async (req,res,next) =>{
+router.put('/:notice_id/edit', async (req,res,next) =>{
     const user_id = Number(req.body.user_id);
     try{
         const user = await DB.execute({
@@ -190,7 +190,7 @@ router.patch('/:notice_id/edit', async (req,res,next) =>{
 })
 
 //공지사항 삭제
-router.patch('/:notice_id/delete', async (req,res,next) =>{
+router.put('/:notice_id/delete', async (req,res,next) =>{
     const user_id = Number(req.body.user_id);
     try{
         const user = await DB.execute({
