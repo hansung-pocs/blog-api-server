@@ -8,12 +8,12 @@ const dayjs = require('dayjs');
 router.post('/', async (req,res,next) =>{
     const user_id = Number(req.body.user_id);
     try{
-        const user = await DB.execute({
+        const userDB = await DB.execute({
             psmt: `select type from USER where user_id = ?`,
             binding: [user_id]
         });
 
-        if(user[0].type == null){
+        if(userDB[0].type == null){
             res.status(404).json({
                 message: "권한이 없습니다.",
                 servertime: new Date()
@@ -33,7 +33,7 @@ router.post('/', async (req,res,next) =>{
     const user_id = Number(req.body.user_id);
     const category = JSON.stringify(req.body.category);
     try{
-        const post = await DB.execute({
+        const postDB = await DB.execute({
             psmt: `insert into POST (title, content, user_id, created_at, category) VALUES(?,?,?,NOW(),?)`,
             binding: [title,content,user_id,category]
         });
@@ -145,12 +145,12 @@ router.get('/:post_id', async (req,res) => {
 router.put('/:post_id/edit', async (req,res,next) =>{
     const user_id = Number(req.body.user_id);
     try{
-        const user = await DB.execute({
+        const userDB = await DB.execute({
             psmt: `select type from USER where user_id = ?`,
             binding: [user_id]
         });
 
-        if(user[0].type == null){
+        if(userDB[0].type == null){
             res.status(404).json({
                 message: "권한이 없습니다.",
                 servertime: new Date()
@@ -171,7 +171,7 @@ router.put('/:post_id/edit', async (req,res,next) =>{
     const post_id = Number(req.params.post_id);
     const user_id = Number(req.body.user_id);
     try{
-        const post = await DB.execute({
+        const postDB = await DB.execute({
             psmt: `update POST set title = ?, content = ?, category = ?, user_id = ?, updated_at = NOW() where post_id = ?`,
             binding: [title,content,category,user_id,post_id]
         });
@@ -194,12 +194,12 @@ router.put('/:post_id/edit', async (req,res,next) =>{
 router.put('/:post_id/delete', async (req,res,next) =>{
     const user_id = Number(req.body.user_id);
     try{
-        const user = await DB.execute({
+        const userDB = await DB.execute({
             psmt: `select type from USER where user_id = ?`,
             binding: [user_id]
         });
 
-        if(user[0].type == null){
+        if(userDB[0].type == null){
             res.status(404).json({
                 message: "권한이 없습니다.",
                 servertime: new Date()
@@ -217,7 +217,7 @@ router.put('/:post_id/delete', async (req,res,next) =>{
     const post_id = Number(req.params.post_id);
     const user_id = Number(req.body.user_id);
     try{
-        const post = await DB.execute({
+        const postDB = await DB.execute({
             psmt: `update POST set canceled_at = NOW() where post_id = ?`,
             binding: [post_id]
         });
