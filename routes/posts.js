@@ -16,10 +16,7 @@ router.post('/', async (req,res,next) =>{
         if(user[0].type == null){
             res.status(404).json({
                 message: "권한이 없습니다.",
-                servertime: new Date(),
-                data: {
-                    user_id
-                }
+                servertime: new Date()
             });
         }
         next();
@@ -36,14 +33,14 @@ router.post('/', async (req,res,next) =>{
     const user_id = Number(req.body.user_id);
     const category = JSON.stringify(req.body.category);
     try{
-        const notice = await DB.execute({
-            psmt: `insert into NOTICE (title, content, user_id, created_at, category) VALUES(?,?,?,NOW(),?)`,
+        const post = await DB.execute({
+            psmt: `insert into POST (title, content, user_id, created_at, category) VALUES(?,?,?,NOW(),?)`,
             binding: [title,content,user_id,category]
         });
 
         res.status(201).json({
             message: "공지사항 추가 완료",
-            servertime: new Date(),
+            servertime: new Date()
         });
 
     } catch (e){
@@ -58,29 +55,36 @@ router.post('/', async (req,res,next) =>{
 //공지사항 목록조회
 router.get('/',async (req,res) => {
     try{
-        const notices = await DB.execute({
-            psmt: `select notice_id, title, created_at, updated_at, category from NOTICE`,
+        const postsDB = await DB.execute({
+            psmt: `select post_id, title, created_at, updated_at, category from POST`,
             binding: []
         });
 
-        console.log("notices: %j",notices);
-        if(!notices){
+        console.log("posts: %j",postsDB);
+        if(!postsDB){
             res.status(404).json({
                 message: "잘못된 요청입니다.",
                 servertime: new Date()
             });
         }
 
-        for(let i in notices){
-            notices[i].created_at = dayjs(notices[i].created_at).format("YY-MM-DD");
-            notices[i].updated_at = dayjs(notices[i].updated_at).format("YY-MM-DD");
+        let posts = new Array();
+        for(let i in postsDB){
+            let postsObj = new Object();
+            postsObj.post_id = postsDB[i].post_id;
+            postsObj.title = postsDB[i].title;
+            postsObj.created_at = dayjs(postsDB[i].created_at).format("YY-MM-DD HH:MM:SS");
+            postsObj.updated_at = dayjs(postsDB[i].updated_at).format("YY-MM-DD HH:MM:SS");
+            postsObj.category = postsDB[i].category;
+
+            posts.push(postsObj);
         }
 
         res.status(200).json({
             message: "공지사항 목록 조회",
             servertime: new Date(),
             data: {
-                notices
+                posts
             }
         });
 
@@ -94,19 +98,19 @@ router.get('/',async (req,res) => {
 })
 
 //공지사항 상세조회
-router.get('/:notice_id', async (req,res) => {
-    const notice_id = req.params.notice_id;
+router.get('/:post_id', async (req,res) => {
+    const post_id = req.params.post_id;
     try{
-        const [notice] = await DB.execute({
-            psmt: `select title, content, n.created_at, u.user_id, username, email, type from NOTICE n, USER u WHERE u.user_id = n.user_id and notice_id = ?`,
-            binding: [notice_id]
+        const [postDB] = await DB.execute({
+            psmt: `select title, content, n.created_at, u.user_id, username, email, type from POST n, USER u WHERE u.user_id = n.user_id and post_id = ?`,
+            binding: [post_id]
         });
 
-        console.log("users: %j",notice);
-        if(!notice){
+        console.log("users: %j",postDB);
+        if(!postDB){
             res.status(404).json({
                 message: "해당 공지사항이 존재하지 않습니다.",
-                servertime: new Date(),
+                servertime: new Date()
             });
         }
 
@@ -114,16 +118,16 @@ router.get('/:notice_id', async (req,res) => {
             message: "공지사항 상세 조회",
             servertime: new Date(),
             data: {
-                title: notice.title,
-                content: notice.content,
-                created_at: dayjs(notice.created_at).format("YY-MM-DD"),
-                updated_at: dayjs(notice.updated_at).format("YY-MM-DD"),
-                category: notice.category,
+                title: postDB.title,
+                content: postDB.content,
+                created_at: dayjs(postDB.created_at).format("YY-MM-DD"),
+                updated_at: dayjs(postDB.updated_at).format("YY-MM-DD"),
+                category: postDB.category,
                 user :{
-                    user_id : notice.user_id,
-                    username : notice.username,
-                    email : notice.email,
-                    type : notice.type,
+                    user_id : postDB.user_id,
+                    username : postDB.username,
+                    email : postDB.email,
+                    type : postDB.type,
                 }
             }
         });
@@ -138,7 +142,7 @@ router.get('/:notice_id', async (req,res) => {
 })
 
 //공지사항 수정
-router.put('/:notice_id/edit', async (req,res,next) =>{
+router.put('/:post_id/edit', async (req,res,next) =>{
     const user_id = Number(req.body.user_id);
     try{
         const user = await DB.execute({
@@ -149,10 +153,7 @@ router.put('/:notice_id/edit', async (req,res,next) =>{
         if(user[0].type == null){
             res.status(404).json({
                 message: "권한이 없습니다.",
-                servertime: new Date(),
-                data: {
-                    user_id
-                }
+                servertime: new Date()
             });
         }
         next();
@@ -167,12 +168,12 @@ router.put('/:notice_id/edit', async (req,res,next) =>{
     const title = JSON.stringify(req.body.title);
     const content = JSON.stringify(req.body.content);
     const category = JSON.stringify(req.body.category);
-    const notice_id = Number(req.params.notice_id);
+    const post_id = Number(req.params.post_id);
     const user_id = Number(req.body.user_id);
     try{
-        const notice = await DB.execute({
-            psmt: `update NOTICE set title = ?, content = ?, category = ?, user_id = ?, updated_at = NOW() where notice_id = ?`,
-            binding: [title,content,category,user_id,notice_id]
+        const post = await DB.execute({
+            psmt: `update POST set title = ?, content = ?, category = ?, user_id = ?, updated_at = NOW() where post_id = ?`,
+            binding: [title,content,category,user_id,post_id]
         });
 
         res.status(201).json({
@@ -190,7 +191,7 @@ router.put('/:notice_id/edit', async (req,res,next) =>{
 })
 
 //공지사항 삭제
-router.put('/:notice_id/delete', async (req,res,next) =>{
+router.put('/:post_id/delete', async (req,res,next) =>{
     const user_id = Number(req.body.user_id);
     try{
         const user = await DB.execute({
@@ -201,10 +202,7 @@ router.put('/:notice_id/delete', async (req,res,next) =>{
         if(user[0].type == null){
             res.status(404).json({
                 message: "권한이 없습니다.",
-                servertime: new Date(),
-                data: {
-                    user_id
-                }
+                servertime: new Date()
             });
         }
         next();
@@ -216,12 +214,12 @@ router.put('/:notice_id/delete', async (req,res,next) =>{
         });
     }
 }, async (req,res) =>{
-    const notice_id = Number(req.params.notice_id);
+    const post_id = Number(req.params.post_id);
     const user_id = Number(req.body.user_id);
     try{
-        const notice = await DB.execute({
-            psmt: `update NOTICE set canceled_at = NOW() where notice_id = ?`,
-            binding: [notice_id]
+        const post = await DB.execute({
+            psmt: `update POST set canceled_at = NOW() where post_id = ?`,
+            binding: [post_id]
         });
 
         res.status(201).json({
