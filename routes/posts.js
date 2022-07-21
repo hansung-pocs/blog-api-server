@@ -98,8 +98,8 @@ router.get('/',async (req,res) => {
 })
 
 //공지사항 상세조회
-router.get('/:post_id', async (req,res) => {
-    const post_id = req.params.post_id;
+router.get('/detail', async (req,res) => {
+    const post_id = req.query.post_id;
     try{
         const [postDB] = await DB.execute({
             psmt: `select title, content, n.created_at, u.user_id, username, email, type from POST n, USER u WHERE u.user_id = n.user_id and post_id = ?`,
@@ -142,7 +142,7 @@ router.get('/:post_id', async (req,res) => {
 })
 
 //공지사항 수정
-router.put('/:post_id/edit', async (req,res,next) =>{
+router.put('/edit', async (req,res,next) =>{
     const user_id = Number(req.body.user_id);
     try{
         const userDB = await DB.execute({
@@ -168,7 +168,7 @@ router.put('/:post_id/edit', async (req,res,next) =>{
     const title = JSON.stringify(req.body.title);
     const content = JSON.stringify(req.body.content);
     const category = JSON.stringify(req.body.category);
-    const post_id = Number(req.params.post_id);
+    const post_id = Number(req.query.post_id);
     const user_id = Number(req.body.user_id);
     try{
         const postDB = await DB.execute({
@@ -191,7 +191,7 @@ router.put('/:post_id/edit', async (req,res,next) =>{
 })
 
 //공지사항 삭제
-router.put('/:post_id/delete', async (req,res,next) =>{
+router.put('/delete', async (req,res,next) =>{
     const user_id = Number(req.body.user_id);
     try{
         const userDB = await DB.execute({
@@ -214,8 +214,7 @@ router.put('/:post_id/delete', async (req,res,next) =>{
         });
     }
 }, async (req,res) =>{
-    const post_id = Number(req.params.post_id);
-    const user_id = Number(req.body.user_id);
+    const post_id = Number(req.query.post_id);
     try{
         const postDB = await DB.execute({
             psmt: `update POST set canceled_at = NOW() where post_id = ?`,

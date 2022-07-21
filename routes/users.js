@@ -65,8 +65,8 @@ router.get('/', async (req, res) => {
 });
 
 // 유저 기수/힉번 정렬
-router.get('/sort/:option', async (req, res) => {
-    let option = req.params.option;
+router.get('/sort', async (req, res) => {
+    let option = req.query.option;
     let usersDB = new Array();
     try{
         if(option == "generation"){
@@ -133,8 +133,8 @@ router.get('/sort/:option', async (req, res) => {
 });
 
 //유저 상세 조회
-router.get("/:user_id", async (req, res) => {
-    const user_id = Number(req.params.user_id);
+router.get("/detail", async (req, res) => {
+    const user_id = Number(req.query.user_id);
     try {
         const userDB = await DB.execute({
             psmt: `select user_id,username,email,student_id,type,company,generation,github,created_at from USER where user_id=?`,
@@ -195,8 +195,8 @@ router.get("/:user_id", async (req, res) => {
 });
 
 //유저 이름 검색
-router.get("/search/:username", async (req, res) => {
-    const username = decodeURIComponent(req.params.username);
+router.get("/search", async (req, res) => {
+    const username = decodeURIComponent(req.query.username);
     try {
         const userDB = await DB.execute({
             psmt: `select user_id,username,email,student_id,type,company,generation,github,created_at from USER where canceled_at IS NULL and username = ?`,
@@ -255,13 +255,13 @@ router.get("/search/:username", async (req, res) => {
 });
 
 //유저 프로필 수정
-router.put('/:user_id/edit', async (req,res) => {
+router.put('/edit', async (req,res) => {
     const password = req.body.password;
     const username = req.body.username;
     const email = req.body.email;
     const company = req.body.company;
     const github = req.body.github;
-    const user_id = req.params.user_id;
+    const user_id = req.query.user_id;
     try{
         const noticeDB = await DB.execute({
             psmt: `update USER set password = ?, username = ?, email = ?, company = ?, github = ?, updated_at = NOW() where user_id = ?`,
