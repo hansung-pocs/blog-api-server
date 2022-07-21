@@ -120,8 +120,8 @@ router.get('/detail', async (req,res) => {
             data: {
                 title: postDB.title,
                 content: postDB.content,
-                created_at: dayjs(postDB.created_at).format("YY-MM-DD"),
-                updated_at: dayjs(postDB.updated_at).format("YY-MM-DD"),
+                created_at: dayjs(postDB.created_at).format("YY-MM-DD HH:MM:SS"),
+                updated_at: dayjs(postDB.updated_at).format("YY-MM-DD HH:MM:SS"),
                 category: postDB.category,
                 user :{
                     user_id : postDB.user_id,
