@@ -32,6 +32,7 @@ router.post('/', async (req,res) =>{
                 servertime: new Date()
             });
         }
+
     }catch(e){
         console.error(e);
         res.status(500).json({
