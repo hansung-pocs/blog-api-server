@@ -15,7 +15,6 @@ router.post('/', async (req,res) =>{
             psmt: `select type from USER where user_id = ?`,
             binding: [user_id]
         });
-
         if(userDB[0].type == null){
             res.status(404).json({
                 message: "권한이 없습니다.",
