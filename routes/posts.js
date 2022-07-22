@@ -171,7 +171,7 @@ router.put('/edit', async (req,res,next) =>{
 })
 
 //공지사항 삭제
-router.put('/delete', async (req,res,next) =>{
+router.patch('/delete', async (req,res,next) =>{
     const user_id = Number(req.body.user_id);
     const post_id = Number(req.query.post_id);
     try{
