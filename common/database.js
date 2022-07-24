@@ -1,3 +1,4 @@
+const dayjs = require("dayjs");
 const mysql = require("mysql2/promise");
 
 const pool = mysql.createPool({
@@ -6,7 +7,6 @@ const pool = mysql.createPool({
     password: process.env.DB_PASSWORD,
     port: process.env.DB_PORT,
     database: process.env.DB_NAME,
-
     connectionLimit: 10,
     waitForConnections: true
 });
@@ -15,7 +15,7 @@ pool.on("release", connection => {
     console.log(`connection ${connection.threadId} released`);
 })
 
-const getConnection = module.exports.getConnection = async () => {
+const getConnection = async () => {
     try {
         const connection = await pool.getConnection();
         console.log("connectionId: ", connection.threadId);
@@ -25,21 +25,27 @@ const getConnection = module.exports.getConnection = async () => {
     }
 }
 
-const execute = module.exports.execute = async params => {
+const execute = async params => {
     console.log("on DB execute: %j", params);
     const {psmt, binding} = params;
 
     let connection;
     try {
         connection = await getConnection();
-        const [result] = await connection.query(psmt, binding);
+        
+        result = await connection.query(psmt, binding);
 
         connection.release();
         return result;
     } catch (error) {
+        console.log(error);
         if (!!connection) {
             connection.release();
         }
         throw error;
     }
+}
+
+module.exports = {
+    execute
 }
