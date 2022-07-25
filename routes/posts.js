@@ -194,10 +194,10 @@ router.get('/:postId', async (req,res) => {
                 updatedAt: dayjs(postsDB[postId-1].updatedAt).format("YY-MM-DD HH:MM:SS"),
                 category: postsDB[postId-1].category,
                 writer:{
-                    userId : postsDB[postId-1].userId,
-                    username : postsDB[postId-1].username,
-                    email : postsDB[postId-1].email,
-                    type : postsDB[postId-1].type
+                    userId : usersDB[postId-1].userId,
+                    userName : usersDB[postId-1].username,
+                    email : usersDB[postId-1].email,
+                    type : usersDB[postId-1].type
                 }
             }
         });
