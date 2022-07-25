@@ -93,7 +93,8 @@ router.post('/', async (req,res) =>{
             res.status(404).json({
                 message: "권한이 없습니다.",
                 status: 404,
-                servertime: new Date()
+                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                data: {}
             });
         }else if(usersDB[userId-1].type == "primary"){
             let postsObj = new Object();
@@ -105,9 +106,10 @@ router.post('/', async (req,res) =>{
             postsDB.push(postsObj);
 
             res.status(201).json({
-                message: "공지사항 추가 완료",
+                message: "공지사항 추가 성공",
                 status: 201,
-                servertime: new Date()
+                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                data: {}
             });
         }
 
@@ -116,7 +118,8 @@ router.post('/', async (req,res) =>{
         res.status(500).json({
             message: "알 수 없는 오류가 발생했습니다.",
             status: 500,
-            servertime: new Date()
+            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            data: {}
         });
     }
 })
@@ -126,9 +129,10 @@ router.get('/',async (req,res) => {
     try{
         if(!postsDB){
             res.status(404).json({
-                message: "잘못된 요청입니다.",
+                message: "게시글 목록을 불러올 수 없습니다.",
                 status: 404,
-                servertime: new Date()
+                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                data: {}
             });
         }
 
@@ -136,19 +140,20 @@ router.get('/',async (req,res) => {
         for(let i in postsDB){
             let postsObj = new Object();
             postsObj.postId = postsDB[i].postId;
-            postsObj.userId = postsDB[i].userId;
+            postsObj.writerName = usersDB[i].username;
             postsObj.title = postsDB[i].title;
-            postsObj.created_at = dayjs(postsDB[i].created_at).format("YY-MM-DD HH:MM:SS");
-            postsObj.updated_at = dayjs(postsDB[i].updated_at).format("YY-MM-DD HH:MM:SS");
+            postsObj.content = postsDB[i].content;
+            postsObj.createdAt = dayjs(postsDB[i].createdAt).format("YY-MM-DD HH:MM:SS");
+            postsObj.updatedAt = dayjs(postsDB[i].updatedAt).format("YY-MM-DD HH:MM:SS");
             postsObj.category = postsDB[i].category;
 
             posts.push(postsObj);
         }
 
         res.status(200).json({
-            message: "공지사항 목록 조회",
+            message: "게시글 목록 조회 성공.",
             status: 200,
-            servertime: new Date(),
+            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
             data: {
                 posts
             }
@@ -159,7 +164,8 @@ router.get('/',async (req,res) => {
         res.status(500).json({
             message: "알 수 없는 오류가 발생했습니다.",
             status: 500,
-            servertime: new Date()
+            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            data: {}
         });
     }
 })
@@ -170,23 +176,24 @@ router.get('/:postId', async (req,res) => {
     try{
         if(!postsDB){
             res.status(404).json({
-                message: "해당 공지사항이 존재하지 않습니다.",
+                message: "없거나 삭제된 게시글입니다.",
                 status: 404,
-                servertime: new Date()
+                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                data: {}
             });
         }
 
         res.status(200).json({
             message: "공지사항 상세 조회",
             status: 200,
-            servertime: new Date(),
+            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
             data: {
                 title: postsDB[postId-1].title,
                 content: postsDB[postId-1].content,
-                created_at: dayjs(postsDB[postId-1].created_at).format("YY-MM-DD HH:MM:SS"),
-                updated_at: dayjs(postsDB[postId-1].updated_at).format("YY-MM-DD HH:MM:SS"),
+                createdAt: dayjs(postsDB[postId-1].createdAt).format("YY-MM-DD HH:MM:SS"),
+                updatedAt: dayjs(postsDB[postId-1].updatedAt).format("YY-MM-DD HH:MM:SS"),
                 category: postsDB[postId-1].category,
-                user :{
+                writer:{
                     userId : postsDB[postId-1].userId,
                     username : postsDB[postId-1].username,
                     email : postsDB[postId-1].email,
@@ -200,7 +207,8 @@ router.get('/:postId', async (req,res) => {
         res.status(500).json({
             message: "알 수 없는 오류가 발생했습니다.",
             status: 500,
-            servertime: new Date()
+            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            data: {}
         });
     }
 })
@@ -217,17 +225,19 @@ router.patch('/:postId', async (req,res,next) =>{
             res.status(404).json({
                 message: "권한이 없습니다.",
                 status: 404,
-                servertime: new Date()
+                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                data: {}
             });
         }else if(usersDB[userId-1].type == "primary"){
             postsDB[postId-1].title = title;
             postsDB[postId-1].userId = userId;
             postsDB[postId-1].content = content;
             postsDB[postId-1].category = category;
-            res.status(201).json({
+            res.status(302).json({
                 message: "공지사항 수정 완료",
-                status: 201,
-                servertime: new Date()
+                status: 302,
+                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                data: {}
             });
         }
 
@@ -236,13 +246,14 @@ router.patch('/:postId', async (req,res,next) =>{
         res.status(500).json({
             message: "알 수 없는 오류가 발생했습니다.",
             status: 500,
-            servertime: new Date()
+            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            data: {}
         });
     }
 })
 
 //공지사항 삭제
-router.patch('/delete/:postId', async (req,res,next) =>{
+router.patch('/:postId/delete', async (req,res,next) =>{
     const userId = Number(req.body.userId);
     const postId = Number(req.params.postId);
     try{
@@ -250,14 +261,16 @@ router.patch('/delete/:postId', async (req,res,next) =>{
             res.status(404).json({
                 message: "권한이 없습니다.",
                 status: 404,
-                servertime: new Date()
+                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                data: {}
             });
         }else if(usersDB[userId-1].type == "primary"){
-            postsDB[postId-1].canceledAt = new Date()
-            res.status(201).json({
-                message: "공지사항 삭제 완료",
-                status: 201,
-                servertime: new Date()
+            postsDB[postId-1].canceledAt = dayjs().format('YYYY-MM-DD HH:MM:ss')
+            res.status(302).json({
+                message: "공지사항 삭제 성공",
+                status: 302,
+                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                data: {}
             });
         }
 
@@ -266,7 +279,8 @@ router.patch('/delete/:postId', async (req,res,next) =>{
         res.status(500).json({
             message: "알 수 없는 오류가 발생했습니다.",
             status: 500,
-            servertime: new Date()
+            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            data: {}
         });
     }
 })

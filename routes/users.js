@@ -49,62 +49,6 @@ const usersDB = [
         updateAt : "2022-07-12"
     }
 ]
-/* GET users listing. */
-router.get('/', async (req, res) => {
-    try{
-        if(!usersDB){
-            res.status(404).json({
-                message: "유저 목록을 불러올 수 없습니다.",
-                status: 404,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
-                data: {}
-            });
-        }
-
-        let users = new Array();
-        for(let i in usersDB){
-            let usersObj = new Object();
-            usersObj.userId = usersDB[i].userId;
-            usersObj.userName = usersDB[i].username;
-            usersObj.email = usersDB[i].email;
-            usersObj.studentId = usersDB[i].studentId;
-            usersObj.type = ((type) => {
-                if (!type) {
-                    return "일반유저";
-                }
-                switch (type) {
-                    case "primary":
-                        return "관리자";
-                    default:
-                        return "unknown";
-                }
-            })(usersDB[i].type);
-            usersObj.company = usersDB[i].company;
-            usersObj.generation = usersDB[i].generation;
-            usersObj.github = usersDB[i].github;
-            usersObj.createdAt = dayjs(usersDB[i].createdAt).format("YYYY-MM-DD");
-
-            users.push(usersObj);
-        }
-
-        res.status(200).json({
-            message: "유저 목록 조회 성공",
-            status: 200,
-            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
-            data: {
-                users
-            }
-        });
-    }catch (e){
-        console.error(e);
-        res.status(500).json({
-            message: "알 수 없는 오류가 발생했습니다.",
-            status: 500,
-            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
-            data: {}
-        });
-    }
-});
 
 // 유저 기수/힉번 정렬
 router.get('/', async (req, res) => {
@@ -173,7 +117,7 @@ router.get('/', async (req, res) => {
 
 //유저 상세 조회
 router.get("/:userId", async (req, res) => {
-    const i = Number(req.params.id);
+    const i = Number(req.params.userId);
     try {
         if (!usersDB) {
             res.status(404).json({
@@ -185,14 +129,14 @@ router.get("/:userId", async (req, res) => {
         }
 
         res.status(200).json({
-            message: `${usersDB[i].username}님 조회 성공`,
+            message: `${usersDB[i-1].username}님 조회 성공`,
             status: 200,
             servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
             data: {
-                userId : usersDB[i].userId,
-                userName : usersDB[i].username,
-                email : usersDB[i].email,
-                studentId : usersDB[i].studentId,
+                userId : usersDB[i-1].userId,
+                userName : usersDB[i-1].username,
+                email : usersDB[i-1].email,
+                studentId : usersDB[i-1].studentId,
                 type : ((type) => {
                     if (!type) {
                         return "일반유저";
@@ -203,11 +147,11 @@ router.get("/:userId", async (req, res) => {
                         default:
                             return "unknown";
                     }
-                })(usersDB[i].type),
-                company : usersDB[i].company,
-                generation : usersDB[i].generation,
-                github : usersDB[i].github,
-                createdAt : dayjs(usersDB[i].createdAt).format("YYYY-MM-DD")
+                })(usersDB[i-1].type),
+                company : usersDB[i-1].company,
+                generation : usersDB[i-1].generation,
+                github : usersDB[i-1].github,
+                createdAt : dayjs(usersDB[i-1].createdAt).format("YYYY-MM-DD")
             }
         });
 
@@ -283,16 +227,16 @@ router.get("/:userId", async (req, res) => {
 
 //유저 프로필 수정
 router.patch('/:userId', async (req,res) => {
-    const password = req.body.password;
-    const userName = req.body.username;
-    const email = req.body.email;
-    const company = req.body.company;
-    const github = req.body.github;
-    const i = req.params.id;
+    const password = JSON.stringify(req.body.password);
+    const userName = JSON.stringify(req.body.userName);
+    const email = JSON.stringify(req.body.email);
+    const company = JSON.stringify(req.body.company);
+    const github = JSON.stringify(req.body.github);
+    const i = Number(req.params.userId);
     try{
-        if (usersDB[i - 1].password == password && usersDB[i - 1].userName == userName &&
-            usersDB[i - 1].email == email && usersDB[i - 1].company == company &&
-            usersDB[i - 1].github == github
+        if (usersDB[i-1].password == password && usersDB[i-1].userName == userName &&
+            usersDB[i-1].email == email && usersDB[i-1].company == company &&
+            usersDB[i-1].github == github
             ) {
             res.status(404).json({
                 message: "바뀔 값이 없습니다.",
