@@ -103,7 +103,7 @@ router.post('/', async (req,res) =>{
             postsObj.content = content;
             postsObj.category = category;
 
-            postsDB.push(postsObj);
+            //postsDB.push(postsObj);
 
             res.status(201).json({
                 message: "공지사항 추가 성공",
