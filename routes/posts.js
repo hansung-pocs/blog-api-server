@@ -30,7 +30,7 @@ router.post('/', async (req, res) => {
         const {type = "member"} = userDB;
 
         switch (type) {
-            case "member" || "unknown" : {
+            case "member" : {
                 res.status(403).json({
                     message: MSG.NO_AUTHORITY,
                     status: 403,
@@ -75,7 +75,7 @@ router.get('/', async (req, res) => {
 
         const posts = [];
         postsDB.forEach(postsDB => {
-            const{
+            const {
                 post_id,
                 username,
                 title,
@@ -86,18 +86,18 @@ router.get('/', async (req, res) => {
             } = postsDB;
 
             const postsObj = {
-                postId : post_id,
-                writerName : username,
-                title : title,
-                content : content,
-                createdAt : dayjs(created_at).format("YYYY-MM-DD HH:MM:ss"),
+                postId: post_id,
+                writerName: username,
+                title: title,
+                content: content,
+                createdAt: dayjs(created_at).format("YYYY-MM-DD HH:MM:ss"),
                 updatedAt: ((updated_at) => {
                     if (!!updated_at) {
                         return dayjs(updated_at).format("YYYY-MM-DD HH:MM:ss")
                     }
                     return null;
                 })(updated_at),
-                category : category
+                category: category
             }
 
             posts.push(postsObj);
@@ -141,7 +141,7 @@ router.get('/:postId', async (req, res) => {
                 data: {}
             });
         } else {
-            const{
+            const {
                 title,
                 content,
                 created_at,
@@ -152,6 +152,7 @@ router.get('/:postId', async (req, res) => {
                 email,
                 type
             } = postDB;
+
             res.status(200).json({
                 message: `${title} ${MSG.READ_POST_SUCCESS}`,
                 status: 200,

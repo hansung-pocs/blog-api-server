@@ -1,5 +1,5 @@
 const CANT_READ_USERDATA = "유저 목록을 불러올 수 없습니다."
-const CANT_READ_POSTDATA = "등록된 게시물이 없습니다." //이거
+const CANT_READ_POSTDATA = "등록된 게시물이 없습니다."
 const READ_USERDATA_SUCCESS = "유저 목록 조회 성공"
 const READ_POSTDATA_SUCCESS = "게시글 목록 조회 성공"
 const NO_USER_DATA = "없거나 탈퇴한 유저입니다."
