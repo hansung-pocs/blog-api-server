@@ -195,7 +195,7 @@ router.post("/users", async (req, res) => {
     try {
         await DB.execute({
             psmt: `insert into USER (username, password, name, student_id, email, generation, type, company, github, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-            binding: [userName, password, name, studentId, email, generation, type, company || null, github || null]
+            binding: [userName, password, name, studentId, email, generation, type, company, github]
         });
 
         res.status(201).json({
