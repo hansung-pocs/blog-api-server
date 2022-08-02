@@ -25,8 +25,9 @@ router.get('/users', async (req, res) => {
         if(!usersDB){
             res.status(404).json({
                 message: MSG.CANT_READ_USERDATA,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
-                data: {}
+                status : 404,
+                servertime : dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                data : {}
             });
         }
 
