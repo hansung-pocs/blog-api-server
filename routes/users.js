@@ -1,190 +1,127 @@
 var express = require('express');
 var router = express.Router();
 
-const DB = require("../common/database");
-
-//https://day.js.org/docs/en/parse/string-format
+const DB = require('../common/database');
+const MSG = require('../common/message')
 const dayjs = require('dayjs')
 
 /* GET users listing. */
 router.get('/', async (req, res) => {
-    try{
+
+    const sortingOption = req.query.sorting;
+    console.log(typeof(sortingOption));
+    console.log(sortingOption);
+
+    // sorting, searching option
+    //const searched = await DB.execute({
+
+    try {
+        let sql = `select * from USER where canceled_at is NULL`;
+
+        if (sortingOption === "generation") {
+            console.log("sorting by generation");
+            sql += ` order by generation DESC`;
+        } else if (sortingOption === "studentId") {
+            console.log("sorting by studentId");
+            sql += ` order by student_id`;
+        } // else if (searchingOption)
+
         const usersDB = await DB.execute({
-            psmt: `select user_id,username,email,student_id,type,company,generation,github,created_at from USER where canceled_at IS NULL`,
+            psmt: sql,
             binding: []
         });
 
-        console.log("users: %j",usersDB);
-        if(!usersDB){
+        if (!usersDB) {
             res.status(404).json({
-                message: "잘못된 요청입니다.",
-                servertime: new Date()
+                message: MSG.CANT_READ_USERDATA,
+                status: 404,
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+                data: {}
             });
         }
 
-        let users = new Array();
-        for(let i in usersDB){
+        const users = new Array();
+        for (let i in usersDB) {
             let usersObj = new Object();
             usersObj.user_id = usersDB[i].user_id;
-            usersObj.username = usersDB[i].username;
+            usersObj.userName = usersDB[i].username;
             usersObj.email = usersDB[i].email;
-            usersObj.student_id = usersDB[i].student_id;
+            usersObj.studentIdd = usersDB[i].student_id;
             usersObj.type = ((type) => {
-                if (!type) {
-                    return "일반유저";
-                }
                 switch (type) {
-                    case "primary":
-                        return "관리자";
+                    case "admin":
+                        return "admin";
+                    case "user":
+                        return "user";
                     default:
                         return "unknown";
                 }
-            })(usersDB[i].type),
-                usersObj.company = usersDB[i].company;
+            })(usersDB[i].type);
+            usersObj.company = usersDB[i].company || "-";
             usersObj.generation = usersDB[i].generation;
-            usersObj.github = usersDB[i].github;
-            usersObj.created_at = dayjs(usersDB[i].created_at).format("YY-MM-DD");
+            usersObj.github = usersDB[i].github || "-";
+            usersObj.createdAt = dayjs(usersDB[i].created_at).format("YY-MM-DD");
 
             users.push(usersObj);
         }
 
         res.status(200).json({
-            message: "유저 목록 조회 완료",
-            servertime: new Date(),
+            message: MSG.READ_USERDATA_SUCCESS,
+            servertime: dayjs.format('YYYY-MM-DD HH:mm:ss'),
             data: {
                 users
             }
         });
-    }catch (e){
+    } catch (e) {
         console.error(e);
         res.status(500).json({
-            message: "알 수 없는 오류가 발생했습니다.",
-            servertime: new Date()
+            message: MSG.UNKNOWN_ERROR,
+            status: 500,
+            servertime: dayjs.format('YYYY-MM-DD HH:mm:ss'),
+            data: {}
         });
     }
 });
 
-// 유저 기수/힉번 정렬
-router.get('/sort/:option', async (req, res) => {
-    let option = req.params.option;
-    let usersDB = new Array();
-    try{
-        if(option == "generation"){
-            usersDB = await DB.execute({
-                psmt: `select user_id,username,email,student_id,type,company,generation,github,created_at from USER where canceled_at IS NULL order by generation`,
-                binding: []
-            });
-        }else if(option == "student_id"){
-            usersDB = await DB.execute({
-                psmt: `select user_id,username,email,student_id,type,company,generation,github,created_at from USER where canceled_at IS NULL order by student_id`,
-                binding: []
-            });
-        }
-
-        console.log("users: %j",usersDB);
-        if(!usersDB){
-            res.status(404).json({
-                message: "잘못된 요청입니다.",
-                servertime: new Date()
-            });
-        }
-
-        let users = new Array();
-        for(let i in usersDB){
-            let usersObj = new Object();
-            usersObj.user_id = usersDB[i].user_id;
-            usersObj.username = usersDB[i].username;
-            usersObj.email = usersDB[i].email;
-            usersObj.student_id = usersDB[i].student_id;
-            usersObj.type = ((type) => {
-                if (!type) {
-                    return "일반유저";
-                }
-                switch (type) {
-                    case "primary":
-                        return "관리자";
-                    default:
-                        return "unknown";
-                }
-            })(usersDB[i].type),
-                usersObj.company = usersDB[i].company;
-            usersObj.generation = usersDB[i].generation;
-            usersObj.github = usersDB[i].github;
-            usersObj.created_at = dayjs(usersDB[i].created_at).format("YY-MM-DD");
-
-            users.push(usersObj);
-        }
-
-        res.status(200).json({
-            message: "유저 목록 정렬 완료",
-            servertime: new Date(),
-            data: {
-                users
-            }
-        });
-    }catch (e){
-        console.error(e);
-
-        res.status(500).json({
-            message: "알 수 없는 오류가 발생했습니다.",
-            servertime: new Date()
-        });
-    }
-});
 
 //유저 상세 조회
-router.get("/:user_id", async (req, res) => {
-    const user_id = Number(req.params.user_id);
+router.get("/:userId", async (req, res) => {
+
+    const user_id = req.params.userId;
+
     try {
         const userDB = await DB.execute({
-            psmt: `select user_id,username,email,student_id,type,company,generation,github,created_at from USER where user_id=?`,
+            psmt: `select * from USER where user_id = ?`,
             binding: [user_id]
         });
-        //console.log("user: ", JSON.stringify(user)와 동일
+
         console.log("user: %j", userDB);
 
         if (!userDB) {
             res.status(404).json({
-                message: "없거나 탈퇴한 유저입니다.",
-                servertime: new Date()
+                message: MSG.CANT_READ_USERDATA,
+                status: 404,
+                servertime: dayjs.format('YYYY-MM-DD HH:mm:ss'),
+                data: {}
             });
         }
 
-
-        let user = new Array();
-        for(let i in userDB){
-            let userObj = new Object();
-            userObj.user_id = userDB[i].user_id;
-            userObj.username = userDB[i].username;
-            userObj.email = userDB[i].email;
-            userObj.student_id = userDB[i].student_id;
-            userObj.type = ((type) => {
-                if (!type) {
-                    return "일반유저";
-                }
-                switch (type) {
-                    case "primary":
-                        return "관리자";
-                    default:
-                        return "unknown";
-                }
-            })(userDB[i].type),
-                userObj.company = userDB[i].company;
-            userObj.generation = userDB[i].generation;
-            userObj.github = userDB[i].github;
-            userObj.created_at = dayjs(userDB[i].created_at).format("YY-MM-DD");
-
-            user.push(userObj);
-        }
-
         res.status(200).json({
-            message: "유저 상세 조회",
-            servertime: new Date(),
+            message: userDB.username + MSG.READ_USERDATA_SUCCESS,
+            status: 200,
+            servertime: dayjs.format('YYYY-MM-DD HH:mm:ss'),
             data: {
-                user
+                userId: userDB.user_id,
+                userName: userDB.username,
+                email: userDB.email,
+                studentId: userDB.student_id,
+                type: userDB.type, // 'admin', 'member' 둘중 하나 default : unknown
+                company: userDB.company || "null", //없으면 "-"
+                generation: userDB.generation, //기수
+                github: userDB.github || "null", // 깃허브 주소, 없으면 "-"
+                createdAt : userDB.created_at // YYYY-MM-DD
             }
         });
-
     } catch (e) {
         console.error(e);
         res.status(500).json({
@@ -194,93 +131,85 @@ router.get("/:user_id", async (req, res) => {
     }
 });
 
-//유저 이름 검색
-router.get("/search/:username", async (req, res) => {
-    const username = decodeURIComponent(req.params.username);
-    try {
-        const userDB = await DB.execute({
-            psmt: `select user_id,username,email,student_id,type,company,generation,github,created_at from USER where canceled_at IS NULL and username = ?`,
-            binding: [username]
-        });
-        //console.log("user: ", JSON.stringify(user)와 동일
-        console.log("user: %j", userDB);
-        if (!userDB) {
-            res.status(404).json({
-                message: "해당 유저를 찾을 수 없습니다.",
-                servertime: new Date()
-            });
-        }
 
-        let user = new Array();
-        for(let i in userDB){
-            let userObj = new Object();
-            userObj.user_id = userDB[i].user_id;
-            userObj.username = userDB[i].username;
-            userObj.email = userDB[i].email;
-            userObj.student_id = userDB[i].student_id;
-            userObj.type = ((type) => {
-                if (!type) {
-                    return "일반유저";
-                }
-                switch (type) {
-                    case "primary":
-                        return "관리자";
-                    default:
-                        return "unknown";
-                }
-            })(userDB[i].type),
-                userObj.company = userDB[i].company;
-            userObj.generation = userDB[i].generation;
-            userObj.github = userDB[i].github;
-            userObj.created_at = dayjs(userDB[i].created_at).format("YY-MM-DD");
-
-            user.push(userObj);
-        }
-
-        res.status(200).json({
-            message: "유저 이름으로 검색",
-            servertime: new Date(),
-            data: {
-                user
-            }
-        });
-
-    } catch (e) {
-        console.error(e);
-        res.status(500).json({
-            message: "알 수 없는 오류가 발생했습니다.",
-            servertime: new Date()
-        });
-    }
-});
 
 //유저 프로필 수정
-router.put('/:user_id/edit', async (req,res) => {
+router.patch('/:user_id', async (req,res) => {
     const password = req.body.password;
-    const username = req.body.username;
+    const userName = req.body.userName;
     const email = req.body.email;
-    const company = req.body.company;
     const github = req.body.github;
-    const user_id = req.params.user_id;
-    try{
-        const noticeDB = await DB.execute({
-            psmt: `update USER set password = ?, username = ?, email = ?, company = ?, github = ?, updated_at = NOW() where user_id = ?`,
-            binding: [password,username,email,company,github,user_id]
+    const company = req.body.company;
+    const userId = req.params.userId;
+
+    try {
+        // 요청한 사람이 본인 또는 관리자인지 검증 필요
+        // 일단 관리자만
+        const userDB = await DB.execute({
+            psmt: `select type from USER where user_id = ?`,
+            binding: [userId]
         });
 
-        res.status(201).json({
-            message: "유저 정보 수정 완료",
-            servertime: new Date(),
-        });
+        if (!userDB[0].type || userDB[0].type === 'unknown') {
+            res.status(403).json({
+                message: MSG.NO_AUTHORITY,
+                status: 403,
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+                data: {}
+            });
+        } else if (userDB[0].type === 'admin') {
+            let sql = `update USER set`;
+            const bindings = [];
 
-    } catch (e){
+            if (password != NULL) {
+                sql += ` password = ?,`;
+                bindings.push(password);
+            }
+
+            if (userName != NULL) {
+                sql += ` username = ?,`;
+                bindings.push(userName);
+            }
+
+            if (email != NULL) {
+                sql += ` email = ?,`;
+                bindings.push(email);
+            }
+
+            if (github != NULL) {
+                sql += ` github = ?,`;
+                bindings.push(password);
+            }
+
+            if (company != NULL) {
+                sql += ` company = ?,`;
+                bindings.push(company);
+            }
+
+            sql += ` updated_at = NOW() where user_id = ?;`;
+            bindings.push(userId);
+
+            const ret = await DB.execute({
+                psmt: sql,
+                binding: bindings
+            });
+
+            res.status(201).json({
+                message: MSG.USER_UPDATE_SUCCESS,
+                status: 201,
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+                data: {}
+            });
+        }
+    } catch (e) {
         console.log(e);
         res.status(500).json({
-            message: "알 수 없는 오류가 발생했습니다.",
-            servertime: new Date()
+            message: MSG.UNKNOWN_ERROR,
+            status: 500,
+            servertime: dayjs(new Date()).format(),
+            data: {}
         });
     }
 })
-
 
 module.exports = router;
