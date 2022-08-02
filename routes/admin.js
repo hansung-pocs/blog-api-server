@@ -5,6 +5,7 @@ const DB = require("../common/database");
 //https://day.js.org/docs/en/parse/string-format
 const dayjs = require('dayjs')
 const MSG = require("../common/message");
+const {Router} = require("express");
 
 router.get('/users', async (req, res) => {
     let sortOption = req.query.sort;
@@ -46,11 +47,11 @@ router.get('/users', async (req, res) => {
                     default: return "unknown";
                 }
             })(usersDB[i].type),
-                usersObj.company = usersDB[i].company;
+                usersObj.company = usersDB[i].company || "-";
             usersObj.generation = usersDB[i].generation;
-            usersObj.github = usersDB[i].github;
-            usersObj.createdAt = dayjs(usersDB[i].created_at).format("YY-MM-DD");
-            usersObj.canceledAt = dayjs(usersDB[i].canceled_at).format("YY-MM-DD");
+            usersObj.github = usersDB[i].github || "-";
+            usersObj.createdAt = dayjs(usersDB[i].created_at).format("YYYY-MM-DD");
+            usersObj.canceledAt = dayjs(usersDB[i].canceled_at).format("YYYY-MM-DD") || "-";
 
             users.push(usersObj);
         }
@@ -112,11 +113,11 @@ router.get("/users/:userId", async (req, res) => {
                         default: return "unknown";
                     }
                 })(userDB[0].type),
-                company : userDB[0].company,
+                company : userDB[0].company || "-",
                 generation : userDB[0].generation,
-                github : userDB[0].github,
-                createdAt : dayjs(userDB[0].created_at).format("YY-MM-DD"),
-                canceledAt : dayjs(userDB[0].canceled_at).format("YY-MM-DD"),
+                github : userDB[0].github || "-",
+                createdAt : dayjs(userDB[0].created_at).format("YYYY-MM-DD"),
+                canceledAt : dayjs(userDB[0].canceled_at).format("YYYY-MM-DD") || "-",
             }
         });
 
@@ -130,5 +131,182 @@ router.get("/users/:userId", async (req, res) => {
         });
     }
 });
+
+router.post("/users", async (req,res) => {
+    const userName = req.body.userName;
+    const password = req.body.password;
+    const name = req.body.name;
+    const studentId = req.body.studentId;
+    const email = req.body.email;
+    const generation = req.body.generation;
+    const type = req.body.type;
+    const company = req.body.company;
+    const github = req.body.github;
+
+    if(!userName || !password || !name || !studentId || !email || !generation || !type){
+        res.status(404).json({
+            message: MSG.NO_REQUIRED_INFO,
+            status : 404,
+            servertime : dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            data : {}
+        });
+    }
+
+    try{
+        await DB.execute({
+            psmt: `insert into USER (username, password, name, student_id, email, generation, type, company, github, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+            binding: [userName, password, name, studentId, email, generation, type, company || null , github || null]
+        });
+
+        res.status(201).json({
+            message: MSG.USER_ADDED,
+            status : 201,
+            servertime : dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            data : {}
+        })
+    }catch (error){
+        console.log(error);
+        res.status(500).json({
+            message: MSG.UNKNOWN_ERROR,
+            status : 500,
+            servertime : dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            data : {}
+        });
+    }
+})
+
+router.patch("/users/:userId/kick", async (req,res) => {
+    const userId = req.params.userId;
+
+    if(!userId){
+        res.status(404).json({
+            message: MSG.NO_USER_DATA,
+            status : 404,
+            servertime : dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            data : {}
+        });
+    }
+    try{
+        await DB.execute({
+            psmt: `update USER SET canceled_at = NOW() where user_id = ?`,
+            binding : [userId]
+        })
+
+        res.status(201).json({
+            message: MSG.USER_KICK_SUCCESS,
+            status : 201,
+            servertime : dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            data : {}
+        });
+    }catch (error){
+        console.log(error);
+        res.status(501).json({
+            message: error.message,
+            status : 501,
+            servertime : dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            data : {}
+        });
+    }
+})
+
+router.get("/posts",async (req,res) => {
+    try{
+        const postsDB = await DB.execute({
+            psmt: `select post_id, username, title, content, p.created_at, p.updated_at, p.canceled_at, category from POST p, USER u WHERE p.user_id = u.user_id`,
+            binding : []
+        })
+
+        console.log("users: %j",postsDB);
+        if(!postsDB){
+            res.status(404).json({
+                message: MSG.CANT_READ_POSTDATA,
+                status : 404,
+                servertime : dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                data : {}
+            });
+        }
+
+        let posts = [];
+        for(let i in postsDB){
+            let postObj = new Object();
+            postObj.postId = postsDB[i].post_id;
+            postObj.writerName = postsDB[i].username;
+            postObj.title = postsDB[i].title;
+            postObj.content = postsDB[i].content;
+            postObj.createdAt = dayjs(postsDB[i].created_at).format("YYYY-MM-DD HH:MM:SS");
+            postObj.updatedAt = dayjs(postsDB[i].updated_at).format("YYYY-MM-DD HH:MM:SS");
+            postObj.canceledAt = dayjs(postsDB[i].canceled_at).format("YYYY-MM-DD HH:MM:SS") || "-";
+            postObj.category = postsDB[i].category;
+
+            posts.push(postObj);
+        }
+        res.status(200).json({
+            message: MSG.READ_POSTDATA_SUCCESS,
+            status : 200,
+            servertime : dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            data : {
+                posts
+            }
+        });
+    }catch (error){
+        console.log(error);
+        res.status(500).json({
+            message: MSG.UNKNOWN_ERROR,
+            status : 500,
+            servertime : dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            data : {}
+        });
+    }
+})
+
+router.get("/posts/:userId",async (req,res) => {
+    const userId = req.params.userId;
+    try{
+        const postsDB = await DB.execute({
+            psmt: `select post_id, title, content, created_at, updated_at, canceled_at, category from POST WHERE user_id = ?`,
+            binding: [userId]
+        });
+
+        console.log("post: %j",postsDB);
+        if(!postsDB){
+            res.status(404).json({
+                message: MSG.CANT_READ_POSTDATA,
+                status : 404,
+                servertime : dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                data : {}
+            });
+        }
+
+        let posts = [];
+        for(let i in postsDB){
+            let postObj = new Object();
+            postObj.postId = postsDB[i].post_id;
+            postObj.title = postsDB[i].title;
+            postObj.content = postsDB[i].content;
+            postObj.createdAt = dayjs(postsDB[i].created_at).format("YYYY-MM-DD HH:MM:SS");
+            postObj.updatedAt = dayjs(postsDB[i].updated_at).format("YYYY-MM-DD HH:MM:SS");
+            postObj.canceledAt = dayjs(postsDB[i].canceled_at).format("YYYY-MM-DD HH:MM:SS") || "-";
+            postObj.category = postsDB[i].category;
+
+            posts.push(postObj);
+        }
+        res.status(200).json({
+            message: "관리자 권한으로 " + MSG.READ_POSTDATA_SUCCESS,
+            status : 200,
+            servertime : dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            data : {
+                posts
+            }
+        });
+    }catch (e){
+        console.error(e);
+        res.status(500).json({
+            message: MSG.UNKNOWN_ERROR,
+            status : 500,
+            servertime : dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            data : {}
+        });
+    }
+})
 
 module.exports = router;

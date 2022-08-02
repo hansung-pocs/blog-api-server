@@ -82,8 +82,8 @@ router.get('/',async (req,res) => {
             postsObj.writerName = postsDB[i].username;
             postsObj.title = postsDB[i].title;
             postsObj.content = postsDB[i].content;
-            postsObj.createdAt = dayjs(postsDB[i].created_at).format("YY-MM-DD HH:MM:SS");
-            postsObj.updatedAt = dayjs(postsDB[i].updated_at).format("YY-MM-DD HH:MM:SS");
+            postsObj.createdAt = dayjs(postsDB[i].created_at).format("YYYY-MM-DD HH:MM:SS");
+            postsObj.updatedAt = dayjs(postsDB[i].updated_at).format("YYYY-MM-DD HH:MM:SS");
             postsObj.category = postsDB[i].category;
 
             posts.push(postsObj);
@@ -135,8 +135,8 @@ router.get('/:postId', async (req,res) => {
             data: {
                 title: postDB.title,
                 content: postDB.content,
-                createdAt: dayjs(postDB.created_at).format("YY-MM-DD HH:MM:SS"),
-                updatedAt: dayjs(postDB.updated_at).format("YY-MM-DD HH:MM:SS"),
+                createdAt: dayjs(postDB.created_at).format("YYYY-MM-DD HH:MM:SS"),
+                updatedAt: dayjs(postDB.updated_at).format("YYYY-MM-DD HH:MM:SS"),
                 category: postDB.category,
                 writer :{
                     userId : postDB.user_id,
