@@ -25,7 +25,7 @@ router.post('/', async (req,res) =>{
             binding: [userId]
         });
 
-        if(!userDB[0].type || userDB[0].type === "unknown"){
+        if(!userDB[0].type || userDB[0].type === "member"){
             res.status(403).json({
                 message : MSG.NO_AUTHORITY,
                 status : 403,
@@ -171,7 +171,7 @@ router.patch('/:postId', async (req,res,next) =>{
             binding: [userId]
         });
 
-        if(!userDB[0].type || userDB[0].type === "unknown"){
+        if(!userDB[0].type || userDB[0].type === "member"){
             res.status(403).json({
                 message: MSG.NO_AUTHORITY,
                 status : 403,
@@ -235,7 +235,7 @@ router.patch('/:postId/delete', async (req,res,next) =>{
             binding: [userId]
         });
 
-        if(!userDB[0].type || userDB[0].type === "unknown"){
+        if(!userDB[0].type || userDB[0].type === "member"){
             res.status(403).json({
                 message: MSG.NO_AUTHORITY,
                 status : 403,
