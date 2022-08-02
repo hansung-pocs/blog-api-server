@@ -15,7 +15,7 @@ router.get('/users', async (req, res) => {
         if (sortOption == "studentId")
             sql += ` order by student_id;`;
         else if (sortOption == "generation")
-            sql += ` order by generation DESC;`;
+            sql += ` order by generation;`;
 
         const usersDB = await DB.execute({
             psmt: sql,
@@ -47,11 +47,11 @@ router.get('/users', async (req, res) => {
                     default: return "unknown";
                 }
             })(usersDB[i].type),
-                usersObj.company = usersDB[i].company || "-";
+                usersObj.company = usersDB[i].company || null;
             usersObj.generation = usersDB[i].generation;
-            usersObj.github = usersDB[i].github || "-";
+            usersObj.github = usersDB[i].github || null;
             usersObj.createdAt = dayjs(usersDB[i].created_at).format("YYYY-MM-DD");
-            usersObj.canceledAt = dayjs(usersDB[i].canceled_at).format("YYYY-MM-DD") || "-";
+            usersObj.canceledAt = dayjs(usersDB[i].canceled_at).format("YYYY-MM-DD") || null;
 
             users.push(usersObj);
         }
@@ -113,11 +113,11 @@ router.get("/users/:userId", async (req, res) => {
                         default: return "unknown";
                     }
                 })(userDB[0].type),
-                company : userDB[0].company || "-",
+                company : userDB[0].company || null,
                 generation : userDB[0].generation,
-                github : userDB[0].github || "-",
+                github : userDB[0].github || null,
                 createdAt : dayjs(userDB[0].created_at).format("YYYY-MM-DD"),
-                canceledAt : dayjs(userDB[0].canceled_at).format("YYYY-MM-DD") || "-",
+                canceledAt : dayjs(userDB[0].canceled_at).format("YYYY-MM-DD") || null,
             }
         });
 
@@ -235,7 +235,7 @@ router.get("/posts",async (req,res) => {
             postObj.content = postsDB[i].content;
             postObj.createdAt = dayjs(postsDB[i].created_at).format("YYYY-MM-DD HH:MM:SS");
             postObj.updatedAt = dayjs(postsDB[i].updated_at).format("YYYY-MM-DD HH:MM:SS");
-            postObj.canceledAt = dayjs(postsDB[i].canceled_at).format("YYYY-MM-DD HH:MM:SS") || "-";
+            postObj.canceledAt = dayjs(postsDB[i].canceled_at).format("YYYY-MM-DD HH:MM:SS") || null;
             postObj.category = postsDB[i].category;
 
             posts.push(postObj);
@@ -285,7 +285,7 @@ router.get("/posts/:userId",async (req,res) => {
             postObj.content = postsDB[i].content;
             postObj.createdAt = dayjs(postsDB[i].created_at).format("YYYY-MM-DD HH:MM:SS");
             postObj.updatedAt = dayjs(postsDB[i].updated_at).format("YYYY-MM-DD HH:MM:SS");
-            postObj.canceledAt = dayjs(postsDB[i].canceled_at).format("YYYY-MM-DD HH:MM:SS") || "-";
+            postObj.canceledAt = dayjs(postsDB[i].canceled_at).format("YYYY-MM-DD HH:MM:SS") || null;
             postObj.category = postsDB[i].category;
 
             posts.push(postObj);
