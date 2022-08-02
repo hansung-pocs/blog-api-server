@@ -5,7 +5,6 @@ const DB = require("../common/database");
 //https://day.js.org/docs/en/parse/string-format
 const dayjs = require('dayjs')
 const MSG = require("../common/message");
-const {Router} = require("express");
 
 router.get('/users', async (req, res) => {
     let sortOption = req.query.sort;
