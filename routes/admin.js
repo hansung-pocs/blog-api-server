@@ -64,10 +64,10 @@ router.get('/users', async (req, res) => {
                 company: company,
                 generation: generation,
                 github: github,
-                createdAt: dayjs(created_at).format("YYYY-MM-DD HH:MM:ss"),
+                createdAt: dayjs(created_at).format("YYYY-MM-DD HH:mm:ss"),
                 canceledAt: ((canceled_at) => {
                     if (!!canceled_at) {
-                        return dayjs(canceled_at).format("YYYY-MM-DD HH:MM:ss")
+                        return dayjs(canceled_at).format("YYYY-MM-DD HH:mm:ss")
                     }
                     return null;
                 })(canceled_at),
@@ -153,10 +153,10 @@ router.get("/users/:userId", async (req, res) => {
                     company: company,
                     generation: generation,
                     github: github,
-                    createdAt: dayjs(created_at).format("YYYY-MM-DD HH:MM:ss"),
+                    createdAt: dayjs(created_at).format("YYYY-MM-DD HH:mm:ss"),
                     canceledAt: ((canceled_at) => {
                         if (!!canceled_at) {
-                            return dayjs(canceled_at).format("YYYY-MM-DD HH:MM:ss")
+                            return dayjs(canceled_at).format("YYYY-MM-DD HH:mm:ss")
                         }
                         return null;
                     })(canceled_at),
@@ -168,7 +168,7 @@ router.get("/users/:userId", async (req, res) => {
         res.status(500).json({
             message: MSG.UNKNOWN_ERROR,
             status: 500,
-            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
             data: {}
         });
     }
@@ -207,49 +207,49 @@ router.post("/users", async (req, res) => {
             res.status(404).json({
                 message: MSG.NO_REQUIRED_INFO,
                 status: 404,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
         } else if (correctEmail.test(email) != true) {
             res.status(403).json({
                 message: MSG.WRONG_EMAIL,
                 status: 403,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
         } else if (studentId.length != 7) {
             res.status(403).json({
                 message: MSG.WRONG_STUDENTID,
                 status: 403,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
         } else if (type != "admin" && type != "member") {
             res.status(403).json({
                 message: MSG.WRONG_TYPE,
                 status: 403,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
         } else if (checkEmail != null) {
             res.status(403).json({
                 message: MSG.EXIST_EMAIL,
                 status: 403,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
         } else if (checkUserName != null) {
             res.status(403).json({
                 message: MSG.EXIST_USERNAME,
                 status: 403,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
         } else if (checkStudentId != null) {
             res.status(403).json({
                 message: MSG.EXIST_STUDENTID,
                 status: 403,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
         } else {
@@ -261,7 +261,7 @@ router.post("/users", async (req, res) => {
             res.status(201).json({
                 message: MSG.USER_ADDED,
                 status: 201,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             })
         }
@@ -270,7 +270,7 @@ router.post("/users", async (req, res) => {
         res.status(500).json({
             message: MSG.UNKNOWN_ERROR,
             status: 500,
-            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
             data: {}
         });
     }
@@ -289,7 +289,7 @@ router.patch("/users/:userId/kick", async (req, res) => {
             res.status(404).json({
                 message: MSG.NO_USER_DATA,
                 status: 404,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
         } else {
@@ -301,7 +301,7 @@ router.patch("/users/:userId/kick", async (req, res) => {
             res.status(201).json({
                 message: MSG.USER_KICK_SUCCESS,
                 status: 201,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
         }
@@ -310,7 +310,7 @@ router.patch("/users/:userId/kick", async (req, res) => {
         res.status(501).json({
             message: error.message,
             status: 501,
-            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
             data: {}
         });
     }
@@ -344,16 +344,16 @@ router.get("/posts", async (req, res) => {
                 writerName: username,
                 title: title,
                 content: content,
-                createdAt: dayjs(created_at).format("YYYY-MM-DD HH:MM:ss"),
+                createdAt: dayjs(created_at).format("YYYY-MM-DD HH:mm:ss"),
                 updatedAt: ((updated_at) => {
                     if (!!updated_at) {
-                        return dayjs(updated_at).format("YYYY-MM-DD HH:MM:ss")
+                        return dayjs(updated_at).format("YYYY-MM-DD HH:mm:ss")
                     }
                     return null;
                 })(updated_at),
                 canceledAt: ((canceled_at) => {
                     if (!!canceled_at) {
-                        return dayjs(canceled_at).format("YYYY-MM-DD HH:MM:ss")
+                        return dayjs(canceled_at).format("YYYY-MM-DD HH:mm:ss")
                     }
                     return null;
                 })(canceled_at),
@@ -364,7 +364,7 @@ router.get("/posts", async (req, res) => {
         res.status(200).json({
             message: MSG.READ_POSTDATA_SUCCESS,
             status: 200,
-            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
             data: {
                 posts
             }
@@ -374,7 +374,7 @@ router.get("/posts", async (req, res) => {
         res.status(500).json({
             message: MSG.UNKNOWN_ERROR,
             status: 500,
-            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
             data: {}
         });
     }
@@ -394,7 +394,7 @@ router.get("/posts/:userId", async (req, res) => {
             res.status(404).json({
                 message: MSG.CANT_READ_POSTDATA,
                 status: 404,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
         } else {
@@ -414,16 +414,16 @@ router.get("/posts/:userId", async (req, res) => {
                     postId: post_id,
                     title: title,
                     content: content,
-                    createdAt: dayjs(created_at).format("YYYY-MM-DD HH:MM:ss"),
+                    createdAt: dayjs(created_at).format("YYYY-MM-DD HH:mm:ss"),
                     updatedAt: ((updated_at) => {
                         if (!!updated_at) {
-                            return dayjs(updated_at).format("YYYY-MM-DD HH:MM:ss")
+                            return dayjs(updated_at).format("YYYY-MM-DD HH:mm:ss")
                         }
                         return null;
                     })(updated_at),
                     canceledAt: ((canceled_at) => {
                         if (!!canceled_at) {
-                            return dayjs(canceled_at).format("YYYY-MM-DD HH:MM:ss")
+                            return dayjs(canceled_at).format("YYYY-MM-DD HH:mm:ss")
                         }
                         return null;
                     })(canceled_at),
@@ -436,7 +436,7 @@ router.get("/posts/:userId", async (req, res) => {
             res.status(200).json({
                 message: `관리자 권한으로 ${MSG.READ_POSTDATA_SUCCESS}`,
                 status: 200,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {
                     posts
                 }
@@ -447,7 +447,7 @@ router.get("/posts/:userId", async (req, res) => {
         res.status(500).json({
             message: MSG.UNKNOWN_ERROR,
             status: 500,
-            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
             data: {}
         });
     }

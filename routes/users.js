@@ -5,7 +5,7 @@ const DB = require('../common/database');
 const MSG = require('../common/message')
 const dayjs = require('dayjs')
 
-/* GET users listing. */
+/* GET users list. */
 router.get('/', async (req, res) => {
 
     const sortingOption = req.query.sort;
@@ -30,7 +30,7 @@ router.get('/', async (req, res) => {
         });
 
         /*
-        !일반 회원이 유저 검색을 했을 때 삭제된 유저를 검색한 경우!
+        !일반 회원이 유저 검색을 했을 때 삭제된 유저를 검색한 경우 404 에러
         => status: 404 Not Found
         요청 리소스를 찾을 수 없음
         - 요청 리소스를 찾을 수 없음
@@ -94,7 +94,7 @@ router.get('/', async (req, res) => {
     }
 });
 
-//유저 상세 조회
+/* GET user detail */
 router.get("/:userId", async (req, res) => {
 
     const user_id = req.params.userId;
@@ -150,7 +150,7 @@ router.get("/:userId", async (req, res) => {
                     company: company,
                     generation: generation,
                     github: github,
-                    createdAt: dayjs(created_at).format("YYYY-MM-DD HH:MM:ss")
+                    createdAt: dayjs(created_at).format("YYYY-MM-DD HH:mm:ss")
                 }
             })
         }
@@ -159,30 +159,13 @@ router.get("/:userId", async (req, res) => {
         res.status(500).json({
             message: MSG.UNKNOWN_ERROR,
             status: 500,
-            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
             data: {}
         });
     }
-
-    res.status(200).json({
-        message: userDB.username + MSG.READ_USERDATA_SUCCESS,
-        status: 200,
-        servertime: dayjs.format('YYYY-MM-DD HH:mm:ss'),
-        data: {
-            userId: userDB.user_id,
-            userName: userDB.username,
-            email: userDB.email,
-            studentId: userDB.student_id,
-            type: userDB.type, // 'admin', 'member' 둘중 하나 default : unknown
-            company: userDB.company || "null", //없으면 "-"
-            generation: userDB.generation, //기수
-            github: userDB.github || "null", // 깃허브 주소, 없으면 "-"
-            createdAt: userDB.created_at // YYYY-MM-DD
-        }
-    });
 })
 
-//유저 프로필 수정
+// PATCH user information
 router.patch('/:user_id', async (req, res) => {
     const password = req.body.password;
     const userName = req.body.userName;
