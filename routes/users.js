@@ -9,11 +9,6 @@ const dayjs = require('dayjs')
 router.get('/', async (req, res) => {
 
     const sortingOption = req.query.sort;
-    console.log(typeof(sortingOption));
-    console.log(sortingOption);
-
-    // sorting, searching option
-    //const searched = await DB.execute({
 
     try {
         let sql = `select * from USER where canceled_at is NULL`;
@@ -25,45 +20,61 @@ router.get('/', async (req, res) => {
             console.log("sorting by studentId");
             sql += ` order by student_id`;
         } // else if (searchingOption)
+        else {
+            sql += ` order by created_at DESC"`;
+        }
 
         const usersDB = await DB.execute({
             psmt: sql,
             binding: []
         });
 
-        if (!usersDB) {
-            res.status(404).json({
-                message: MSG.CANT_READ_USERDATA,
-                status: 404,
-                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                data: {}
-            });
-        }
+        /*
+        !일반 회원이 유저 검색을 했을 때 삭제된 유저를 검색한 경우!
+        => status: 404 Not Found
+        요청 리소스를 찾을 수 없음
+        - 요청 리소스를 찾을 수 없음
+        - 또는 클라이언트가 권한이 부족한 리소스에 접근할 때 해당 리소스를 숨기고 싶을 때
+         */
 
-        const users = new Array();
-        for (let i in usersDB) {
-            let usersObj = new Object();
-            usersObj.user_id = usersDB[i].user_id;
-            usersObj.userName = usersDB[i].username;
-            usersObj.email = usersDB[i].email;
-            usersObj.studentIdd = usersDB[i].student_id;
-            usersObj.type = ((type) => {
-                switch (type) {
-                    case "admin":
-                        return "admin";
-                    case "user":
-                        return "user";
-                    default:
-                        return "unknown";
-                }
-            })(usersDB[i].type);
-            usersObj.company = usersDB[i].company || "-";
-            usersObj.generation = usersDB[i].generation;
-            usersObj.github = usersDB[i].github || "-";
-            usersObj.createdAt = dayjs(usersDB[i].created_at).format("YY-MM-DD");
+        const users = [];
+        usersDB.forEach(usersDB => {
+            const {
+                user_id,
+                username,
+                email,
+                student_id,
+                type,
+                company,
+                generation,
+                github,
+                created_at,
+            } = usersDB;
 
+            const usersObj = {
+                userId: user_id,
+                userName: username,
+                email: email,
+                studentId: student_id,
+                type: ((type) => {
+                    if (!type) return "비회원";
+
+                    switch (type) {
+                        case "admin":
+                            return "admin";
+                        case "member":
+                            return "member";
+                        default:
+                            return "unknown";
+                    }
+                })(type),
+                company: company,
+                generation: generation,
+                github: github,
+                createdAt: dayjs(created_at).format("YYYY-MM-DD HH:MM:ss"),
+            }
             users.push(usersObj);
-        }
+        })
 
         res.status(200).json({
             message: MSG.READ_USERDATA_SUCCESS,
@@ -83,7 +94,6 @@ router.get('/', async (req, res) => {
     }
 });
 
-
 //유저 상세 조회
 router.get("/:userId", async (req, res) => {
 
@@ -95,6 +105,7 @@ router.get("/:userId", async (req, res) => {
             binding: [user_id]
         });
 
+        //console.log("user: ", JSON.stringify(user)와 동일
         console.log("user: %j", userDB);
 
         if (!userDB) {
@@ -104,37 +115,75 @@ router.get("/:userId", async (req, res) => {
                 servertime: dayjs.format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
-        }
+        } else {
+            const {
+                user_id,
+                username,
+                email,
+                student_id,
+                type,
+                company,
+                generation,
+                github,
+                created_at,
+            } = userDB;
 
-        res.status(200).json({
-            message: userDB.username + MSG.READ_USERDATA_SUCCESS,
-            status: 200,
-            servertime: dayjs.format('YYYY-MM-DD HH:mm:ss'),
-            data: {
-                userId: userDB.user_id,
-                userName: userDB.username,
-                email: userDB.email,
-                studentId: userDB.student_id,
-                type: userDB.type, // 'admin', 'member' 둘중 하나 default : unknown
-                company: userDB.company || "null", //없으면 "-"
-                generation: userDB.generation, //기수
-                github: userDB.github || "null", // 깃허브 주소, 없으면 "-"
-                createdAt : userDB.created_at // YYYY-MM-DD
-            }
-        });
-    } catch (e) {
-        console.error(e);
+            res.status(200).json({
+                message: `어드민 권한으로 ${username}${MSG.READ_USER_SUCCESS}`,
+                status: 200,
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+                data: {
+                    userId: user_id,
+                    userName: username,
+                    email: email,
+                    studentId: student_id,
+                    type: ((type) => {
+                        switch (type) {
+                            case "admin":
+                                return "admin";
+                            case "member":
+                                return "member";
+                            default:
+                                return "unknown";
+                        }
+                    })(type),
+                    company: company,
+                    generation: generation,
+                    github: github,
+                    createdAt: dayjs(created_at).format("YYYY-MM-DD HH:MM:ss")
+                }
+            })
+        }
+    } catch (error) {
+        console.error(error);
         res.status(500).json({
-            message: "알 수 없는 오류가 발생했습니다.",
-            servertime: new Date()
+            message: MSG.UNKNOWN_ERROR,
+            status: 500,
+            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            data: {}
         });
     }
-});
 
-
+    res.status(200).json({
+        message: userDB.username + MSG.READ_USERDATA_SUCCESS,
+        status: 200,
+        servertime: dayjs.format('YYYY-MM-DD HH:mm:ss'),
+        data: {
+            userId: userDB.user_id,
+            userName: userDB.username,
+            email: userDB.email,
+            studentId: userDB.student_id,
+            type: userDB.type, // 'admin', 'member' 둘중 하나 default : unknown
+            company: userDB.company || "null", //없으면 "-"
+            generation: userDB.generation, //기수
+            github: userDB.github || "null", // 깃허브 주소, 없으면 "-"
+            createdAt: userDB.created_at // YYYY-MM-DD
+        }
+    });
+})
 
 //유저 프로필 수정
-router.patch('/:user_id', async (req,res) => {
+router.patch('/:user_id', async (req, res) => {
     const password = req.body.password;
     const userName = req.body.userName;
     const email = req.body.email;

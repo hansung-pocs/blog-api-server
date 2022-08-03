@@ -8,7 +8,9 @@ const MSG = require("../common/message");
 
 //관리자 페이지 유저 목록 조회
 router.get('/users', async (req, res) => {
+
     const sortOption = req.query.sort;
+
     try {
         let sql = `select user_id,username,email,student_id,type,company,generation,github,created_at, canceled_at from USER`;
 
@@ -77,7 +79,7 @@ router.get('/users', async (req, res) => {
         res.status(200).json({
             message: `관리자 권한으로 ${MSG.READ_USERDATA_SUCCESS}`,
             status: 200,
-            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
             data: {
                 users
             }
@@ -87,7 +89,7 @@ router.get('/users', async (req, res) => {
         res.status(500).json({
             message: MSG.UNKNOWN_ERROR,
             status: 500,
-            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
             data: {}
         });
     }
@@ -95,20 +97,22 @@ router.get('/users', async (req, res) => {
 
 //유저 상세 조회
 router.get("/users/:userId", async (req, res) => {
+
     const userId = req.params.userId;
+
     try {
         const [userDB] = await DB.execute({
             psmt: `select user_id,username,email,student_id,type,company,generation,github,created_at,canceled_at from USER where user_id=?`,
             binding: [userId]
         });
-        //console.log("user: ", JSON.stringify(user)와 동일
+
         console.log("user: %j", userDB);
 
         if (!userDB) {
             res.status(404).json({
                 message: MSG.NO_USER_DATA,
                 status: 404,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
         } else {
@@ -128,7 +132,7 @@ router.get("/users/:userId", async (req, res) => {
             res.status(200).json({
                 message: `어드민 권한으로 ${username}${MSG.READ_USER_SUCCESS}`,
                 status: 200,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {
                     userId: user_id,
                     userName: username,
