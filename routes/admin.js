@@ -13,11 +13,11 @@ router.get('/users', async (req, res) => {
         let sql = `select user_id,username,email,student_id,type,company,generation,github,created_at, canceled_at from USER`;
 
         if (sortOption == "studentId") {
-            sql += ` order by student_id;`;
+            sql += ` order by student_id DESC;`;
         } else if (sortOption == "generation") {
             sql += ` order by generation DESC;`;
         } else {
-            sql += ` order by created_at;`;
+            sql += ` order by created_at DESC;`;
         }
 
         const usersDB = await DB.execute({
