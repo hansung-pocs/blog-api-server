@@ -323,7 +323,7 @@ router.get("/posts", async (req, res) => {
 router.get("/posts/:userId", async (req, res) => {
     const userId = req.params.userId;
     try {
-        const [postsDB] = await DB.execute({
+        const postsDB = await DB.execute({
             psmt: `select post_id, title, content, created_at, updated_at, canceled_at, category from POST WHERE user_id = ?`,
             binding: [userId]
         });
@@ -338,37 +338,39 @@ router.get("/posts/:userId", async (req, res) => {
             });
         } else {
             const posts = [];
-            const {
-                post_id,
-                title,
-                content,
-                created_at,
-                updated_at,
-                canceled_at,
-                category,
-            } = postsDB;
+            postsDB.forEach(postsDB =>{
+                const {
+                    post_id,
+                    title,
+                    content,
+                    created_at,
+                    updated_at,
+                    canceled_at,
+                    category,
+                } = postsDB;
 
-            const postsObj = {
-                postId: post_id,
-                title: title,
-                content: content,
-                createdAt: dayjs(created_at).format("YYYY-MM-DD HH:MM:ss"),
-                updatedAt: ((updated_at) => {
-                    if (!!updated_at) {
-                        return dayjs(updated_at).format("YYYY-MM-DD HH:MM:ss")
-                    }
-                    return null;
-                })(updated_at),
-                canceledAt: ((canceled_at) => {
-                    if (!!canceled_at) {
-                        return dayjs(canceled_at).format("YYYY-MM-DD HH:MM:ss")
-                    }
-                    return null;
-                })(canceled_at),
-                category: category
-            }
+                const postsObj = {
+                    postId: post_id,
+                    title: title,
+                    content: content,
+                    createdAt: dayjs(created_at).format("YYYY-MM-DD HH:MM:ss"),
+                    updatedAt: ((updated_at) => {
+                        if (!!updated_at) {
+                            return dayjs(updated_at).format("YYYY-MM-DD HH:MM:ss")
+                        }
+                        return null;
+                    })(updated_at),
+                    canceledAt: ((canceled_at) => {
+                        if (!!canceled_at) {
+                            return dayjs(canceled_at).format("YYYY-MM-DD HH:MM:ss")
+                        }
+                        return null;
+                    })(canceled_at),
+                    category: category
+                }
 
-            posts.push(postsObj);
+                posts.push(postsObj);
+            })
 
             res.status(200).json({
                 message: `관리자 권한으로 ${MSG.READ_POSTDATA_SUCCESS}`,
