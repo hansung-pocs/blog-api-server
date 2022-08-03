@@ -12,12 +12,12 @@ router.get('/users', async (req, res) => {
     const sortOption = req.query.sort;
 
     try {
-        let sql = `select user_id,username,email,student_id,type,company,generation,github,created_at, canceled_at from USER`;
+        let sql = `select user_id, username, email, student_id, type, company, generation, github, created_at, canceled_at from USER`;
 
-        if (sortOption == "studentId") {
-            sql += ` order by student_id DESC;`;
-        } else if (sortOption == "generation") {
+        if (sortOption == "generation") {
             sql += ` order by generation DESC;`;
+        } else if (sortOption == "studentId") {
+            sql += ` order by student_id;`;
         } else {
             sql += ` order by created_at DESC;`;
         }
@@ -382,9 +382,11 @@ router.get("/posts", async (req, res) => {
 
 //특정 회원이 작성한 글 조회
 router.get("/posts/:userId", async (req, res) => {
+
     const userId = req.params.userId;
+
     try {
-        const postsDB = await DB.execute({
+        const [postsDB] = await DB.execute({
             psmt: `select post_id, title, content, created_at, updated_at, canceled_at, category from POST WHERE user_id = ?`,
             binding: [userId]
         });
