@@ -16,6 +16,11 @@ const USER_ADDED = "새로운 유저가 등록되었습니다."
 const POST_UPDATE_SUCCESS = "게시글 수정이 완료됐습니다."
 const POST_DELETE_SUCCESS = "게시글을 삭제하였습니다."
 const USER_KICK_SUCCESS = "유저를 탈퇴 처리하였습니다."
+const EXIST_EMAIL = "이미 존재하는 이메일 입니다."
+const EXIST_USERNAME = "이미 존재하는 userName 입니다."
+const EXIST_STUDENTID = "이미 존재하는 학번 입니다."
+const WRONG_EMAIL = "잘못된 형식의 이메일 입니다."
+const WRONG_STUDENTID = "잘못된 형식의 학번 입니다."
 
 module.exports = {
     CANT_READ_USERDATA,
@@ -35,5 +40,10 @@ module.exports = {
     POST_UPDATE_SUCCESS,
     USER_ADDED,
     POST_DELETE_SUCCESS,
-    USER_KICK_SUCCESS
+    USER_KICK_SUCCESS,
+    EXIST_EMAIL,
+    EXIST_USERNAME,
+    EXIST_STUDENTID,
+    WRONG_EMAIL,
+    WRONG_STUDENTID
 }
