@@ -25,14 +25,14 @@ router.post('/', async (req, res) => {
             res.status(404).json({
                 message: MSG.NO_REQUIRED_INFO,
                 status: 404,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             })
         } else if (category != "memory" && category != "notice" && category != "study" && category != "knowhow" && category != "reference") {
             res.status(403).json({
                 message: MSG.WRONG_CATEGORY,
                 status: 403,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             })
         } else {
@@ -41,7 +41,7 @@ router.post('/', async (req, res) => {
                     res.status(403).json({
                         message: MSG.NO_AUTHORITY,
                         status: 403,
-                        servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                        servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                         data: {}
                     });
                 }
@@ -54,7 +54,7 @@ router.post('/', async (req, res) => {
                     res.status(201).json({
                         message: MSG.POST_ADDED,
                         status: 201,
-                        servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                        servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                         data: {}
                     });
                 }
@@ -65,7 +65,7 @@ router.post('/', async (req, res) => {
         res.status(500).json({
             message: MSG.UNKNOWN_ERROR,
             status: 500,
-            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
             data: {}
         });
     }
@@ -98,10 +98,10 @@ router.get('/', async (req, res) => {
                 writerName: username,
                 title: title,
                 content: content,
-                createdAt: dayjs(created_at).format("YYYY-MM-DD HH:MM:ss"),
+                createdAt: dayjs(created_at).format("YYYY-MM-DD HH:mm:ss"),
                 updatedAt: ((updated_at) => {
                     if (!!updated_at) {
-                        return dayjs(updated_at).format("YYYY-MM-DD HH:MM:ss")
+                        return dayjs(updated_at).format("YYYY-MM-DD HH:mm:ss")
                     }
                     return null;
                 })(updated_at),
@@ -114,7 +114,7 @@ router.get('/', async (req, res) => {
         res.status(200).json({
             message: MSG.READ_POSTDATA_SUCCESS,
             status: 200,
-            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
             data: {
                 posts
             }
@@ -125,7 +125,7 @@ router.get('/', async (req, res) => {
         res.status(500).json({
             message: MSG.UNKNOWN_ERROR,
             status: 500,
-            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
             data: {}
         });
     }
@@ -145,7 +145,7 @@ router.get('/:postId', async (req, res) => {
             res.status(404).json({
                 message: MSG.NO_POST_DATA,
                 status: 404,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
         } else {
@@ -164,14 +164,14 @@ router.get('/:postId', async (req, res) => {
             res.status(200).json({
                 message: `${title} ${MSG.READ_POST_SUCCESS}`,
                 status: 200,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {
                     title: title,
                     content: content,
-                    createdAt: dayjs(created_at).format("YYYY-MM-DD HH:MM:ss"),
+                    createdAt: dayjs(created_at).format("YYYY-MM-DD HH:mm:ss"),
                     updatedAt: ((updated_at) => {
                         if (!!updated_at) {
-                            return dayjs(updated_at).format("YYYY-MM-DD HH:MM:ss")
+                            return dayjs(updated_at).format("YYYY-MM-DD HH:mm:ss")
                         }
                         return null;
                     })(updated_at),
@@ -190,7 +190,7 @@ router.get('/:postId', async (req, res) => {
         res.status(500).json({
             message: MSG.UNKNOWN_ERROR,
             status: 500,
-            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
             data: {}
         });
     }
@@ -215,7 +215,7 @@ router.patch('/:postId', async (req, res, next) => {
             res.status(403).json({
                 message: MSG.NO_AUTHORITY,
                 status: 403,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
         } else if (userDB.type === "admin") {
@@ -249,7 +249,7 @@ router.patch('/:postId', async (req, res, next) => {
             res.status(201).json({
                 message: MSG.POST_UPDATE_SUCCESS,
                 status: 201,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
         }
@@ -259,7 +259,7 @@ router.patch('/:postId', async (req, res, next) => {
         res.status(501).json({
             message: e.message,
             status: 501,
-            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
             data: {}
         });
     }
@@ -279,7 +279,7 @@ router.patch('/:postId/delete', async (req, res, next) => {
             res.status(403).json({
                 message: MSG.NO_AUTHORITY,
                 status: 403,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
         } else if (userDB.type === "admin") {
@@ -291,7 +291,7 @@ router.patch('/:postId/delete', async (req, res, next) => {
             res.status(201).json({
                 message: MSG.POST_DELETE_SUCCESS,
                 status: 201,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
         }
@@ -301,7 +301,7 @@ router.patch('/:postId/delete', async (req, res, next) => {
         res.status(501).json({
             message: e.message,
             status: 501,
-            servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
             data: {}
         });
     }
