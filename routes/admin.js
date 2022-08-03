@@ -220,6 +220,13 @@ router.post("/users", async (req, res) => {
                 servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
                 data: {}
             });
+        } else if (type != "admin" && type != "member") {
+            res.status(403).json({
+                message: MSG.WRONG_TYPE,
+                status: 403,
+                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                data: {}
+            });
         } else if (checkEmail != null) {
             res.status(403).json({
                 message: MSG.EXIST_EMAIL,

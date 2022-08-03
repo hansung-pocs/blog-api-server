@@ -21,6 +21,8 @@ const EXIST_USERNAME = "이미 존재하는 userName 입니다."
 const EXIST_STUDENTID = "이미 존재하는 학번 입니다."
 const WRONG_EMAIL = "잘못된 형식의 이메일 입니다."
 const WRONG_STUDENTID = "잘못된 형식의 학번 입니다."
+const WRONG_TYPE = "잘못된 형식의 유저 권한 등급 입니다."
+const WRONG_CATEGORY = "잘못된 형식의 카테고리 입니다."
 
 module.exports = {
     CANT_READ_USERDATA,
@@ -45,5 +47,7 @@ module.exports = {
     EXIST_USERNAME,
     EXIST_STUDENTID,
     WRONG_EMAIL,
-    WRONG_STUDENTID
+    WRONG_STUDENTID,
+    WRONG_TYPE,
+    WRONG_CATEGORY
 }

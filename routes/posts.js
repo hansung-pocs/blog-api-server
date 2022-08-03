@@ -14,14 +14,6 @@ router.post('/', async (req, res) => {
         category
     } = req.body;
     try {
-        if (!userId || !title || !content || !category) {
-            res.status(404).json({
-                message: MSG.NO_REQUIRED_INFO,
-                status: 404,
-                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
-                data: {}
-            })
-        }
         const [userDB] = await DB.execute({
             psmt: `select type from USER where user_id = ?`,
             binding: [userId]
@@ -29,27 +21,44 @@ router.post('/', async (req, res) => {
 
         const {type = "member"} = userDB;
 
-        switch (type) {
-            case "member" : {
-                res.status(403).json({
-                    message: MSG.NO_AUTHORITY,
-                    status: 403,
-                    servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
-                    data: {}
-                });
-            }
-            case "admin": {
-                await DB.execute({
-                    psmt: `insert into POST (title, content, user_id, created_at, category) VALUES(?,?,?,NOW(),?)`,
-                    binding: [title, content, userId, category]
-                });
+        if (!userId || !title || !content || !category) {
+            res.status(404).json({
+                message: MSG.NO_REQUIRED_INFO,
+                status: 404,
+                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                data: {}
+            })
+        }else if(category != "memory" && category != "notice" && category != "study" && category != "knowhow" && category != "reference"){
+            res.status(403).json({
+                message: MSG.WRONG_CATEGORY,
+                status: 403,
+                servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                data: {}
+            })
+        }
+        else {
+            switch (type) {
+                case "member" : {
+                    res.status(403).json({
+                        message: MSG.NO_AUTHORITY,
+                        status: 403,
+                        servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                        data: {}
+                    });
+                }
+                case "admin": {
+                    await DB.execute({
+                        psmt: `insert into POST (title, content, user_id, created_at, category) VALUES(?,?,?,NOW(),?)`,
+                        binding: [title, content, userId, category]
+                    });
 
-                res.status(201).json({
-                    message: MSG.POST_ADDED,
-                    status: 201,
-                    servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
-                    data: {}
-                });
+                    res.status(201).json({
+                        message: MSG.POST_ADDED,
+                        status: 201,
+                        servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
+                        data: {}
+                    });
+                }
             }
         }
     } catch (error) {
