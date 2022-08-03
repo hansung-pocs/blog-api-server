@@ -15,13 +15,13 @@ router.get('/', async (req, res) => {
 
         if (sortingOption === "generation") {
             console.log("sorting by generation");
-            sql += ` order by generation DESC`;
+            sql += ` order by generation DESC;`;
         } else if (sortingOption === "studentId") {
             console.log("sorting by studentId");
-            sql += ` order by student_id`;
+            sql += ` order by student_id;`;
         } // else if (searchingOption)
         else {
-            sql += ` order by created_at DESC"`;
+            sql += ` order by created_at DESC;`;
         }
 
         const usersDB = await DB.execute({
@@ -78,7 +78,8 @@ router.get('/', async (req, res) => {
 
         res.status(200).json({
             message: MSG.READ_USERDATA_SUCCESS,
-            servertime: dayjs.format('YYYY-MM-DD HH:mm:ss'),
+            status: 200,
+            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
             data: {
                 users
             }
@@ -88,7 +89,7 @@ router.get('/', async (req, res) => {
         res.status(500).json({
             message: MSG.UNKNOWN_ERROR,
             status: 500,
-            servertime: dayjs.format('YYYY-MM-DD HH:mm:ss'),
+            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
             data: {}
         });
     }
@@ -100,8 +101,8 @@ router.get("/:userId", async (req, res) => {
     const user_id = req.params.userId;
 
     try {
-        const userDB = await DB.execute({
-            psmt: `select * from USER where user_id = ?`,
+        const [userDB] = await DB.execute({
+            psmt: `select user_id, username, email, student_id, type, company, generation, github, created_at from USER where user_id = ?`,
             binding: [user_id]
         });
 
@@ -110,9 +111,9 @@ router.get("/:userId", async (req, res) => {
 
         if (!userDB) {
             res.status(404).json({
-                message: MSG.CANT_READ_USERDATA,
+                message: MSG.NO_USER_DATA,
                 status: 404,
-                servertime: dayjs.format('YYYY-MM-DD HH:mm:ss'),
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
         } else {
@@ -129,7 +130,7 @@ router.get("/:userId", async (req, res) => {
             } = userDB;
 
             res.status(200).json({
-                message: `어드민 권한으로 ${username}${MSG.READ_USER_SUCCESS}`,
+                message: `${username}${MSG.READ_USER_SUCCESS}`,
                 status: 200,
                 servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {

@@ -102,7 +102,7 @@ router.get("/users/:userId", async (req, res) => {
 
     try {
         const [userDB] = await DB.execute({
-            psmt: `select user_id,username,email,student_id,type,company,generation,github,created_at,canceled_at from USER where user_id=?`,
+            psmt: `select user_id, username, email, student_id, type, company, generation, github, created_at, canceled_at from USER where user_id = ?`,
             binding: [userId]
         });
 
