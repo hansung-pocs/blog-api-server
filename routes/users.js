@@ -166,24 +166,27 @@ router.get("/:userId", async (req, res) => {
     }
 })
 
-// PATCH user information
+// PATCH user info
 router.patch('/:user_id', async (req, res) => {
-    const password = req.body.password;
-    const userName = req.body.userName;
-    const email = req.body.email;
-    const github = req.body.github;
-    const company = req.body.company;
-    const userId = req.params.userId;
+
+    const {
+        password,
+        userName,
+        email,
+        github,
+        company,
+        userId
+    } = req.body;
 
     try {
         // 요청한 사람이 본인 또는 관리자인지 검증 필요
         // 일단 관리자만
-        const userDB = await DB.execute({
+        const [userDB] = await DB.execute({
             psmt: `select type from USER where user_id = ?`,
             binding: [userId]
         });
 
-        if (!userDB[0].type || userDB[0].type === 'unknown') {
+        if (!userDB.type || userDB.type === 'member' || userDB.type === 'unknown') {
             res.status(403).json({
                 message: MSG.NO_AUTHORITY,
                 status: 403,
@@ -194,27 +197,23 @@ router.patch('/:user_id', async (req, res) => {
             let sql = `update USER set`;
             const bindings = [];
 
-            if (password != NULL) {
+            if (!!password) {
                 sql += ` password = ?,`;
                 bindings.push(password);
             }
-
-            if (userName != NULL) {
+            if (!!userName) {
                 sql += ` username = ?,`;
                 bindings.push(userName);
             }
-
-            if (email != NULL) {
+            if (!!email) {
                 sql += ` email = ?,`;
                 bindings.push(email);
             }
-
-            if (github != NULL) {
+            if (!!github) {
                 sql += ` github = ?,`;
                 bindings.push(password);
             }
-
-            if (company != NULL) {
+            if (!!company) {
                 sql += ` company = ?,`;
                 bindings.push(company);
             }
@@ -231,7 +230,9 @@ router.patch('/:user_id', async (req, res) => {
                 message: MSG.USER_UPDATE_SUCCESS,
                 status: 201,
                 servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                data: {}
+                data: {
+                    ret
+                }
             });
         }
     } catch (e) {

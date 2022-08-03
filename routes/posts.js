@@ -198,20 +198,23 @@ router.get('/:postId', async (req, res) => {
 
 //공지사항 수정
 router.patch('/:postId', async (req, res, next) => {
+
     const {
         userId,
         title,
         content,
         category
     } = req.body
+
     const postId = req.params.postId;
+
     try {
         const [userDB] = await DB.execute({
             psmt: `select type from USER where user_id = ?`,
             binding: [userId]
         });
 
-        if (!userDB.type || userDB.type === "member" || userDB.type === "unknown") {
+        if (!userDB.type || userDB.type === 'member' || userDB.type === 'unknown') {
             res.status(403).json({
                 message: MSG.NO_AUTHORITY,
                 status: 403,
@@ -241,7 +244,7 @@ router.patch('/:postId', async (req, res, next) => {
             sql += ' updated_at = NOW() where post_id = ?;';
             bindings.push(postId);
 
-            await DB.execute({
+            const ret = await DB.execute({
                 psmt: sql,
                 binding: bindings
             });
@@ -250,14 +253,16 @@ router.patch('/:postId', async (req, res, next) => {
                 message: MSG.POST_UPDATE_SUCCESS,
                 status: 201,
                 servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                data: {}
+                data: {
+                    ret
+                }
             });
         }
 
     } catch (e) {
         console.error(e);
-        res.status(501).json({
-            message: e.message,
+        res.status(500).json({
+            message: MSG.UNKNOWN_ERROR,
             status: 501,
             servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
             data: {}
