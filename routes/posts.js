@@ -28,15 +28,14 @@ router.post('/', async (req, res) => {
                 servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
                 data: {}
             })
-        }else if(category != "memory" && category != "notice" && category != "study" && category != "knowhow" && category != "reference"){
+        } else if (category != "memory" && category != "notice" && category != "study" && category != "knowhow" && category != "reference") {
             res.status(403).json({
                 message: MSG.WRONG_CATEGORY,
                 status: 403,
                 servertime: dayjs().format('YYYY-MM-DD HH:MM:ss'),
                 data: {}
             })
-        }
-        else {
+        } else {
             switch (type) {
                 case "member" : {
                     res.status(403).json({

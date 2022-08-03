@@ -8,7 +8,7 @@ const dayjs = require('dayjs')
 /* GET users listing. */
 router.get('/', async (req, res) => {
 
-    const sortingOption = req.query.sorting;
+    const sortingOption = req.query.sort;
     console.log(typeof(sortingOption));
     console.log(sortingOption);
 
