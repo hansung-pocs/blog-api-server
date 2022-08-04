@@ -8,18 +8,19 @@ const dayjs = require('dayjs')
 /* GET users list. */
 router.get('/', async (req, res) => {
 
-    const sortingOption = req.query.sort;
+    const sortOption = req.query.sort;
+    // const searchOption = req.query.search;
 
     try {
         let sql = `select * from USER where canceled_at is NULL`;
 
-        if (sortingOption === 'generation') {
+        if (sortOption === 'generation') {
             console.log('sorting by generation');
             sql += ` order by generation DESC;`;
-        } else if (sortingOption === 'studentId') {
+        } else if (sortOption === 'studentId') {
             console.log('sorting by studentId');
             sql += ` order by student_id;`;
-        } // else if (searchingOption)
+        } // else if (searchOption)
         else {
             sql += ` order by created_at DESC;`;
         }
@@ -166,34 +167,33 @@ router.get('/:userId', async (req, res) => {
     }
 })
 
-// PATCH user info
+/* PATCH (edit) user info */
 router.patch('/:user_id', async (req, res) => {
 
+    const userId = req.params.user_id;
     const {
         password,
         userName,
         email,
         github,
-        company,
-        userId
+        company
     } = req.body;
 
     try {
         // 요청한 사람이 본인 또는 관리자인지 검증 필요
-        // 일단 관리자만
         const [userDB] = await DB.execute({
             psmt: `select type from USER where user_id = ?`,
             binding: [userId]
         });
 
-        if (!userDB.type || userDB.type === 'member' || userDB.type === 'unknown') {
+        if (!userDB.type) {
             res.status(403).json({
                 message: MSG.NO_AUTHORITY,
                 status: 403,
                 servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
-        } else if (userDB[0].type === 'admin') {
+        } else if (userDB.type === 'admin' || userDB.type === 'member') {
             let sql = `update USER set`;
             const bindings = [];
 

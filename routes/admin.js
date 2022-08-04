@@ -6,7 +6,7 @@ const DB = require('../common/database');
 const dayjs = require('dayjs')
 const MSG = require('../common/message');
 
-//관리자 페이지 유저 목록 조회
+/* GET user list by admin */
 router.get('/users', async (req, res) => {
 
     const sortOption = req.query.sort;
@@ -19,7 +19,7 @@ router.get('/users', async (req, res) => {
         } else if (sortOption == 'studentId') {
             sql += ` order by student_id;`;
         } else {
-            sql += ` order by created_at DESC;`;
+            sql += ` order by created_at DESC;`;    // default는 생성된 순의 내림차순으로 정렬
         }
 
         const usersDB = await DB.execute({
@@ -50,6 +50,7 @@ router.get('/users', async (req, res) => {
                 email: email,
                 studentId: student_id,
                 type: ((type) => {
+                    // 어차피 POST할 때 type은 member or admin으로 주고 default = unknown으로 했는데 꼭 필요?
                     if (!type) return '비회원';
 
                     switch (type) {
@@ -61,9 +62,9 @@ router.get('/users', async (req, res) => {
                             return 'unknown';
                     }
                 })(type),
-                company: company,
+                company: company || null,
                 generation: generation,
-                github: github,
+                github: github || null,
                 createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss'),
                 canceledAt: ((canceled_at) => {
                     if (!!canceled_at) {
@@ -95,7 +96,7 @@ router.get('/users', async (req, res) => {
     }
 });
 
-//유저 상세 조회
+/* GET user detail by admin */
 router.get('/users/:userId', async (req, res) => {
 
     const userId = req.params.userId;
@@ -150,9 +151,9 @@ router.get('/users/:userId', async (req, res) => {
                                 return 'unknown';
                         }
                     })(type),
-                    company: company,
+                    company: company || null,
                     generation: generation,
-                    github: github,
+                    github: github || null,
                     createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss'),
                     canceledAt: ((canceled_at) => {
                         if (!!canceled_at) {
@@ -174,7 +175,7 @@ router.get('/users/:userId', async (req, res) => {
     }
 });
 
-//유저 등록
+/* POST regist new user by admin */
 router.post('/users', async (req, res) => {
     const {
         userName,
@@ -276,7 +277,7 @@ router.post('/users', async (req, res) => {
     }
 })
 
-//유저 삭제
+/* PATCH (delete) user by admin */
 router.patch('/users/:userId/kick', async (req, res) => {
     const userId = req.params.userId;
 
@@ -316,7 +317,7 @@ router.patch('/users/:userId/kick', async (req, res) => {
     }
 })
 
-//삭제된 게시물 포함 게시글 조회
+/* GET posts list by admin(included deleted posts) */
 router.get('/posts', async (req, res) => {
     try {
         const postsDB = await DB.execute({
@@ -380,7 +381,7 @@ router.get('/posts', async (req, res) => {
     }
 })
 
-//특정 회원이 작성한 글 조회
+/* GET get for posts written by a specific user by admin */
 router.get('/posts/:userId', async (req, res) => {
 
     const userId = req.params.userId;
@@ -450,6 +451,86 @@ router.get('/posts/:userId', async (req, res) => {
             message: MSG.UNKNOWN_ERROR,
             status: 500,
             servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+            data: {}
+        });
+    }
+})
+
+/* PATCH (edit) user info */
+router.patch('/../admin/users/:user_id', async (req, res) => {
+
+    const {
+        password,
+        userName,
+        email,
+        github,
+        company,
+        userId
+    } = req.body;
+
+    try {
+        // 요청한 사람이 본인 또는 관리자인지 검증 필요
+        // 일단 관리자만
+        const [userDB] = await DB.execute({
+            psmt: `select type from USER where user_id = ?`,
+            binding: [userId]
+        });
+
+        if (!userDB.type || userDB.type === 'member' || userDB.type === 'unknown') {
+            res.status(403).json({
+                message: MSG.NO_AUTHORITY,
+                status: 403,
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+                data: {}
+            });
+        } else if (userDB[0].type === 'admin') {
+            let sql = `update USER set`;
+            const bindings = [];
+
+            if (!!password) {
+                sql += ` password = ?,`;
+                bindings.push(password);
+            }
+            if (!!userName) {
+                sql += ` username = ?,`;
+                bindings.push(userName);
+            }
+            if (!!email) {
+                sql += ` email = ?,`;
+                bindings.push(email);
+            }
+            if (!!github) {
+                sql += ` github = ?,`;
+                bindings.push(password);
+            }
+            if (!!company) {
+                sql += ` company = ?,`;
+                bindings.push(company);
+            }
+
+            sql += ` updated_at = NOW() where user_id = ?;`;
+            bindings.push(userId);
+
+            const ret = await DB.execute({
+                psmt: sql,
+                binding: bindings
+            });
+
+            res.status(201).json({
+                message: MSG.USER_UPDATE_SUCCESS,
+                status: 201,
+                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+                data: {
+                    ret
+                }
+            });
+        }
+    } catch (e) {
+        console.log(e);
+        res.status(500).json({
+            message: MSG.UNKNOWN_ERROR,
+            status: 500,
+            servertime: dayjs(new Date()).format(),
             data: {}
         });
     }

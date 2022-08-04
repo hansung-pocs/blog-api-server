@@ -5,7 +5,7 @@ const DB = require('../common/database');
 const MSG = require('../common/message');
 const dayjs = require('dayjs');
 
-//공지사항 추가
+/* POST new post */
 router.post('/', async (req, res) => {
     const {
         title,
@@ -71,7 +71,7 @@ router.post('/', async (req, res) => {
     }
 })
 
-//공지사항 목록조회
+/* GET posts list */
 router.get('/', async (req, res) => {
     try {
         const postsDB = await DB.execute({
@@ -131,7 +131,7 @@ router.get('/', async (req, res) => {
     }
 })
 
-//공지사항 상세조회
+/* GET post detail */
 router.get('/:postId', async (req, res) => {
     const postId = req.params.postId;
     try {
@@ -196,7 +196,7 @@ router.get('/:postId', async (req, res) => {
     }
 })
 
-//공지사항 수정
+/* PATCH (edit) post info */
 router.patch('/:postId', async (req, res, next) => {
 
     const {
@@ -270,7 +270,7 @@ router.patch('/:postId', async (req, res, next) => {
     }
 })
 
-//공지사항 삭제
+/* PATCH (delete) post */
 router.patch('/:postId/delete', async (req, res, next) => {
     const userId = req.body.userId;
     const postId = req.params.postId;
@@ -311,5 +311,11 @@ router.patch('/:postId/delete', async (req, res, next) => {
         });
     }
 })
+
+
+
+// notice
+
+
 
 module.exports = router;
