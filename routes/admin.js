@@ -341,7 +341,7 @@ router.get('/posts/:userId', async (req, res) => {
 
                 posts.push(postsObj);
             })
-            res.status(200).json(util.getReturnObject(`관리자 권한으로 ${MSG.READ_POSTDATA_SUCCESS}`,200,{posts}));
+            res.status(200).json(util.getReturnObject(`관리자 권한으로 ${MSG.READ_POSTDATA_SUCCESS}`, 200, {posts}));
         }
     } catch (e) {
         console.error(e);

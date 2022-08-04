@@ -23,23 +23,23 @@ router.post('/', async (req, res) => {
         const {type = 'member'} = userDB;
 
         if (!userId || !title || !content || !category) {
-            res.status(403).json(util.getReturnObject(MSG.NO_REQUIRED_INFO,403,{}));
+            res.status(403).json(util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         } else if (category != 'memory' && category != 'notice' && category != 'study' && category != 'knowhow' && category != 'reference') {
-            res.status(403).json(util.getReturnObject(MSG.WRONG_CATEGORY,403,{}));
+            res.status(403).json(util.getReturnObject(MSG.WRONG_CATEGORY, 403, {}));
         } else {
-            if(type === 'member' && category === 'notice'){
-                res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY,403,{}));
-            }else{
+            if (type === 'member' && category === 'notice') {
+                res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
+            } else {
                 await DB.execute({
                     psmt: `insert into POST (title, content, user_id, created_at, category) VALUES(?,?,?,NOW(),?)`,
                     binding: [title, content, userId, category]
                 });
-                res.status(201).json(util.getReturnObject(MSG.POST_ADDED,201,{}));
+                res.status(201).json(util.getReturnObject(MSG.POST_ADDED, 201, {}));
             }
         }
     } catch (error) {
         console.error(error);
-        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR,500,{}));
+        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 })
 
@@ -82,10 +82,10 @@ router.get('/', async (req, res) => {
 
             posts.push(postsObj);
         })
-        res.status(200).json(util.getReturnObject(MSG.READ_POSTDATA_SUCCESS,200,{posts}));
+        res.status(200).json(util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {posts}));
     } catch (error) {
         console.log(error);
-        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR,500,{}));
+        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 })
 
@@ -100,7 +100,7 @@ router.get('/:postId', async (req, res) => {
 
         console.log('post: %j', postDB);
         if (!postDB) {
-            res.status(404).json(util.getReturnObject(MSG.NO_POST_DATA,404,{}));
+            res.status(404).json(util.getReturnObject(MSG.NO_POST_DATA, 404, {}));
         } else {
             const {
                 title,
@@ -114,7 +114,7 @@ router.get('/:postId', async (req, res) => {
                 type
             } = postDB;
 
-            res.status(200).json(util.getReturnObject(`${title} ${MSG.READ_POST_SUCCESS}`,200,{
+            res.status(200).json(util.getReturnObject(`${title} ${MSG.READ_POST_SUCCESS}`, 200, {
                 title: title,
                 content: content,
                 createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss'),
@@ -135,7 +135,7 @@ router.get('/:postId', async (req, res) => {
         }
     } catch (e) {
         console.error(e);
-        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR,500,{}));
+        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 })
 
@@ -158,7 +158,7 @@ router.patch('/:postId', async (req, res, next) => {
         });
 
         if (!userDB.type || userDB.type === 'member' || userDB.type === 'unknown') {
-            res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY,403,{}));
+            res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         } else if (userDB.type === 'admin') {
             let sql = 'update POST set';
             const bindings = [];
@@ -187,12 +187,12 @@ router.patch('/:postId', async (req, res, next) => {
                 binding: bindings
             });
 
-            res.status(201).json(util.getReturnObject(MSG.POST_UPDATE_SUCCESS,201,{}));
+            res.status(201).json(util.getReturnObject(MSG.POST_UPDATE_SUCCESS, 201, {}));
         }
 
     } catch (e) {
         console.error(e);
-        res.status(501).json(util.getReturnObject(MSG.UNKNOWN_ERROR,501,{}));
+        res.status(501).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 501, {}));
     }
 })
 
@@ -207,26 +207,24 @@ router.patch('/:postId/delete', async (req, res, next) => {
         });
 
         if (!userDB.type || userDB.type === 'member' || userDB.type === 'unknown') {
-            res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY,403,{}));
+            res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         } else if (userDB.type === 'admin') {
             await DB.execute({
                 psmt: `update POST set canceled_at = NOW() where post_id = ?`,
                 binding: [postId]
             });
 
-            res.status(201).json(util.getReturnObject(MSG.POST_DELETE_SUCCESS,201,{}));
+            res.status(201).json(util.getReturnObject(MSG.POST_DELETE_SUCCESS, 201, {}));
         }
 
     } catch (e) {
         console.error(e);
-        res.status(501).json(util.getReturnObject(e.message,501,{}));
+        res.status(501).json(util.getReturnObject(e.message, 501, {}));
     }
 })
 
 
-
 // notice
-
 
 
 module.exports = router;
