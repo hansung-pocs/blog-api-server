@@ -1,4 +1,4 @@
-const mysql = require("mysql2/promise");
+const mysql = require('mysql2/promise');
 
 const pool = mysql.createPool({
     host: process.env.DB_URL,
@@ -11,14 +11,14 @@ const pool = mysql.createPool({
     waitForConnections: true
 });
 
-pool.on("release", connection => {
+pool.on('release', connection => {
     console.log(`connection ${connection.threadId} released`);
 })
 
 const getConnection = module.exports.getConnection = async () => {
     try {
         const connection = await pool.getConnection();
-        console.log("connectionId: ", connection.threadId);
+        console.log('connectionId: ', connection.threadId);
         return connection;
     } catch (error) {
         console.log('error on get connection', error);
@@ -26,7 +26,7 @@ const getConnection = module.exports.getConnection = async () => {
 }
 
 const execute = module.exports.execute = async params => {
-    console.log("on DB execute: %j", params);
+    console.log('on DB execute: %j', params);
     const {psmt, binding} = params;
 
     let connection;

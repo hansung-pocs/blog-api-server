@@ -1,8 +1,8 @@
 const express = require('express');
 const router = express.Router();
 
-const DB = require("../common/database");
-const MSG = require("../common/message");
+const DB = require('../common/database');
+const MSG = require('../common/message');
 const dayjs = require('dayjs');
 
 //공지사항 추가
@@ -19,7 +19,7 @@ router.post('/', async (req, res) => {
             binding: [userId]
         });
 
-        const {type = "member"} = userDB;
+        const {type = 'member'} = userDB;
 
         if (!userId || !title || !content || !category) {
             res.status(404).json({
@@ -28,7 +28,7 @@ router.post('/', async (req, res) => {
                 servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             })
-        } else if (category != "memory" && category != "notice" && category != "study" && category != "knowhow" && category != "reference") {
+        } else if (category != 'memory' && category != 'notice' && category != 'study' && category != 'knowhow' && category != 'reference') {
             res.status(403).json({
                 message: MSG.WRONG_CATEGORY,
                 status: 403,
@@ -37,7 +37,7 @@ router.post('/', async (req, res) => {
             })
         } else {
             switch (type) {
-                case "member" : {
+                case 'member' : {
                     res.status(403).json({
                         message: MSG.NO_AUTHORITY,
                         status: 403,
@@ -45,7 +45,7 @@ router.post('/', async (req, res) => {
                         data: {}
                     });
                 }
-                case "admin": {
+                case 'admin': {
                     await DB.execute({
                         psmt: `insert into POST (title, content, user_id, created_at, category) VALUES(?,?,?,NOW(),?)`,
                         binding: [title, content, userId, category]
@@ -79,7 +79,7 @@ router.get('/', async (req, res) => {
             binding: []
         });
 
-        console.log("posts: %j", postsDB);
+        console.log('posts: %j', postsDB);
 
         const posts = [];
         postsDB.forEach(postsDB => {
@@ -98,10 +98,10 @@ router.get('/', async (req, res) => {
                 writerName: username,
                 title: title,
                 content: content,
-                createdAt: dayjs(created_at).format("YYYY-MM-DD HH:mm:ss"),
+                createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss'),
                 updatedAt: ((updated_at) => {
                     if (!!updated_at) {
-                        return dayjs(updated_at).format("YYYY-MM-DD HH:mm:ss")
+                        return dayjs(updated_at).format('YYYY-MM-DD HH:mm:ss')
                     }
                     return null;
                 })(updated_at),
@@ -140,7 +140,7 @@ router.get('/:postId', async (req, res) => {
             binding: [postId]
         });
 
-        console.log("post: %j", postDB);
+        console.log('post: %j', postDB);
         if (!postDB) {
             res.status(404).json({
                 message: MSG.NO_POST_DATA,
@@ -168,10 +168,10 @@ router.get('/:postId', async (req, res) => {
                 data: {
                     title: title,
                     content: content,
-                    createdAt: dayjs(created_at).format("YYYY-MM-DD HH:mm:ss"),
+                    createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss'),
                     updatedAt: ((updated_at) => {
                         if (!!updated_at) {
-                            return dayjs(updated_at).format("YYYY-MM-DD HH:mm:ss")
+                            return dayjs(updated_at).format('YYYY-MM-DD HH:mm:ss')
                         }
                         return null;
                     })(updated_at),
@@ -221,7 +221,7 @@ router.patch('/:postId', async (req, res, next) => {
                 servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
-        } else if (userDB.type === "admin") {
+        } else if (userDB.type === 'admin') {
             let sql = 'update POST set';
             const bindings = [];
 
@@ -280,14 +280,14 @@ router.patch('/:postId/delete', async (req, res, next) => {
             binding: [userId]
         });
 
-        if (!userDB.type || userDB.type === "member" || userDB.type === "unknown") {
+        if (!userDB.type || userDB.type === 'member' || userDB.type === 'unknown') {
             res.status(403).json({
                 message: MSG.NO_AUTHORITY,
                 status: 403,
                 servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
-        } else if (userDB.type === "admin") {
+        } else if (userDB.type === 'admin') {
             await DB.execute({
                 psmt: `update POST set canceled_at = NOW() where post_id = ?`,
                 binding: [postId]

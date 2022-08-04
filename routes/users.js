@@ -13,11 +13,11 @@ router.get('/', async (req, res) => {
     try {
         let sql = `select * from USER where canceled_at is NULL`;
 
-        if (sortingOption === "generation") {
-            console.log("sorting by generation");
+        if (sortingOption === 'generation') {
+            console.log('sorting by generation');
             sql += ` order by generation DESC;`;
-        } else if (sortingOption === "studentId") {
-            console.log("sorting by studentId");
+        } else if (sortingOption === 'studentId') {
+            console.log('sorting by studentId');
             sql += ` order by student_id;`;
         } // else if (searchingOption)
         else {
@@ -57,21 +57,21 @@ router.get('/', async (req, res) => {
                 email: email,
                 studentId: student_id,
                 type: ((type) => {
-                    if (!type) return "비회원";
+                    if (!type) return '비회원';
 
                     switch (type) {
-                        case "admin":
-                            return "admin";
-                        case "member":
-                            return "member";
+                        case 'admin':
+                            return 'admin';
+                        case 'member':
+                            return 'member';
                         default:
-                            return "unknown";
+                            return 'unknown';
                     }
                 })(type),
                 company: company,
                 generation: generation,
                 github: github,
-                createdAt: dayjs(created_at).format("YYYY-MM-DD HH:MM:ss"),
+                createdAt: dayjs(created_at).format('YYYY-MM-DD HH:MM:ss'),
             }
             users.push(usersObj);
         })
@@ -96,7 +96,7 @@ router.get('/', async (req, res) => {
 });
 
 /* GET user detail */
-router.get("/:userId", async (req, res) => {
+router.get('/:userId', async (req, res) => {
 
     const user_id = req.params.userId;
 
@@ -106,8 +106,8 @@ router.get("/:userId", async (req, res) => {
             binding: [user_id]
         });
 
-        //console.log("user: ", JSON.stringify(user)와 동일
-        console.log("user: %j", userDB);
+        //console.log('user: ', JSON.stringify(user)와 동일
+        console.log('user: %j', userDB);
 
         if (!userDB) {
             res.status(404).json({
@@ -140,18 +140,18 @@ router.get("/:userId", async (req, res) => {
                     studentId: student_id,
                     type: ((type) => {
                         switch (type) {
-                            case "admin":
-                                return "admin";
-                            case "member":
-                                return "member";
+                            case 'admin':
+                                return 'admin';
+                            case 'member':
+                                return 'member';
                             default:
-                                return "unknown";
+                                return 'unknown';
                         }
                     })(type),
                     company: company,
                     generation: generation,
                     github: github,
-                    createdAt: dayjs(created_at).format("YYYY-MM-DD HH:mm:ss")
+                    createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss')
                 }
             })
         }
