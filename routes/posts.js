@@ -33,7 +33,7 @@ router.post('/', async (req, res) => {
                 res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
             } else {
                 await DB.execute({
-                    psmt: `insert into POST (title, content, user_id, created_at, category) VALUES(?,?,?,NOW(),?)`,
+                    psmt: `insert into POST (title, content, user_id, created_at, category) VALUES(?, ?, ?, NOW(), ?)`,
                     binding: [title, content, userId, category]
                 });
                 res.status(201).json(util.getReturnObject(MSG.POST_ADDED, 201, {}));
@@ -93,7 +93,9 @@ router.get('/', async (req, res) => {
 
 /* GET post detail */
 router.get('/:postId', async (req, res) => {
+
     const postId = req.params.postId;
+
     try {
         const [postDB] = await DB.execute({
             psmt: `select title, content, p.created_at, p.updated_at, category, u.user_id, username, email, type, p.canceled_at from POST p, USER u WHERE u.user_id = p.user_id and post_id = ?`,
@@ -115,10 +117,11 @@ router.get('/:postId', async (req, res) => {
 
         console.log('post: %j', postDB);
         console.log('canceledAt: ' + canceled_at);
+
         if (!postDB) {
             res.status(404).json(util.getReturnObject(MSG.NO_POST_DATA, 404, {}));
-        } else if (canceled_at != null) {
-            res.status(403).json(util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
+        } else if (!!canceled_at) {
+            res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         } else {
             res.status(200).json(util.getReturnObject(`${title} ${MSG.READ_POST_SUCCESS}`, 200, {
                 title: title,
