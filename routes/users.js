@@ -4,6 +4,7 @@ var router = express.Router();
 const DB = require('../common/database');
 const MSG = require('../common/message')
 const dayjs = require('dayjs')
+const util = require("../common/util");
 
 /* GET users list. */
 router.get('/', async (req, res) => {
@@ -29,14 +30,6 @@ router.get('/', async (req, res) => {
             psmt: sql,
             binding: []
         });
-
-        /*
-        !일반 회원이 유저 검색을 했을 때 삭제된 유저를 검색한 경우 404 에러
-        => status: 404 Not Found
-        요청 리소스를 찾을 수 없음
-        - 요청 리소스를 찾을 수 없음
-        - 또는 클라이언트가 권한이 부족한 리소스에 접근할 때 해당 리소스를 숨기고 싶을 때
-         */
 
         const users = [];
         usersDB.forEach(usersDB => {
@@ -69,30 +62,19 @@ router.get('/', async (req, res) => {
                             return 'unknown';
                     }
                 })(type),
-                company: company,
+                company: company || null,
                 generation: generation,
-                github: github,
-                createdAt: dayjs(created_at).format('YYYY-MM-DD HH:MM:ss'),
+                github: github || null,
+                createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss'),
             }
             users.push(usersObj);
         })
 
-        res.status(200).json({
-            message: MSG.READ_USERDATA_SUCCESS,
-            status: 200,
-            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-            data: {
-                users
-            }
-        });
+        res.status(200).json(util.getReturnObject(MSG.READ_USERDATA_SUCCESS, 200, {users}));
+
     } catch (e) {
         console.error(e);
-        res.status(500).json({
-            message: MSG.UNKNOWN_ERROR,
-            status: 500,
-            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-            data: {}
-        });
+        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
 
@@ -103,7 +85,7 @@ router.get('/:userId', async (req, res) => {
 
     try {
         const [userDB] = await DB.execute({
-            psmt: `select user_id, username, email, student_id, type, company, generation, github, created_at from USER where user_id = ?`,
+            psmt: `select * from USER where user_id = ?`,
             binding: [user_id]
         });
 
@@ -111,12 +93,7 @@ router.get('/:userId', async (req, res) => {
         console.log('user: %j', userDB);
 
         if (!userDB) {
-            res.status(404).json({
-                message: MSG.NO_USER_DATA,
-                status: 404,
-                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                data: {}
-            });
+            res.status(404).json(util.getReturnObject(MSG.NO_USER_DATA, 404, {}));
         } else {
             const {
                 user_id,
@@ -128,18 +105,20 @@ router.get('/:userId', async (req, res) => {
                 generation,
                 github,
                 created_at,
+                canceled_at
             } = userDB;
 
-            res.status(200).json({
-                message: `${username}${MSG.READ_USER_SUCCESS}`,
-                status: 200,
-                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                data: {
+            if (!!canceled_at) {
+                res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
+            } else {
+                res.status(200).json(util.getReturnObject(`${username} ${MSG.READ_USER_SUCCESS}`, 200, {
                     userId: user_id,
                     userName: username,
                     email: email,
                     studentId: student_id,
                     type: ((type) => {
+                        if (!type) return '비회원';
+
                         switch (type) {
                             case 'admin':
                                 return 'admin';
@@ -149,21 +128,16 @@ router.get('/:userId', async (req, res) => {
                                 return 'unknown';
                         }
                     })(type),
-                    company: company,
+                    company: company || null,
                     generation: generation,
-                    github: github,
+                    github: github || null,
                     createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss')
-                }
-            })
+                }));
+            }
         }
     } catch (error) {
         console.error(error);
-        res.status(500).json({
-            message: MSG.UNKNOWN_ERROR,
-            status: 500,
-            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-            data: {}
-        });
+        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 })
 
@@ -182,65 +156,55 @@ router.patch('/:user_id', async (req, res) => {
     try {
         // 요청한 사람이 본인 또는 관리자인지 검증 필요
         const [userDB] = await DB.execute({
-            psmt: `select type from USER where user_id = ?`,
+            psmt: `select * from USER where user_id = ?`,
             binding: [userId]
         });
 
         if (!userDB.type) {
-            res.status(403).json({
-                message: MSG.NO_AUTHORITY,
-                status: 403,
-                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                data: {}
-            });
+            res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         } else if (userDB.type === 'admin' || userDB.type === 'member') {
             let sql = `update USER set`;
             const bindings = [];
+            console.log(bindings.length);
 
-            if (!!password) {
+            if (userDB.password != password) {
                 sql += ` password = ?,`;
                 bindings.push(password);
             }
-            if (!!userName) {
+            if (userDB.username != userName) {
                 sql += ` username = ?,`;
                 bindings.push(userName);
             }
-            if (!!email) {
+            if (userDB.email != email) {
                 sql += ` email = ?,`;
                 bindings.push(email);
             }
-            if (!!github) {
+            if (userDB.github != github) {
                 sql += ` github = ?,`;
-                bindings.push(password);
+                bindings.push(github);
             }
-            if (!!company) {
+            if (userDB.company != company) {
                 sql += ` company = ?,`;
                 bindings.push(company);
             }
 
-            sql += ` updated_at = NOW() where user_id = ?;`;
-            bindings.push(userId);
+            if (bindings.length === 0) {
+                res.status(404).json(util.getReturnObject(MSG.NO_CHANGED_INFO, 404, {}));
+            } else {
+                sql += ` updated_at = NOW() where user_id = ?;`;
+                bindings.push(userId);
 
-            await DB.execute({
-                psmt: sql,
-                binding: bindings
-            });
-
-            res.status(201).json({
-                message: MSG.USER_UPDATE_SUCCESS,
-                status: 201,
-                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                data: {}
-            });
+                await DB.execute({
+                    psmt: sql,
+                    binding: bindings
+                });
+                // http status code 204: 요청 수행 완료, 반환 값 없음.
+                res.status(204).json(util.getReturnObject(MSG.USER_UPDATE_SUCCESS, 204, {}));
+            }
         }
     } catch (e) {
         console.log(e);
-        res.status(500).json({
-            message: MSG.UNKNOWN_ERROR,
-            status: 500,
-            servertime: dayjs(new Date()).format(),
-            data: {}
-        });
+        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 })
 

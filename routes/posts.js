@@ -8,12 +8,14 @@ const util = require("../common/util");
 
 /* POST new post */
 router.post('/', async (req, res) => {
+
     const {
         title,
         content,
         userId,
         category
     } = req.body;
+
     try {
         const [userDB] = await DB.execute({
             psmt: `select type from USER where user_id = ?`,
@@ -187,12 +189,12 @@ router.patch('/:postId', async (req, res, next) => {
                 binding: bindings
             });
 
-            res.status(201).json(util.getReturnObject(MSG.POST_UPDATE_SUCCESS, 201, {}));
+            res.status(204).json(util.getReturnObject(MSG.POST_UPDATE_SUCCESS, 204, {}));
         }
 
     } catch (e) {
         console.error(e);
-        res.status(501).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 501, {}));
+        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 })
 
@@ -222,9 +224,5 @@ router.patch('/:postId/delete', async (req, res, next) => {
         res.status(501).json(util.getReturnObject(e.message, 501, {}));
     }
 })
-
-
-// notice
-
 
 module.exports = router;
