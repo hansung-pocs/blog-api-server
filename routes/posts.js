@@ -4,6 +4,7 @@ const router = express.Router();
 const DB = require('../common/database');
 const MSG = require('../common/message');
 const dayjs = require('dayjs');
+const util = require("../common/util");
 
 /* POST new post */
 router.post('/', async (req, res) => {
@@ -22,49 +23,23 @@ router.post('/', async (req, res) => {
         const {type = 'member'} = userDB;
 
         if (!userId || !title || !content || !category) {
-            res.status(404).json({
-                message: MSG.NO_REQUIRED_INFO,
-                status: 404,
-                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                data: {}
-            })
+            res.status(403).json(util.getReturnObject(MSG.NO_REQUIRED_INFO,403,{}));
         } else if (category != 'memory' && category != 'notice' && category != 'study' && category != 'knowhow' && category != 'reference') {
-            res.status(403).json({
-                message: MSG.WRONG_CATEGORY,
-                status: 403,
-                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                data: {}
-            })
+            res.status(403).json(util.getReturnObject(MSG.WRONG_CATEGORY,403,{}));
         } else {
             if(type === 'member' && category === 'notice'){
-                res.status(403).json({
-                    message: MSG.NO_AUTHORITY,
-                    status: 403,
-                    servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                    data: {}
-                });
+                res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY,403,{}));
             }else{
                 await DB.execute({
                     psmt: `insert into POST (title, content, user_id, created_at, category) VALUES(?,?,?,NOW(),?)`,
                     binding: [title, content, userId, category]
                 });
-
-                res.status(201).json({
-                    message: MSG.POST_ADDED,
-                    status: 201,
-                    servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                    data: {}
-                });
+                res.status(201).json(util.getReturnObject(MSG.POST_ADDED,201,{}));
             }
         }
     } catch (error) {
         console.error(error);
-        res.status(500).json({
-            message: MSG.UNKNOWN_ERROR,
-            status: 500,
-            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-            data: {}
-        });
+        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR,500,{}));
     }
 })
 
@@ -107,24 +82,10 @@ router.get('/', async (req, res) => {
 
             posts.push(postsObj);
         })
-
-        res.status(200).json({
-            message: MSG.READ_POSTDATA_SUCCESS,
-            status: 200,
-            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-            data: {
-                posts
-            }
-        });
-
+        res.status(200).json(util.getReturnObject(MSG.READ_POSTDATA_SUCCESS,200,{posts}));
     } catch (error) {
         console.log(error);
-        res.status(500).json({
-            message: MSG.UNKNOWN_ERROR,
-            status: 500,
-            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-            data: {}
-        });
+        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR,500,{}));
     }
 })
 
@@ -139,12 +100,7 @@ router.get('/:postId', async (req, res) => {
 
         console.log('post: %j', postDB);
         if (!postDB) {
-            res.status(404).json({
-                message: MSG.NO_POST_DATA,
-                status: 404,
-                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                data: {}
-            });
+            res.status(404).json(util.getReturnObject(MSG.NO_POST_DATA,404,{}));
         } else {
             const {
                 title,
@@ -158,38 +114,28 @@ router.get('/:postId', async (req, res) => {
                 type
             } = postDB;
 
-            res.status(200).json({
-                message: `${title} ${MSG.READ_POST_SUCCESS}`,
-                status: 200,
-                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                data: {
-                    title: title,
-                    content: content,
-                    createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss'),
-                    updatedAt: ((updated_at) => {
-                        if (!!updated_at) {
-                            return dayjs(updated_at).format('YYYY-MM-DD HH:mm:ss')
-                        }
-                        return null;
-                    })(updated_at),
-                    category: category,
-                    writer: {
-                        userId: user_id,
-                        userName: username,
-                        email: email,
-                        type: type
+            res.status(200).json(util.getReturnObject(`${title} ${MSG.READ_POST_SUCCESS}`,200,{
+                title: title,
+                content: content,
+                createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss'),
+                updatedAt: ((updated_at) => {
+                    if (!!updated_at) {
+                        return dayjs(updated_at).format('YYYY-MM-DD HH:mm:ss')
                     }
+                    return null;
+                })(updated_at),
+                category: category,
+                writer: {
+                    userId: user_id,
+                    userName: username,
+                    email: email,
+                    type: type
                 }
-            });
+            }));
         }
     } catch (e) {
         console.error(e);
-        res.status(500).json({
-            message: MSG.UNKNOWN_ERROR,
-            status: 500,
-            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-            data: {}
-        });
+        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR,500,{}));
     }
 })
 
@@ -212,12 +158,7 @@ router.patch('/:postId', async (req, res, next) => {
         });
 
         if (!userDB.type || userDB.type === 'member' || userDB.type === 'unknown') {
-            res.status(403).json({
-                message: MSG.NO_AUTHORITY,
-                status: 403,
-                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                data: {}
-            });
+            res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY,403,{}));
         } else if (userDB.type === 'admin') {
             let sql = 'update POST set';
             const bindings = [];
@@ -241,29 +182,17 @@ router.patch('/:postId', async (req, res, next) => {
             sql += ' updated_at = NOW() where post_id = ?;';
             bindings.push(postId);
 
-            const ret = await DB.execute({
+            await DB.execute({
                 psmt: sql,
                 binding: bindings
             });
 
-            res.status(201).json({
-                message: MSG.POST_UPDATE_SUCCESS,
-                status: 201,
-                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                data: {
-                    ret
-                }
-            });
+            res.status(201).json(util.getReturnObject(MSG.POST_UPDATE_SUCCESS,201,{}));
         }
 
     } catch (e) {
         console.error(e);
-        res.status(500).json({
-            message: MSG.UNKNOWN_ERROR,
-            status: 501,
-            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-            data: {}
-        });
+        res.status(501).json(util.getReturnObject(MSG.UNKNOWN_ERROR,501,{}));
     }
 })
 
@@ -278,34 +207,19 @@ router.patch('/:postId/delete', async (req, res, next) => {
         });
 
         if (!userDB.type || userDB.type === 'member' || userDB.type === 'unknown') {
-            res.status(403).json({
-                message: MSG.NO_AUTHORITY,
-                status: 403,
-                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                data: {}
-            });
+            res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY,403,{}));
         } else if (userDB.type === 'admin') {
             await DB.execute({
                 psmt: `update POST set canceled_at = NOW() where post_id = ?`,
                 binding: [postId]
             });
 
-            res.status(201).json({
-                message: MSG.POST_DELETE_SUCCESS,
-                status: 201,
-                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                data: {}
-            });
+            res.status(201).json(util.getReturnObject(MSG.POST_DELETE_SUCCESS,201,{}));
         }
 
     } catch (e) {
         console.error(e);
-        res.status(501).json({
-            message: e.message,
-            status: 501,
-            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-            data: {}
-        });
+        res.status(501).json(util.getReturnObject(e.message,501,{}));
     }
 })
 
