@@ -191,19 +191,6 @@ router.post('/users', async (req, res) => {
     const correctEmail = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/;
 
     try {
-        const [checkEmail] = await DB.execute({
-            psmt: `select user_id from USER where email = ?`,
-            binding: [email]
-        });
-        const [checkUserName] = await DB.execute({
-            psmt: `select user_id from USER where username = ?`,
-            binding: [userName]
-        });
-        const [checkStudentId] = await DB.execute({
-            psmt: `select user_id from USER where student_id = ?`,
-            binding: [studentId]
-        });
-
         if (!userName || !password || !name || !studentId || !email || !generation || !type) {
             res.status(404).json({
                 message: MSG.NO_REQUIRED_INFO,
@@ -211,61 +198,84 @@ router.post('/users', async (req, res) => {
                 servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
-        } else if (correctEmail.test(email) != true) {
+        }
+
+        const [checkEmail, checkUsername, checkStudentId] = await Promise.all([
+            await DB.execute({
+                psmt: `select user_id from USER where email = ?`,
+                binding: [email]
+            }),
+            await DB.execute({
+                psmt: `select user_id from USER where username = ?`,
+                binding: [userName]
+            }),
+            await DB.execute({
+                psmt: `select user_id from USER where student_id = ?`,
+                binding: [studentId]
+            })
+        ]);
+
+        if (!correctEmail.test(email)) {
             res.status(403).json({
                 message: MSG.WRONG_EMAIL,
                 status: 403,
                 servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
-        } else if (studentId.length != 7) {
+        }
+        if (studentId.length != 7) {
             res.status(403).json({
                 message: MSG.WRONG_STUDENTID,
                 status: 403,
                 servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
-        } else if (type != 'admin' && type != 'member') {
+        }
+        if (type != 'admin' && type != 'member') {
             res.status(403).json({
                 message: MSG.WRONG_TYPE,
                 status: 403,
                 servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
-        } else if (checkEmail != null) {
+        }
+        if (!checkEmail) {
             res.status(403).json({
                 message: MSG.EXIST_EMAIL,
                 status: 403,
                 servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
-        } else if (checkUserName != null) {
+        }
+        if (!checkUserName) {
             res.status(403).json({
                 message: MSG.EXIST_USERNAME,
                 status: 403,
                 servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
-        } else if (checkStudentId != null) {
+        }
+        if (!checkStudentId) {
             res.status(403).json({
                 message: MSG.EXIST_STUDENTID,
                 status: 403,
                 servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
                 data: {}
             });
-        } else {
-            await DB.execute({
-                psmt: `insert into USER (username, password, name, student_id, email, generation, type, company, github, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-                binding: [userName, password, name, studentId, email, generation, type, company, github]
-            });
-
-            res.status(201).json({
-                message: MSG.USER_ADDED,
-                status: 201,
-                servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                data: {}
-            })
         }
+
+        await DB.execute({
+            psmt: `insert into USER (username, password, name, student_id, email, generation, type, company, github, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+            binding: [userName, password, name, studentId, email, generation, type, company, github]
+        });
+
+        res.status(201).json({
+            message: MSG.USER_ADDED,
+            status: 201,
+            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+            data: {}
+        });
+
     } catch (error) {
         console.log(error);
         res.status(500).json({
