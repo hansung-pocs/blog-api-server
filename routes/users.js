@@ -221,7 +221,7 @@ router.patch('/:user_id', async (req, res) => {
             sql += ` updated_at = NOW() where user_id = ?;`;
             bindings.push(userId);
 
-            const ret = await DB.execute({
+            await DB.execute({
                 psmt: sql,
                 binding: bindings
             });
@@ -230,9 +230,7 @@ router.patch('/:user_id', async (req, res) => {
                 message: MSG.USER_UPDATE_SUCCESS,
                 status: 201,
                 servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                data: {
-                    ret
-                }
+                data: {}
             });
         }
     } catch (e) {
