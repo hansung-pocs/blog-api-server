@@ -1,5 +1,6 @@
 const express = require('express');
 const router = express.Router();
+const util = require('../common/util');
 
 const DB = require('../common/database');
 //https://day.js.org/docs/en/parse/string-format
@@ -77,22 +78,10 @@ router.get('/users', async (req, res) => {
             users.push(usersObj);
         })
 
-        res.status(200).json({
-            message: `관리자 권한으로 ${MSG.READ_USERDATA_SUCCESS}`,
-            status: 200,
-            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-            data: {
-                users
-            }
-        });
+        res.status(200).json(util.getReturnObject(`관리자 권한으로 ${MSG.READ_USERDATA_SUCCESS}`,200,users));
     } catch (e) {
         console.error(e);
-        res.status(500).json({
-            message: MSG.UNKNOWN_ERROR,
-            status: 500,
-            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-            data: {}
-        });
+        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR,500,{}));
     }
 });
 

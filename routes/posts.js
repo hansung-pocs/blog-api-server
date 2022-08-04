@@ -36,42 +36,25 @@ router.post('/', async (req, res) => {
                 data: {}
             })
         } else {
-            switch (type) {
-                case 'member' : {
-                    if(category === "notice"){
-                        res.status(403).json({
-                            message: MSG.NO_AUTHORITY,
-                            status: 403,
-                            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                            data: {}
-                        });
-                    }else {
-                        await DB.execute({
-                            psmt: `insert into POST (title, content, user_id, created_at, category) VALUES(?,?,?,NOW(),?)`,
-                            binding: [title, content, userId, category]
-                        });
+            if(type === 'member' && category === 'notice'){
+                res.status(403).json({
+                    message: MSG.NO_AUTHORITY,
+                    status: 403,
+                    servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+                    data: {}
+                });
+            }else{
+                await DB.execute({
+                    psmt: `insert into POST (title, content, user_id, created_at, category) VALUES(?,?,?,NOW(),?)`,
+                    binding: [title, content, userId, category]
+                });
 
-                        res.status(201).json({
-                            message: MSG.POST_ADDED,
-                            status: 201,
-                            servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                            data: {}
-                        });
-                    }
-                }
-                case 'admin': {
-                    await DB.execute({
-                        psmt: `insert into POST (title, content, user_id, created_at, category) VALUES(?,?,?,NOW(),?)`,
-                        binding: [title, content, userId, category]
-                    });
-
-                    res.status(201).json({
-                        message: MSG.POST_ADDED,
-                        status: 201,
-                        servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-                        data: {}
-                    });
-                }
+                res.status(201).json({
+                    message: MSG.POST_ADDED,
+                    status: 201,
+                    servertime: dayjs().format('YYYY-MM-DD HH:mm:ss'),
+                    data: {}
+                });
             }
         }
     } catch (error) {
