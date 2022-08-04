@@ -109,7 +109,7 @@ router.get('/:userId', async (req, res) => {
             } = userDB;
 
             if (!!canceled_at) {
-                res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
+                res.status(403).json(util.getReturnObject(MSG.NO_USER_DATA, 403, {}));
             } else {
                 res.status(200).json(util.getReturnObject(`${username} ${MSG.READ_USER_SUCCESS}`, 200, {
                     userId: user_id,

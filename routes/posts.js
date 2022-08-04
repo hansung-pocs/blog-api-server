@@ -49,7 +49,7 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
     try {
         const postsDB = await DB.execute({
-            psmt: `select post_id, username, title, content, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id`,
+            psmt: `select post_id, username, title, content, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL`,
             binding: []
         });
 
@@ -96,26 +96,30 @@ router.get('/:postId', async (req, res) => {
     const postId = req.params.postId;
     try {
         const [postDB] = await DB.execute({
-            psmt: `select title, content, p.created_at, p.updated_at, category, u.user_id, username, email, type from POST p, USER u WHERE u.user_id = p.user_id and post_id = ?`,
+            psmt: `select title, content, p.created_at, p.updated_at, category, u.user_id, username, email, type, p.canceled_at from POST p, USER u WHERE u.user_id = p.user_id and post_id = ?`,
             binding: [postId]
         });
 
+        const {
+            title,
+            content,
+            created_at,
+            updated_at,
+            category,
+            user_id,
+            username,
+            email,
+            type,
+            canceled_at
+        } = postDB;
+
         console.log('post: %j', postDB);
+        console.log('canceledAt: ' + canceled_at);
         if (!postDB) {
             res.status(404).json(util.getReturnObject(MSG.NO_POST_DATA, 404, {}));
+        } else if (canceled_at != null) {
+            res.status(403).json(util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
         } else {
-            const {
-                title,
-                content,
-                created_at,
-                updated_at,
-                category,
-                user_id,
-                username,
-                email,
-                type
-            } = postDB;
-
             res.status(200).json(util.getReturnObject(`${title} ${MSG.READ_POST_SUCCESS}`, 200, {
                 title: title,
                 content: content,
@@ -154,12 +158,19 @@ router.patch('/:postId', async (req, res, next) => {
     const postId = req.params.postId;
 
     try {
-        const [userDB] = await DB.execute({
-            psmt: `select type from USER where user_id = ?`,
-            binding: [userId]
-        });
-
-        if (!userDB.type || userDB.type === 'member' || userDB.type === 'unknown') {
+        const [userIdCheck, userDB] = await Promise.all([
+            await DB.execute({
+                psmt: `select user_id from POST where post_id = ?`,
+                binding: [postId]
+            }),
+            await DB.execute({
+                psmt: `select type from USER where user_id = ?`,
+                binding: [userId]
+            })
+        ])
+        if (userIdCheck != userId) {
+            res.status(403).json(util.getReturnObject(MSG.NOT_YOUR_POST, 403, {}));
+        } else if (!userDB.type || userDB.type === 'member' || userDB.type === 'unknown') {
             res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         } else if (userDB.type === 'admin') {
             let sql = 'update POST set';

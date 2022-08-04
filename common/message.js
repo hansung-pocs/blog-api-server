@@ -28,6 +28,7 @@ const WRONG_EMAIL = '잘못된 형식의 이메일 입니다.'
 const WRONG_STUDENTID = '잘못된 형식의 학번 입니다.'
 const WRONG_TYPE = '잘못된 형식의 유저 권한 등급 입니다.'
 const WRONG_CATEGORY = '잘못된 형식의 카테고리 입니다.'
+const NOT_YOUR_POST = '본인 글이 아닙니다.'
 
 module.exports = {
     CANT_READ_USERDATA,
@@ -54,5 +55,6 @@ module.exports = {
     WRONG_EMAIL,
     WRONG_STUDENTID,
     WRONG_TYPE,
-    WRONG_CATEGORY
+    WRONG_CATEGORY,
+    NOT_YOUR_POST
 }
