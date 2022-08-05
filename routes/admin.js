@@ -165,11 +165,7 @@ router.post('/users', async (req, res) => {
     const correctEmail = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/;
 
     try {
-        if (!userName || !password || !name || !studentId || !email || !generation || !type) {
-            res.status(404).json(util.getReturnObject(MSG.NO_REQUIRED_INFO, 404, {}));
-        }
-
-        const [checkEmail, checkUserName, checkStudentId] = await Promise.all([
+        const [[checkEmail], [checkUserName], [checkStudentId]] = await Promise.all([
             await DB.execute({
                 psmt: `select user_id from USER where email = ?`,
                 binding: [email]
@@ -184,31 +180,28 @@ router.post('/users', async (req, res) => {
             })
         ]);
 
-        if (!correctEmail.test(email)) {
+        if (!userName || !password || !name || !studentId || !email || !generation || !type) {
+            res.status(404).json(util.getReturnObject(MSG.NO_REQUIRED_INFO, 404, {}));
+        } else if (!correctEmail.test(email)) {
             res.status(403).json(util.getReturnObject(MSG.WRONG_EMAIL, 403, {}));
-        }
-        if (studentId.length != 7) {
+        } else if (1000000 >= studentId && studentId >= 9999999) {
             res.status(403).json(util.getReturnObject(MSG.WRONG_STUDENTID, 403, {}));
-        }
-        if (type != 'admin' && type != 'member') {
+        } else if (type != 'admin' && type != 'member') {
             res.status(403).json(util.getReturnObject(MSG.WRONG_TYPE, 403, {}));
-        }
-        if (!checkEmail) {
+        } else if (checkEmail != null) {
             res.status(403).json(util.getReturnObject(MSG.EXIST_EMAIL, 403, {}));
-        }
-        if (!checkUserName) {
+        } else if (checkUserName != null) {
             res.status(403).json(util.getReturnObject(MSG.EXIST_USERNAME, 403, {}));
-        }
-        if (!checkStudentId) {
+        } else if (checkStudentId != null) {
             res.status(403).json(util.getReturnObject(MSG.EXIST_STUDENTID, 403, {}));
+        } else {
+            await DB.execute({
+                psmt: `insert into USER (username, password, name, student_id, email, generation, type, company, github, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+                binding: [userName, password, name, studentId, email, generation, type, company, github]
+            });
+
+            res.status(201).json(util.getReturnObject(MSG.USER_ADDED, 201, {}));
         }
-
-        await DB.execute({
-            psmt: `insert into USER (username, password, name, student_id, email, generation, type, company, github, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
-            binding: [userName, password, name, studentId, email, generation, type, company, github]
-        });
-
-        res.status(201).json(util.getReturnObject(MSG.USER_ADDED, 201, {}));
     } catch (error) {
         console.log(error);
         res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
