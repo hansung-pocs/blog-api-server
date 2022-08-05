@@ -120,7 +120,7 @@ router.get('/:postId', async (req, res) => {
         if (!postDB) {
             res.status(404).json(util.getReturnObject(MSG.NO_POST_DATA, 404, {}));
         } else if (!!canceled_at) {
-            res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
+            res.status(403).json(util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
         } else {
             res.status(200).json(util.getReturnObject(`${title} ${MSG.READ_POST_SUCCESS}`, 200, {
                 title: title,
@@ -161,11 +161,13 @@ router.patch('/:postId', async (req, res, next) => {
 
     try {
         const [postDB] = await DB.execute({
-                psmt: `select * from POST where post_id = ?`,
-                binding: [postId]
+            psmt: `select * from POST where post_id = ?`,
+            binding: [postId]
         })
 
-        if (postDB.user_id !== userId) {
+        if (postDB.canceled_at != null) {
+            res.status(403).json(util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
+        } else if (postDB.user_id !== userId) {
             res.status(403).json(util.getReturnObject(MSG.NOT_YOUR_POST, 403, {}));
         } else {
             let sql = 'update POST set';

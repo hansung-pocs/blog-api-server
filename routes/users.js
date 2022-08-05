@@ -160,7 +160,9 @@ router.patch('/:user_id', async (req, res) => {
             binding: [userId]
         });
 
-        if (!userDB.type) {
+        if (userDB.canceled_at != null) {
+            res.status(403).json(util.getReturnObject(MSG.NO_USER_DATA, 403, {}));
+        } else if (!userDB.type) {
             res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         } else if (userDB.type === 'admin' || userDB.type === 'member') {
             let sql = `update USER set`;
