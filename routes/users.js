@@ -199,7 +199,7 @@ router.patch('/:user_id', async (req, res) => {
                     binding: bindings
                 });
                 // http status code 204: 요청 수행 완료, 반환 값 없음.
-                res.status(204).json(util.getReturnObject(MSG.USER_UPDATE_SUCCESS, 204, {}));
+                res.status(302).json(util.getReturnObject(MSG.USER_UPDATE_SUCCESS, 302, {}));
             }
         }
     } catch (e) {

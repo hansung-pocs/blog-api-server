@@ -244,7 +244,7 @@ router.patch('/users/:userId/kick', async (req, res) => {
 router.get('/posts', async (req, res) => {
     try {
         const postsDB = await DB.execute({
-            psmt: `select post_id, username, title, content, p.created_at, p.updated_at, p.canceled_at, category from POST p, USER u WHERE p.user_id = u.user_id`,
+            psmt: `select post_id, username, title, content, p.created_at, p.updated_at, p.canceled_at, category from POST p, USER u WHERE p.user_id = u.user_id order by created_at DESC`,
             binding: []
         })
 
@@ -298,13 +298,14 @@ router.get('/posts/:userId', async (req, res) => {
     const userId = req.params.userId;
 
     try {
-        const [postsDB] = await DB.execute({
+        const postsDB = await DB.execute({
             psmt: `select post_id, title, content, created_at, updated_at, canceled_at, category from POST WHERE user_id = ?`,
             binding: [userId]
         });
 
         console.log('post: %j', postsDB);
-        if (!postsDB) {
+
+        if (postsDB.length === 0) {
             res.status(404).json(util.getReturnObject(MSG.CANT_READ_POSTDATA, 404, {}));
         } else {
             const posts = [];
@@ -341,7 +342,7 @@ router.get('/posts/:userId', async (req, res) => {
 
                 posts.push(postsObj);
             })
-            res.status(200).json(util.getReturnObject(`관리자 권한으로 ${MSG.READ_POSTDATA_SUCCESS}`, 200, {posts}));
+            res.status(200).json(util.getReturnObject(`관리자 권한으로 userID : ${userId}의 ${MSG.READ_POSTDATA_SUCCESS}`, 200, {posts}));
         }
     } catch (e) {
         console.error(e);

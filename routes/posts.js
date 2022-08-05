@@ -49,7 +49,7 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
     try {
         const postsDB = await DB.execute({
-            psmt: `select post_id, username, title, content, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL`,
+            psmt: `select post_id, username, title, content, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL order by created_at DESC`,
             binding: []
         });
 
@@ -161,51 +161,54 @@ router.patch('/:postId', async (req, res, next) => {
     const postId = req.params.postId;
 
     try {
-        const [userIdCheck, userDB] = await Promise.all([
+        const [[postDB], [userDB]] = await Promise.all([
             await DB.execute({
-                psmt: `select user_id from POST where post_id = ?`,
+                psmt: `select * from POST where post_id = ?`,
                 binding: [postId]
             }),
             await DB.execute({
-                psmt: `select type from USER where user_id = ?`,
+                psmt: `select * from USER where user_id = ?`,
                 binding: [userId]
             })
         ])
-        if (userIdCheck != userId) {
+
+        if (postDB.user_id !== userId) {
             res.status(403).json(util.getReturnObject(MSG.NOT_YOUR_POST, 403, {}));
-        } else if (!userDB.type || userDB.type === 'member' || userDB.type === 'unknown') {
+        } else if (!userDB.type || userDB.type === 'admin' || userDB.type === 'unknown') {
             res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
-        } else if (userDB.type === 'admin') {
+        } else if (userDB.type === 'member') {   // (userDB.type === 'admin')
             let sql = 'update POST set';
             const bindings = [];
 
-            if (!!title) {
+            if (postDB.title != title) {
                 sql += ' title = ?,';
                 bindings.push(title);
             }
-            if (!!content) {
+            if (postDB.content != content) {
                 sql += ' content = ?,';
                 bindings.push(content);
             }
-            if (!!category) {
+            if (postDB.category != category) {
                 sql += ' category = ?,';
                 bindings.push(category);
             }
-            if (!!userId) {
-                sql += ' user_id = ?,';
-                bindings.push(userId);
+
+            console.log(bindings.length);
+
+            if (bindings.length === 0) {
+                res.status(404).json(util.getReturnObject(MSG.NO_CHANGED_INFO, 404, {}));
+            } else {
+                sql += ' updated_at = NOW() where post_id = ?;';
+                bindings.push(postId);
+
+                await DB.execute({
+                    psmt: sql,
+                    binding: bindings
+                });
+
+                res.status(302).json(util.getReturnObject(MSG.POST_UPDATE_SUCCESS, 302, {}));
             }
-            sql += ' updated_at = NOW() where post_id = ?;';
-            bindings.push(postId);
-
-            await DB.execute({
-                psmt: sql,
-                binding: bindings
-            });
-
-            res.status(204).json(util.getReturnObject(MSG.POST_UPDATE_SUCCESS, 204, {}));
         }
-
     } catch (e) {
         console.error(e);
         res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
