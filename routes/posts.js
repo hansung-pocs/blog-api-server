@@ -174,9 +174,7 @@ router.patch('/:postId', async (req, res, next) => {
 
         if (postDB.user_id !== userId) {
             res.status(403).json(util.getReturnObject(MSG.NOT_YOUR_POST, 403, {}));
-        } else if (!userDB.type || userDB.type === 'admin' || userDB.type === 'unknown') {
-            res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
-        } else if (userDB.type === 'member') {   // (userDB.type === 'admin')
+        } else {
             let sql = 'update POST set';
             const bindings = [];
 
