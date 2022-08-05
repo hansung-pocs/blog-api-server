@@ -116,7 +116,6 @@ router.get('/:postId', async (req, res) => {
         } = postDB;
 
         console.log('post: %j', postDB);
-        console.log('canceledAt: ' + canceled_at);
 
         if (!postDB) {
             res.status(404).json(util.getReturnObject(MSG.NO_POST_DATA, 404, {}));
@@ -161,12 +160,10 @@ router.patch('/:postId', async (req, res, next) => {
     const postId = req.params.postId;
 
     try {
-        const [postDB] = await Promise.all([
-            await DB.execute({
+        const [postDB] = await DB.execute({
                 psmt: `select * from POST where post_id = ?`,
                 binding: [postId]
-            })
-        ])
+        })
 
         if (postDB.user_id !== userId) {
             res.status(403).json(util.getReturnObject(MSG.NOT_YOUR_POST, 403, {}));
