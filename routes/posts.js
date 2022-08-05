@@ -161,14 +161,10 @@ router.patch('/:postId', async (req, res, next) => {
     const postId = req.params.postId;
 
     try {
-        const [[postDB], [userDB]] = await Promise.all([
+        const [postDB] = await Promise.all([
             await DB.execute({
                 psmt: `select * from POST where post_id = ?`,
                 binding: [postId]
-            }),
-            await DB.execute({
-                psmt: `select * from USER where user_id = ?`,
-                binding: [userId]
             })
         ])
 
