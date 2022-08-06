@@ -65,7 +65,7 @@ router.get('/', async (req, res) => {
                 company: company || null,
                 generation: generation,
                 github: github || null,
-                createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss'),
+                createdAt: dayjs(created_at).format('YYYY-MM-DD')
             }
             users.push(usersObj);
         })
@@ -139,7 +139,7 @@ router.get('/:userId', async (req, res) => {
         console.error(error);
         res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
-})
+});
 
 /* PATCH (edit) user info */
 router.patch('/:user_id', async (req, res) => {
@@ -153,8 +153,21 @@ router.patch('/:user_id', async (req, res) => {
         company
     } = req.body;
 
+    const correctEmail = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/;
+
     try {
         // 요청한 사람이 본인 또는 관리자인지 검증 필요
+        const [[checkUserName], [checkEmail]] = await Promise.all([
+            await DB.execute({
+                psmt: `select user_id from USER where username = ?`,
+                binding: [userName]
+            }),
+            await DB.execute({
+                psmt: `select user_id from USER where email = ?`,
+                binding: [email]
+            })
+        ]);
+
         const [userDB] = await DB.execute({
             psmt: `select * from USER where user_id = ?`,
             binding: [userId]
@@ -162,8 +175,8 @@ router.patch('/:user_id', async (req, res) => {
 
         if (userDB.canceled_at != null) {
             res.status(403).json(util.getReturnObject(MSG.NO_USER_DATA, 403, {}));
-        } else if (!userDB.type) {
-            res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
+        } else if (!correctEmail.test(email)) {
+            res.status(403).json(util.getReturnObject(MSG.WRONG_EMAIL, 403, {}));
         } else if (userDB.type === 'admin' || userDB.type === 'member') {
             let sql = `update USER set`;
             const bindings = [];
@@ -174,10 +187,16 @@ router.patch('/:user_id', async (req, res) => {
                 bindings.push(password);
             }
             if (userDB.username != userName) {
+                if (checkUserName != null) {
+                    res.status(403).json(util.getReturnObject(MSG.EXIST_USERNAME, 403, {}));
+                }
                 sql += ` username = ?,`;
                 bindings.push(userName);
             }
             if (userDB.email != email) {
+                if (checkEmail != null) {
+                    res.status(403).json(util.getReturnObject(MSG.EXIST_EMAIL, 403, {}));
+                }
                 sql += ` email = ?,`;
                 bindings.push(email);
             }
@@ -208,6 +227,6 @@ router.patch('/:user_id', async (req, res) => {
         console.log(e);
         res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
-})
+});
 
 module.exports = router;

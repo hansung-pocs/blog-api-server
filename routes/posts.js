@@ -10,9 +10,9 @@ const util = require("../common/util");
 router.post('/', async (req, res) => {
 
     const {
+        userId,
         title,
         content,
-        userId,
         category
     } = req.body;
 
@@ -43,7 +43,7 @@ router.post('/', async (req, res) => {
         console.error(error);
         res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
-})
+});
 
 /* GET posts list */
 router.get('/', async (req, res) => {
@@ -72,10 +72,10 @@ router.get('/', async (req, res) => {
                 writerName: username,
                 title: title,
                 content: content,
-                createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss'),
+                createdAt: dayjs(created_at).format('YYYY-MM-DD'),
                 updatedAt: ((updated_at) => {
                     if (!!updated_at) {
-                        return dayjs(updated_at).format('YYYY-MM-DD HH:mm:ss')
+                        return dayjs(updated_at).format('YYYY-MM-DD')
                     }
                     return null;
                 })(updated_at),
@@ -89,7 +89,7 @@ router.get('/', async (req, res) => {
         console.log(error);
         res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
-})
+});
 
 /* GET post detail */
 router.get('/:postId', async (req, res) => {
@@ -102,50 +102,50 @@ router.get('/:postId', async (req, res) => {
             binding: [postId]
         });
 
-        const {
-            title,
-            content,
-            created_at,
-            updated_at,
-            category,
-            user_id,
-            username,
-            email,
-            type,
-            canceled_at
-        } = postDB;
-
-        console.log('post: %j', postDB);
-
-        if (!postDB) {
+        if (!postDB) {  // 데이터에 없는 postId를 입력한 경우
             res.status(404).json(util.getReturnObject(MSG.NO_POST_DATA, 404, {}));
-        } else if (!!canceled_at) {
-            res.status(403).json(util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
         } else {
-            res.status(200).json(util.getReturnObject(`${title} ${MSG.READ_POST_SUCCESS}`, 200, {
-                title: title,
-                content: content,
-                createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss'),
-                updatedAt: ((updated_at) => {
-                    if (!!updated_at) {
-                        return dayjs(updated_at).format('YYYY-MM-DD HH:mm:ss')
+            const {
+                title,
+                content,
+                created_at,
+                updated_at,
+                category,
+                user_id,
+                username,
+                email,
+                type,
+                canceled_at
+            } = postDB;
+
+            if (!!canceled_at) {
+                res.status(403).json(util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
+            } else {
+                res.status(200).json(util.getReturnObject(`${title} ${MSG.READ_POST_SUCCESS}`, 200, {
+                    title: title,
+                    content: content,
+                    createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss'),
+                    updatedAt: ((updated_at) => {
+                        if (!!updated_at) {
+                            return dayjs(updated_at).format('YYYY-MM-DD HH:mm:ss')
+                        }
+                        return null;
+                    })(updated_at),
+                    category: category,
+                    writer: {
+                        userId: user_id,
+                        userName: username,
+                        email: email,
+                        type: type
                     }
-                    return null;
-                })(updated_at),
-                category: category,
-                writer: {
-                    userId: user_id,
-                    userName: username,
-                    email: email,
-                    type: type
-                }
-            }));
+                }));
+            }
         }
     } catch (e) {
         console.error(e);
         res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
-})
+});
 
 /* PATCH (edit) post info */
 router.patch('/:postId', async (req, res, next) => {
@@ -206,33 +206,41 @@ router.patch('/:postId', async (req, res, next) => {
         console.error(e);
         res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
-})
+});
 
 /* PATCH (delete) post */
 router.patch('/:postId/delete', async (req, res, next) => {
     const userId = req.body.userId;
     const postId = req.params.postId;
     try {
-        const [userDB] = await DB.execute({
-            psmt: `select type from USER where user_id = ?`,
-            binding: [userId]
-        });
-
-        if (!userDB.type || userDB.type === 'member' || userDB.type === 'unknown') {
+        const [[userDB], [postDB]] = await Promise.all([
+            await DB.execute({
+                psmt: `select type, user_id from USER where user_id = ?`,
+                binding: [userId]
+            }),
+            await DB.execute({
+                psmt: `select user_id, canceled_at from POST where post_id = ?`,
+                binding: [postId]
+            })
+        ])
+        if (postDB.canceled_at != null) {
+            res.status(403).json(util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
+        } else if (!userDB.type || userDB.type === 'unknown') {
             res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
-        } else if (userDB.type === 'admin') {
+        } else if (userDB.type === 'admin' || (userDB.type === 'member' && postDB.user_id === userId)) {
             await DB.execute({
                 psmt: `update POST set canceled_at = NOW() where post_id = ?`,
                 binding: [postId]
             });
-
             res.status(201).json(util.getReturnObject(MSG.POST_DELETE_SUCCESS, 201, {}));
+        } else {
+            res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         }
 
     } catch (e) {
         console.error(e);
         res.status(501).json(util.getReturnObject(e.message, 501, {}));
     }
-})
+});
 
 module.exports = router;

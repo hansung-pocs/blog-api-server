@@ -7,7 +7,7 @@ const DB = require('../common/database');
 const dayjs = require('dayjs')
 const MSG = require('../common/message');
 
-/* GET user list by admin */
+/* GET users list by admin */
 router.get('/users', async (req, res) => {
 
     const sortOption = req.query.sort;
@@ -66,10 +66,10 @@ router.get('/users', async (req, res) => {
                 company: company || null,
                 generation: generation,
                 github: github || null,
-                createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss'),
+                createdAt: dayjs(created_at).format('YYYY-MM-DD'),
                 canceledAt: ((canceled_at) => {
                     if (!!canceled_at) {
-                        return dayjs(canceled_at).format('YYYY-MM-DD HH:mm:ss')
+                        return dayjs(canceled_at).format('YYYY-MM-DD')
                     }
                     return null;
                 })(canceled_at),
@@ -162,14 +162,11 @@ router.post('/users', async (req, res) => {
         company,
         github
     } = req.body
+
     const correctEmail = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/;
 
     try {
-        const [[checkEmail], [checkUserName], [checkStudentId]] = await Promise.all([
-            await DB.execute({
-                psmt: `select user_id from USER where email = ?`,
-                binding: [email]
-            }),
+        const [[checkUserName], [checkStudentId], [checkEmail]] = await Promise.all([
             await DB.execute({
                 psmt: `select user_id from USER where username = ?`,
                 binding: [userName]
@@ -177,23 +174,27 @@ router.post('/users', async (req, res) => {
             await DB.execute({
                 psmt: `select user_id from USER where student_id = ?`,
                 binding: [studentId]
+            }),
+            await DB.execute({
+                psmt: `select user_id from USER where email = ?`,
+                binding: [email]
             })
         ]);
 
         if (!userName || !password || !name || !studentId || !email || !generation || !type) {
-            res.status(404).json(util.getReturnObject(MSG.NO_REQUIRED_INFO, 404, {}));
+            res.status(403).json(util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         } else if (!correctEmail.test(email)) {
             res.status(403).json(util.getReturnObject(MSG.WRONG_EMAIL, 403, {}));
         } else if (1000000 >= studentId && studentId >= 9999999) {
             res.status(403).json(util.getReturnObject(MSG.WRONG_STUDENTID, 403, {}));
         } else if (type != 'admin' && type != 'member') {
             res.status(403).json(util.getReturnObject(MSG.WRONG_TYPE, 403, {}));
-        } else if (checkEmail != null) {
-            res.status(403).json(util.getReturnObject(MSG.EXIST_EMAIL, 403, {}));
         } else if (checkUserName != null) {
             res.status(403).json(util.getReturnObject(MSG.EXIST_USERNAME, 403, {}));
         } else if (checkStudentId != null) {
             res.status(403).json(util.getReturnObject(MSG.EXIST_STUDENTID, 403, {}));
+        } else if (checkEmail != null) {
+            res.status(403).json(util.getReturnObject(MSG.EXIST_EMAIL, 403, {}));
         } else {
             await DB.execute({
                 psmt: `insert into USER (username, password, name, student_id, email, generation, type, company, github, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
@@ -206,7 +207,7 @@ router.post('/users', async (req, res) => {
         console.log(error);
         res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
-})
+});
 
 /* PATCH (delete) user by admin */
 router.patch('/users/:userId/kick', async (req, res) => {
@@ -214,11 +215,13 @@ router.patch('/users/:userId/kick', async (req, res) => {
 
     try {
         const [user] = await DB.execute({
-            psmt: `select username from USER where user_id = ?`,
+            psmt: `select canceled_at from USER where user_id = ?`,
             binding: [userId]
         })
         if (!user) {
             res.status(404).json(util.getReturnObject(MSG.NO_USER_DATA, 404, {}));
+        } else if (user.canceled_at != null) {
+            res.status(403).json(util.getReturnObject(MSG.NO_USER_DATA, 403, {}));
         } else {
             await DB.execute({
                 psmt: `update USER SET canceled_at = NOW() where user_id = ?`,
@@ -231,7 +234,7 @@ router.patch('/users/:userId/kick', async (req, res) => {
         console.log(error);
         res.status(501).json(util.getReturnObject(error.message, 501, {}));
     }
-})
+});
 
 /* GET posts list by admin(included deleted posts) */
 router.get('/posts', async (req, res) => {
@@ -261,16 +264,16 @@ router.get('/posts', async (req, res) => {
                 writerName: username,
                 title: title,
                 content: content,
-                createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss'),
+                createdAt: dayjs(created_at).format('YYYY-MM-DD'),
                 updatedAt: ((updated_at) => {
                     if (!!updated_at) {
-                        return dayjs(updated_at).format('YYYY-MM-DD HH:mm:ss')
+                        return dayjs(updated_at).format('YYYY-MM-DD')
                     }
                     return null;
                 })(updated_at),
                 canceledAt: ((canceled_at) => {
                     if (!!canceled_at) {
-                        return dayjs(canceled_at).format('YYYY-MM-DD HH:mm:ss')
+                        return dayjs(canceled_at).format('YYYY-MM-DD')
                     }
                     return null;
                 })(canceled_at),
@@ -283,7 +286,7 @@ router.get('/posts', async (req, res) => {
         console.log(error);
         res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
-})
+});
 
 /* GET get for posts written by a specific user by admin */
 router.get('/posts/:userId', async (req, res) => {
@@ -341,6 +344,35 @@ router.get('/posts/:userId', async (req, res) => {
         console.error(e);
         res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
-})
+});
+
+/* PATCH (delete) post by admin */
+router.patch('/posts/:postId/delete', async (req, res, next) => {
+
+    const postId = req.params.postId;
+    try {
+
+        const [postDB] = await DB.execute({
+            psmt: `select canceled_at from POST where post_id = ?`,
+            binding: [postId]
+        });
+
+        if (!postDB) {
+            res.status(403).json(util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
+        } else if (!!postDB.canceled_at) {
+            res.status(403).json(util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
+        } else {
+            await DB.execute({
+                psmt: `update POST set canceled_at = NOW() where post_id = ?`,
+                binding: [postId]
+            });
+
+            res.status(201).json(util.getReturnObject(`관리자 권한으로 ${MSG.POST_DELETE_SUCCESS}`, 201, {}));
+        }
+    } catch (e) {
+        console.error(e);
+        res.status(501).json(util.getReturnObject(e.message, 501, {}));
+    }
+});
 
 module.exports = router;
