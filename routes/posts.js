@@ -173,15 +173,15 @@ router.patch('/:postId', async (req, res, next) => {
             let sql = 'update POST set';
             const bindings = [];
 
-            if (postDB.title != title) {
+            if (!!title && postDB.title != title) {
                 sql += ' title = ?,';
                 bindings.push(title);
             }
-            if (postDB.content != content) {
+            if (!!content && postDB.content != content) {
                 sql += ' content = ?,';
                 bindings.push(content);
             }
-            if (postDB.category != category) {
+            if (!!category && postDB.category != category) {
                 sql += ' category = ?,';
                 bindings.push(category);
             }
@@ -225,6 +225,8 @@ router.patch('/:postId/delete', async (req, res, next) => {
         ])
         if (postDB.canceled_at != null) {
             res.status(403).json(util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
+        } else if (!userId) {
+            res.status(403).json(util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         } else if (!userDB.type || userDB.type === 'unknown') {
             res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         } else if (userDB.type === 'admin' || (userDB.type === 'member' && postDB.user_id === userId)) {
