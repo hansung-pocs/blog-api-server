@@ -38,7 +38,7 @@ router.post('/login', isNotLoggedIn, async (req, res) => {
         });
 
 
-        return res.status(200).json(util.getReturnObject("세션 발급 성공", 200, {sessionToken}));
+        return res.status(200).json(util.getReturnObject("로그인 성공", 200, {sessionToken}));
     } catch (error) {
         console.log(error);
         return res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
@@ -80,5 +80,13 @@ router.post('/logout', isLoggedIn, async (req, res, next) => {
         return res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
+
+router.post("/validation", (req, res) => {
+    if (!!req.user) {
+        return res.status(200).json(util.getReturnObject("유효한 세션입니다.", 200, {}));
+    } else {
+        return res.status(403).json(util.getReturnObject("유효하지 않은 세션입니다.", 403, {}));
+    }
+})
 
 module.exports = router;
