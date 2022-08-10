@@ -47,6 +47,8 @@ router.post('/', async (req, res) => {
 
 /* GET posts list */
 router.get('/', async (req, res) => {
+    const offset = req.query.offset;
+    const page = req.query.pageNum;
     try {
         const postsDB = await DB.execute({
             psmt: `select post_id, username, title, content, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL order by created_at DESC`,
@@ -55,7 +57,7 @@ router.get('/', async (req, res) => {
 
         console.log('posts: %j', postsDB);
 
-        const posts = [];
+        const postsAll = [];
         postsDB.forEach(postsDB => {
             const {
                 post_id,
@@ -82,9 +84,16 @@ router.get('/', async (req, res) => {
                 category: category
             }
 
-            posts.push(postsObj);
+            postsAll.push(postsObj);
         })
+        const posts = [];
+        let pagination = 0;
+        for(let i = (offset*page)-offset; i<offset*page; i++){
+            posts[pagination] = postsAll[i];
+            pagination++;
+        }
         res.status(200).json(util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {posts}));
+        pagination = 0;
     } catch (error) {
         console.log(error);
         res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));

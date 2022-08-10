@@ -10,7 +10,8 @@ const util = require("../common/util");
 router.get('/', async (req, res) => {
 
     const sortOption = req.query.sort;
-    // const searchOption = req.query.search;
+    const offset = req.query.offset;
+    const page = req.query.pageNum;
 
     try {
         let sql = `select * from USER where canceled_at is NULL`;
@@ -21,7 +22,7 @@ router.get('/', async (req, res) => {
         } else if (sortOption === 'studentId') {
             console.log('sorting by studentId');
             sql += ` order by student_id;`;
-        } // else if (searchOption)
+        }
         else {
             sql += ` order by created_at DESC;`;
         }
@@ -31,7 +32,7 @@ router.get('/', async (req, res) => {
             binding: []
         });
 
-        const users = [];
+        const usersAll = [];
         usersDB.forEach(usersDB => {
             const {
                 user_id,
@@ -67,10 +68,16 @@ router.get('/', async (req, res) => {
                 github: github || null,
                 createdAt: dayjs(created_at).format('YYYY-MM-DD')
             }
-            users.push(usersObj);
+            usersAll.push(usersObj);
         })
-
+        const users = [];
+        let pagination = 0;
+        for(let i = (offset*page)-offset; i<offset*page; i++){
+            users[pagination] = usersAll[i];
+            pagination++;
+        }
         res.status(200).json(util.getReturnObject(MSG.READ_USERDATA_SUCCESS, 200, {users}));
+        pagination = 0;
 
     } catch (e) {
         console.error(e);
