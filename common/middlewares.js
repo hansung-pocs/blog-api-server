@@ -11,7 +11,7 @@ exports.deserializeUser = (async (req, res, next) => {
 
     try {
         const [user] = await DB.execute({
-            psmt: "select u.user_id, u.username, u.company, u.email, u.created_at, u.github, u.name, u.student_id, u.type" +
+            psmt: "select u.user_id, u.name, u.company, u.email, u.created_at, u.github, u.name, u.student_id, u.type" +
                 " from USER u left join SESSION s on u.user_id = s.user_id" +
                 " where s.token = ? and s.expiredAt > ?;",
             binding: [sessionToken, new Date()]
@@ -48,5 +48,6 @@ exports.isAdmin = (req, res, next) => {
     if (!!user && user.type === "admin") {
         next();
     } else {
-        return res.status(403).json(util.getReturnObject("권한이 없습니다. 필요합니다.", 403, {}));    }
+        return res.status(403).json(util.getReturnObject("권한이 없습니다. 필요합니다.", 403, {}));
+    }
 }

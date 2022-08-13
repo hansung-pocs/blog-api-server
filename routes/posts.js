@@ -4,7 +4,7 @@ const router = express.Router();
 const DB = require('../common/database');
 const MSG = require('../common/message');
 const dayjs = require('dayjs');
-const util = require("../common/util");
+const util = require('../common/util');
 
 /* POST new post */
 router.post('/', async (req, res) => {
