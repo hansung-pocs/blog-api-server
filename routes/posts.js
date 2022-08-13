@@ -49,7 +49,7 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
     try {
         const postsDB = await DB.execute({
-            psmt: `select post_id, username, title, content, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL order by created_at DESC`,
+            psmt: `select post_id, name, title, content, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL order by created_at DESC`,
             binding: []
         });
 
@@ -59,7 +59,7 @@ router.get('/', async (req, res) => {
         postsDB.forEach(postsDB => {
             const {
                 post_id,
-                username,
+                name,
                 title,
                 content,
                 created_at,
@@ -69,7 +69,7 @@ router.get('/', async (req, res) => {
 
             const postsObj = {
                 postId: post_id,
-                writerName: username,
+                writerName: name,
                 title: title,
                 content: content,
                 createdAt: dayjs(created_at).format('YYYY-MM-DD'),
@@ -97,22 +97,33 @@ router.get('/:postId', async (req, res) => {
     const postId = req.params.postId;
 
     try {
-        const [postDB] = await DB.execute({
-            psmt: `select title, content, p.created_at, p.updated_at, category, u.user_id, username, email, type, p.canceled_at from POST p, USER u WHERE u.user_id = p.user_id and post_id = ?`,
+        const [nonePost] = await DB.execute({
+            psmt: `select title from POST p, USER u where u.user_id = p.user_id and post_id = ?`,
             binding: [postId]
         });
 
-        if (!postDB) {  // 데이터에 없는 postId를 입력한 경우
+        if (!nonePost) {  // 데이터에 없는 postId를 입력한 경우
             res.status(404).json(util.getReturnObject(MSG.NO_POST_DATA, 404, {}));
         } else {
+            await DB.execute({
+                psmt: `update POST set views = views + 1 where post_id = ?`,
+                binding: [postId]
+            });
+
+            const [postDB] = await DB.execute({
+                psmt: `select title, content, views, p.created_at, p.updated_at, category, u.user_id, name, email, type, p.canceled_at from POST p, USER u where u.user_id = p.user_id and post_id = ?`,
+                binding: [postId]
+            });
+
             const {
                 title,
                 content,
+                views,
                 created_at,
                 updated_at,
                 category,
                 user_id,
-                username,
+                name,
                 email,
                 type,
                 canceled_at
@@ -124,6 +135,7 @@ router.get('/:postId', async (req, res) => {
                 res.status(200).json(util.getReturnObject(`${title} ${MSG.READ_POST_SUCCESS}`, 200, {
                     title: title,
                     content: content,
+                    views: views,
                     createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss'),
                     updatedAt: ((updated_at) => {
                         if (!!updated_at) {
@@ -134,7 +146,7 @@ router.get('/:postId', async (req, res) => {
                     category: category,
                     writer: {
                         userId: user_id,
-                        userName: username,
+                        name: name,
                         email: email,
                         type: type
                     }
