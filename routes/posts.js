@@ -49,7 +49,7 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
     try {
         const postsDB = await DB.execute({
-            psmt: `select post_id, name, title, content, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL order by created_at DESC`,
+            psmt: `select post_id, name, title, content, views, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL order by created_at DESC`,
             binding: []
         });
 
@@ -62,6 +62,7 @@ router.get('/', async (req, res) => {
                 name,
                 title,
                 content,
+                views,
                 created_at,
                 updated_at,
                 category
@@ -72,6 +73,7 @@ router.get('/', async (req, res) => {
                 writerName: name,
                 title: title,
                 content: content,
+                views: views,
                 createdAt: dayjs(created_at).format('YYYY-MM-DD'),
                 updatedAt: ((updated_at) => {
                     if (!!updated_at) {
@@ -158,6 +160,10 @@ router.get('/:postId', async (req, res) => {
         res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
+
+
+
+
 
 /* PATCH (edit) post info */
 router.patch('/:postId', async (req, res, next) => {
