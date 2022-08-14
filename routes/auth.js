@@ -38,8 +38,9 @@ router.post('/login', isNotLoggedIn, async (req, res) => {
             binding: [user.user_id, sessionToken, deviceType, dayjs().add(90, 'day').toDate()]
         });
 
+        console.log(userDetailInfo(user));
 
-        return res.status(200).json(Util.getReturnObject('로그인 성공', 200, {sessionToken, ...userDetailInfo(user)}));
+        return res.status(200).json(Util.getReturnObject('로그인 성공', 200, {sessionToken, user: userDetailInfo(user)}));
     } catch (error) {
         console.log(error);
         return res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
@@ -85,7 +86,7 @@ router.post('/logout', isLoggedIn, async (req, res, next) => {
 router.post('/validation', (req, res) => {
     const user = req.user;
     if (!!user) {
-        return res.status(200).json(Util.getReturnObject('유효한 세션입니다.', 200, {...userDetailInfo(user)}));
+        return res.status(200).json(Util.getReturnObject('유효한 세션입니다.', 200, {user: userDetailInfo(user)}));
     } else {
         return res.status(403).json(Util.getReturnObject('유효하지 않은 세션입니다.', 403, {}));
     }
