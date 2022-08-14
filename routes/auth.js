@@ -38,7 +38,7 @@ router.post('/login', isNotLoggedIn, async (req, res) => {
         });
 
 
-        return res.status(200).json(util.getReturnObject("로그인 성공", 200, {sessionToken, userId: user.user_id}));
+        return res.status(200).json(util.getReturnObject("로그인 성공", 200, {sessionToken, ...userDetailInfo(user)}));
     } catch (error) {
         console.log(error);
         return res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
@@ -84,10 +84,47 @@ router.post('/logout', isLoggedIn, async (req, res, next) => {
 router.post("/validation", (req, res) => {
     const user = req.user;
     if (!!user) {
-        return res.status(200).json(util.getReturnObject("유효한 세션입니다.", 200, {userId: user.user_id}));
+        return res.status(200).json(util.getReturnObject("유효한 세션입니다.", 200, {...userDetailInfo(user)}));
     } else {
         return res.status(403).json(util.getReturnObject("유효하지 않은 세션입니다.", 403, {}));
     }
-})
+});
+
+const userDetailInfo = user => {
+    const {
+        user_id,
+        username,
+        email,
+        student_id,
+        type,
+        company,
+        generation,
+        github,
+        created_at,
+    } = user;
+
+    return {
+        userId: user_id,
+        userName: username,
+        email: email,
+        studentId: student_id,
+        type: ((type) => {
+            if (!type) return '비회원';
+
+            switch (type) {
+                case 'admin':
+                    return 'admin';
+                case 'member':
+                    return 'member';
+                default:
+                    return 'unknown';
+            }
+        })(type),
+        company: company || null,
+        generation: generation,
+        github: github || null,
+        createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss')
+    }
+}
 
 module.exports = router;
