@@ -16,16 +16,7 @@ const Util = require('../common/util');
 /* PATCH (edit) comment */
 
 
-
 /* GET comments by postId */
-
-
-
-
-
-
-
-
 
 
 module.exports = router;

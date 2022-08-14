@@ -172,7 +172,7 @@ router.patch('/:user_id', async (req, res) => {
             binding: [userId]
         });
 
-      //  const [[checkEmail], [userDB]] = await Promise.all
+        //  const [[checkEmail], [userDB]] = await Promise.all
 
         if (userDB.canceled_at != null) {
             res.status(403).json(Util.getReturnObject(MSG.NO_USER_DATA, 403, {}));

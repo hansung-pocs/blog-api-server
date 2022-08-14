@@ -6,56 +6,56 @@ const MSG = require('../common/message');
 var router = express.Router();
 
 /* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Express' });
+router.get('/', function (req, res, next) {
+    res.render('index', {title: 'Express'});
 });
 
 // GET best post by views
 router.get('/best', async (req, res) => {
-  try {
-    const postsDB = await DB.execute({
-      psmt: `select post_id, name, title, content, views, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL order by views DESC`,
-      binding: []
-    });
+    try {
+        const postsDB = await DB.execute({
+            psmt: `select post_id, name, title, content, views, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL order by views DESC`,
+            binding: []
+        });
 
-    console.log('posts: %j', postsDB);
+        console.log('posts: %j', postsDB);
 
-    const posts = [];
-    postsDB.forEach(postsDB => {
-      const {
-        post_id,
-        name,
-        title,
-        content,
-        views,
-        created_at,
-        updated_at,
-        category
-      } = postsDB;
+        const posts = [];
+        postsDB.forEach(postsDB => {
+            const {
+                post_id,
+                name,
+                title,
+                content,
+                views,
+                created_at,
+                updated_at,
+                category
+            } = postsDB;
 
-      const postsObj = {
-        postId: post_id,
-        writerName: name,
-        views: views,
-        title: title,
-        content: content,
-        createdAt: dayjs(created_at).format('YYYY-MM-DD'),
-        updatedAt: ((updated_at) => {
-          if (!!updated_at) {
-            return dayjs(updated_at).format('YYYY-MM-DD')
-          }
-          return null;
-        })(updated_at),
-        category: category
-      }
+            const postsObj = {
+                postId: post_id,
+                writerName: name,
+                views: views,
+                title: title,
+                content: content,
+                createdAt: dayjs(created_at).format('YYYY-MM-DD'),
+                updatedAt: ((updated_at) => {
+                    if (!!updated_at) {
+                        return dayjs(updated_at).format('YYYY-MM-DD')
+                    }
+                    return null;
+                })(updated_at),
+                category: category
+            }
 
-      posts.push(postsObj);
-    })
-    res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {posts}));
-  } catch (error) {
-    console.log(error);
-    res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
-  }
+            posts.push(postsObj);
+        })
+        res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {posts}));
+    } catch (error) {
+        console.log(error);
+        res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
+    }
 });
 
 module.exports = router;

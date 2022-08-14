@@ -162,9 +162,6 @@ router.get('/:postId', async (req, res) => {
 });
 
 
-
-
-
 /* PATCH (edit) post info */
 router.patch('/:postId', async (req, res, next) => {
 
