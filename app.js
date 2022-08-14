@@ -29,7 +29,7 @@ app.use(middlewares.deserializeUser);
 app.use('/', require('./routes/index'));
 app.use('/users', require('./routes/users'));
 app.use('/posts', require('./routes/posts'));
-app.user('/comments', require('./routes/comments'));
+app.use('/comments', require('./routes/comments'));
 app.use('/admin', require('./routes/admin'));
 app.use('/auth', require('./routes/auth'));
 

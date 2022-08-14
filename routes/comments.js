@@ -18,3 +18,14 @@ const Util = require('../common/util');
 
 
 /* GET comments by postId */
+
+
+
+
+
+
+
+
+
+
+module.exports = router;
