@@ -1,7 +1,7 @@
 var express = require('express');
 const DB = require('../common/database');
 const dayjs = require('dayjs');
-const util = require('../common/util');
+const Util = require('../common/util');
 const MSG = require('../common/message');
 var router = express.Router();
 
@@ -51,10 +51,10 @@ router.get('/best', async (req, res) => {
 
       posts.push(postsObj);
     })
-    res.status(200).json(util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {posts}));
+    res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {posts}));
   } catch (error) {
     console.log(error);
-    res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
+    res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
   }
 });
 

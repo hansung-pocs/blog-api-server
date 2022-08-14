@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
-const util = require('../common/util');
 
 const DB = require('../common/database');
-const dayjs = require('dayjs')
+const dayjs = require('dayjs');
 const MSG = require('../common/message');
+const Util = require('../common/util');
 
 /* GET users list by admin */
 router.get('/users', async (req, res) => {
@@ -77,10 +77,10 @@ router.get('/users', async (req, res) => {
             users.push(usersObj);
         })
 
-        res.status(200).json(util.getReturnObject(`관리자 권한으로 ${MSG.READ_USERDATA_SUCCESS}`, 200, {users}));
+        res.status(200).json(Util.getReturnObject(`관리자 권한으로 ${MSG.READ_USERDATA_SUCCESS}`, 200, {users}));
     } catch (e) {
         console.error(e);
-        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
+        res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
 
@@ -98,7 +98,7 @@ router.get('/users/:userId', async (req, res) => {
         console.log('user: %j', userDB);
 
         if (!userDB) {
-            res.status(404).json(util.getReturnObject(MSG.NO_USER_DATA, 404, {}));
+            res.status(404).json(Util.getReturnObject(MSG.NO_USER_DATA, 404, {}));
         } else {
             const {
                 user_id,
@@ -113,7 +113,7 @@ router.get('/users/:userId', async (req, res) => {
                 canceled_at
             } = userDB;
 
-            res.status(200).json(util.getReturnObject(`어드민 권한으로 ${username}${MSG.READ_USER_SUCCESS}`, 200, {
+            res.status(200).json(Util.getReturnObject(`어드민 권한으로 ${username}${MSG.READ_USER_SUCCESS}`, 200, {
                 userId: user_id,
                 userName: username,
                 email: email,
@@ -144,7 +144,7 @@ router.get('/users/:userId', async (req, res) => {
         }
     } catch (error) {
         console.error(error);
-        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
+        res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
 
@@ -181,30 +181,30 @@ router.post('/users', async (req, res) => {
         ]);
 
         if (!userName || !password || !name || !studentId || !email || !generation || !type) {
-            res.status(403).json(util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
+            res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         } else if (!correctEmail.test(email)) {
-            res.status(403).json(util.getReturnObject(MSG.WRONG_EMAIL, 403, {}));
+            res.status(403).json(Util.getReturnObject(MSG.WRONG_EMAIL, 403, {}));
         } else if (1000000 >= studentId && studentId >= 9999999) {
-            res.status(403).json(util.getReturnObject(MSG.WRONG_STUDENTID, 403, {}));
+            res.status(403).json(Util.getReturnObject(MSG.WRONG_STUDENTID, 403, {}));
         } else if (type != 'admin' && type != 'member') {
-            res.status(403).json(util.getReturnObject(MSG.WRONG_TYPE, 403, {}));
+            res.status(403).json(Util.getReturnObject(MSG.WRONG_TYPE, 403, {}));
         } else if (checkUserName != null) {
-            res.status(403).json(util.getReturnObject(MSG.EXIST_USERNAME, 403, {}));
+            res.status(403).json(Util.getReturnObject(MSG.EXIST_USERNAME, 403, {}));
         } else if (checkStudentId != null) {
-            res.status(403).json(util.getReturnObject(MSG.EXIST_STUDENTID, 403, {}));
+            res.status(403).json(Util.getReturnObject(MSG.EXIST_STUDENTID, 403, {}));
         } else if (checkEmail != null) {
-            res.status(403).json(util.getReturnObject(MSG.EXIST_EMAIL, 403, {}));
+            res.status(403).json(Util.getReturnObject(MSG.EXIST_EMAIL, 403, {}));
         } else {
             await DB.execute({
                 psmt: `insert into USER (username, password, name, student_id, email, generation, type, company, github, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
                 binding: [userName, password, name, studentId, email, generation, type, company, github]
             });
 
-            res.status(201).json(util.getReturnObject(MSG.USER_ADDED, 201, {}));
+            res.status(201).json(Util.getReturnObject(MSG.USER_ADDED, 201, {}));
         }
     } catch (error) {
         console.log(error);
-        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
+        res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
 
@@ -218,20 +218,20 @@ router.patch('/users/:userId/kick', async (req, res) => {
             binding: [userId]
         })
         if (!user) {
-            res.status(404).json(util.getReturnObject(MSG.NO_USER_DATA, 404, {}));
+            res.status(404).json(Util.getReturnObject(MSG.NO_USER_DATA, 404, {}));
         } else if (user.canceled_at != null) {
-            res.status(403).json(util.getReturnObject(MSG.NO_USER_DATA, 403, {}));
+            res.status(403).json(Util.getReturnObject(MSG.NO_USER_DATA, 403, {}));
         } else {
             await DB.execute({
                 psmt: `update USER SET canceled_at = NOW() where user_id = ?`,
                 binding: [userId]
             })
 
-            res.status(201).json(util.getReturnObject(MSG.USER_KICK_SUCCESS, 201, {}));
+            res.status(201).json(Util.getReturnObject(MSG.USER_KICK_SUCCESS, 201, {}));
         }
     } catch (error) {
         console.log(error);
-        res.status(501).json(util.getReturnObject(error.message, 501, {}));
+        res.status(501).json(Util.getReturnObject(error.message, 501, {}));
     }
 });
 
@@ -280,10 +280,10 @@ router.get('/posts', async (req, res) => {
             }
             posts.push(postsObj);
         })
-        res.status(200).json(util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {posts}));
+        res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {posts}));
     } catch (error) {
         console.log(error);
-        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
+        res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
 
@@ -301,7 +301,7 @@ router.get('/posts/:userId', async (req, res) => {
         console.log('post: %j', postsDB);
 
         if (postsDB.length === 0) {
-            res.status(404).json(util.getReturnObject(MSG.CANT_READ_POSTDATA, 404, {}));
+            res.status(404).json(Util.getReturnObject(MSG.CANT_READ_POSTDATA, 404, {}));
         } else {
             const posts = [];
             postsDB.forEach(postsDB => {
@@ -337,11 +337,11 @@ router.get('/posts/:userId', async (req, res) => {
 
                 posts.push(postsObj);
             })
-            res.status(200).json(util.getReturnObject(`관리자 권한으로 userID : ${userId}의 ${MSG.READ_POSTDATA_SUCCESS}`, 200, {posts}));
+            res.status(200).json(Util.getReturnObject(`관리자 권한으로 userID : ${userId}의 ${MSG.READ_POSTDATA_SUCCESS}`, 200, {posts}));
         }
     } catch (e) {
         console.error(e);
-        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
+        res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
 
@@ -357,20 +357,20 @@ router.patch('/posts/:postId/delete', async (req, res, next) => {
         });
 
         if (!postDB) {
-            res.status(403).json(util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
+            res.status(403).json(Util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
         } else if (!!postDB.canceled_at) {
-            res.status(403).json(util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
+            res.status(403).json(Util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
         } else {
             await DB.execute({
                 psmt: `update POST set canceled_at = NOW() where post_id = ?`,
                 binding: [postId]
             });
 
-            res.status(201).json(util.getReturnObject(`관리자 권한으로 ${MSG.POST_DELETE_SUCCESS}`, 201, {}));
+            res.status(201).json(Util.getReturnObject(`관리자 권한으로 ${MSG.POST_DELETE_SUCCESS}`, 201, {}));
         }
     } catch (e) {
         console.error(e);
-        res.status(501).json(util.getReturnObject(e.message, 501, {}));
+        res.status(501).json(Util.getReturnObject(e.message, 501, {}));
     }
 });
 

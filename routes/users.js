@@ -1,10 +1,10 @@
-var express = require('express');
-var router = express.Router();
+const express = require('express');
+const router = express.Router();
 
 const DB = require('../common/database');
-const MSG = require('../common/message')
-const dayjs = require('dayjs')
-const util = require('../common/util');
+const dayjs = require('dayjs');
+const MSG = require('../common/message');
+const Util = require('../common/util');
 
 /* GET users list. */
 router.get('/', async (req, res) => {
@@ -72,14 +72,14 @@ router.get('/', async (req, res) => {
 
         const countAllUsers = users.length;
 
-        res.status(200).json(util.getReturnObject(MSG.READ_USERDATA_SUCCESS, 200, {
+        res.status(200).json(Util.getReturnObject(MSG.READ_USERDATA_SUCCESS, 200, {
             users,
             countAllUsers
         }));
 
     } catch (e) {
         console.error(e);
-        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
+        res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
 
@@ -98,7 +98,7 @@ router.get('/:userId', async (req, res) => {
         console.log('user: %j', userDB);
 
         if (!userDB) {
-            res.status(404).json(util.getReturnObject(MSG.NO_USER_DATA, 404, {}));
+            res.status(404).json(Util.getReturnObject(MSG.NO_USER_DATA, 404, {}));
         } else {
             const {
                 user_id,
@@ -114,9 +114,9 @@ router.get('/:userId', async (req, res) => {
             } = userDB;
 
             if (!!canceled_at) {
-                res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
+                res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
             } else {
-                res.status(200).json(util.getReturnObject(`${name} ${MSG.READ_USER_SUCCESS}`, 200, {
+                res.status(200).json(Util.getReturnObject(`${name} ${MSG.READ_USER_SUCCESS}`, 200, {
                     userId: user_id,
                     name: name,
                     email: email,
@@ -142,7 +142,7 @@ router.get('/:userId', async (req, res) => {
         }
     } catch (error) {
         console.error(error);
-        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
+        res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
 
@@ -175,9 +175,9 @@ router.patch('/:user_id', async (req, res) => {
       //  const [[checkEmail], [userDB]] = await Promise.all
 
         if (userDB.canceled_at != null) {
-            res.status(403).json(util.getReturnObject(MSG.NO_USER_DATA, 403, {}));
+            res.status(403).json(Util.getReturnObject(MSG.NO_USER_DATA, 403, {}));
         } else if (!correctEmail.test(email)) {
-            res.status(403).json(util.getReturnObject(MSG.WRONG_EMAIL, 403, {}));
+            res.status(403).json(Util.getReturnObject(MSG.WRONG_EMAIL, 403, {}));
         } else if (userDB.type === 'admin' || userDB.type === 'member') {
             let sql = `update USER set`;
             const bindings = [];
@@ -193,7 +193,7 @@ router.patch('/:user_id', async (req, res) => {
             }
             if (userDB.email != email) {
                 if (checkEmail != null) {
-                    res.status(403).json(util.getReturnObject(MSG.EXIST_EMAIL, 403, {}));
+                    res.status(403).json(Util.getReturnObject(MSG.EXIST_EMAIL, 403, {}));
                 }
                 sql += ` email = ?,`;
                 bindings.push(email);
@@ -208,7 +208,7 @@ router.patch('/:user_id', async (req, res) => {
             }
 
             if (bindings.length === 0) {
-                res.status(404).json(util.getReturnObject(MSG.NO_CHANGED_INFO, 404, {}));
+                res.status(404).json(Util.getReturnObject(MSG.NO_CHANGED_INFO, 404, {}));
             } else {
                 sql += ` updated_at = NOW() where user_id = ?;`;
                 bindings.push(userId);
@@ -218,12 +218,12 @@ router.patch('/:user_id', async (req, res) => {
                     binding: bindings
                 });
                 // http status code 204: 요청 수행 완료, 반환 값 없음.
-                res.status(302).json(util.getReturnObject(MSG.USER_UPDATE_SUCCESS, 302, {}));
+                res.status(302).json(Util.getReturnObject(MSG.USER_UPDATE_SUCCESS, 302, {}));
             }
         }
     } catch (e) {
         console.log(e);
-        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
+        res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
 
