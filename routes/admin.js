@@ -10,6 +10,8 @@ const MSG = require('../common/message');
 router.get('/users', async (req, res) => {
 
     const sortOption = req.query.sort;
+    const offset = req.query.offset;
+    const page = req.query.pageNum;
 
     try {
         let sql = `select user_id, username, email, student_id, type, company, generation, github, created_at, canceled_at from USER`;
@@ -29,7 +31,7 @@ router.get('/users', async (req, res) => {
 
         console.log('users: %j', usersDB);
 
-        const users = [];
+        const usersAll = [];
         usersDB.forEach(usersDB => {
             const {
                 user_id,
@@ -73,10 +75,14 @@ router.get('/users', async (req, res) => {
                     return null;
                 })(canceled_at),
             }
-
-            users.push(usersObj);
+            usersAll.push(usersObj);
         })
-
+        const users = [];
+        let pagination = 0;
+        for(let i = (offset*page)-offset; i<offset*page; i++){
+            users[pagination] = usersAll[i];
+            pagination++;
+        }
         res.status(200).json(util.getReturnObject(`관리자 권한으로 ${MSG.READ_USERDATA_SUCCESS}`, 200, {users}));
     } catch (e) {
         console.error(e);
