@@ -4,7 +4,7 @@ const router = express.Router();
 const DB = require('../common/database');
 const MSG = require('../common/message');
 const dayjs = require('dayjs');
-const util = require("../common/util");
+const util = require('../common/util');
 
 /* POST new post */
 router.post('/', async (req, res) => {
@@ -51,7 +51,7 @@ router.get('/', async (req, res) => {
     const page = req.query.pageNum;
     try {
         const postsDB = await DB.execute({
-            psmt: `select post_id, username, title, content, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL order by created_at DESC`,
+            psmt: `select post_id, name, title, content, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL order by created_at DESC`,
             binding: []
         });
 
@@ -61,7 +61,7 @@ router.get('/', async (req, res) => {
         postsDB.forEach(postsDB => {
             const {
                 post_id,
-                username,
+                name,
                 title,
                 content,
                 created_at,
@@ -71,7 +71,7 @@ router.get('/', async (req, res) => {
 
             const postsObj = {
                 postId: post_id,
-                writerName: username,
+                writerName: name,
                 title: title,
                 content: content,
                 createdAt: dayjs(created_at).format('YYYY-MM-DD'),
@@ -107,7 +107,7 @@ router.get('/:postId', async (req, res) => {
 
     try {
         const [postDB] = await DB.execute({
-            psmt: `select title, content, p.created_at, p.updated_at, category, u.user_id, username, email, type, p.canceled_at from POST p, USER u WHERE u.user_id = p.user_id and post_id = ?`,
+            psmt: `select title, content, p.created_at, p.updated_at, category, u.user_id, name, email, type, p.canceled_at from POST p, USER u WHERE u.user_id = p.user_id and post_id = ?`,
             binding: [postId]
         });
 
@@ -121,7 +121,7 @@ router.get('/:postId', async (req, res) => {
                 updated_at,
                 category,
                 user_id,
-                username,
+                name,
                 email,
                 type,
                 canceled_at
@@ -143,7 +143,7 @@ router.get('/:postId', async (req, res) => {
                     category: category,
                     writer: {
                         userId: user_id,
-                        userName: username,
+                        name: name,
                         email: email,
                         type: type
                     }

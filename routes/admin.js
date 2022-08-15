@@ -14,7 +14,7 @@ router.get('/users', async (req, res) => {
     const page = req.query.pageNum;
 
     try {
-        let sql = `select user_id, username, email, student_id, type, company, generation, github, created_at, canceled_at from USER`;
+        let sql = `select user_id, name, email, student_id, type, company, generation, github, created_at, canceled_at from USER`;
 
         if (sortOption == 'generation') {
             sql += ` order by generation DESC;`;
@@ -35,7 +35,7 @@ router.get('/users', async (req, res) => {
         usersDB.forEach(usersDB => {
             const {
                 user_id,
-                username,
+                name,
                 email,
                 student_id,
                 type,
@@ -48,7 +48,7 @@ router.get('/users', async (req, res) => {
 
             const usersObj = {
                 userId: user_id,
-                userName: username,
+                name: name,
                 email: email,
                 studentId: student_id,
                 type: ((type) => {
@@ -97,7 +97,7 @@ router.get('/users/:userId', async (req, res) => {
 
     try {
         const [userDB] = await DB.execute({
-            psmt: `select user_id, username, email, student_id, type, company, generation, github, created_at, canceled_at from USER where user_id = ?`,
+            psmt: `select user_id, name, email, student_id, type, company, generation, github, created_at, canceled_at from USER where user_id = ?`,
             binding: [userId]
         });
 
@@ -108,7 +108,7 @@ router.get('/users/:userId', async (req, res) => {
         } else {
             const {
                 user_id,
-                username,
+                name,
                 email,
                 student_id,
                 type,
@@ -119,9 +119,9 @@ router.get('/users/:userId', async (req, res) => {
                 canceled_at
             } = userDB;
 
-            res.status(200).json(util.getReturnObject(`어드민 권한으로 ${username}${MSG.READ_USER_SUCCESS}`, 200, {
+            res.status(200).json(util.getReturnObject(`어드민 권한으로 ${name}${MSG.READ_USER_SUCCESS}`, 200, {
                 userId: user_id,
-                userName: username,
+                name: name,
                 email: email,
                 studentId: student_id,
                 type: ((type) => {
@@ -245,7 +245,7 @@ router.patch('/users/:userId/kick', async (req, res) => {
 router.get('/posts', async (req, res) => {
     try {
         const postsDB = await DB.execute({
-            psmt: `select post_id, username, title, content, p.created_at, p.updated_at, p.canceled_at, category from POST p, USER u WHERE p.user_id = u.user_id order by created_at DESC`,
+            psmt: `select post_id, name, title, content, p.created_at, p.updated_at, p.canceled_at, category from POST p, USER u WHERE p.user_id = u.user_id order by created_at DESC`,
             binding: []
         })
 
@@ -255,7 +255,7 @@ router.get('/posts', async (req, res) => {
         postsDB.forEach(postsDB => {
             const {
                 post_id,
-                username,
+                name,
                 title,
                 content,
                 created_at,
@@ -266,7 +266,7 @@ router.get('/posts', async (req, res) => {
 
             const postsObj = {
                 postId: post_id,
-                writerName: username,
+                writerName: name,
                 title: title,
                 content: content,
                 createdAt: dayjs(created_at).format('YYYY-MM-DD'),
