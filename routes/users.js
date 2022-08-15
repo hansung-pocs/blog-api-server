@@ -14,7 +14,7 @@ router.get('/', async (req, res) => {
     const page = req.query.pageNum;
 
     try {
-        let sql = `select * from USER where canceled_at is NULL`;
+        let sql = `select * from USER where canceled_at is NULL and type is NOT NULL`;
 
         if (sortOption === 'generation') {
             console.log('sorting by generation');
@@ -92,7 +92,7 @@ router.get('/:userId', async (req, res) => {
 
     try {
         const [userDB] = await DB.execute({
-            psmt: `select * from USER where user_id = ?`,
+            psmt: `select * from USER where user_id = ? and type is NOT NULL`,
             binding: [user_id]
         });
 
