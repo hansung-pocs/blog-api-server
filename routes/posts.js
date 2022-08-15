@@ -22,14 +22,14 @@ router.post('/', async (req, res) => {
             binding: [userId]
         });
 
-        const {type = 'member'} = userDB;
+        const {type} = userDB;
 
         if (!userId || !title || !content || !category) {
             res.status(403).json(util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
-        } else if (category != 'memory' && category != 'notice' && category != 'study' && category != 'knowhow' && category != 'reference') {
+        } else if (category != 'memory' && category != 'notice' && category != 'study' && category != 'knowhow' && category != 'reference' && category != 'Q&A') {
             res.status(403).json(util.getReturnObject(MSG.WRONG_CATEGORY, 403, {}));
         } else {
-            if (type === 'member' && category === 'notice') {
+            if ((type === 'member' && category === 'notice') || ((!type) && category != 'Q&A')) {
                 res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
             } else {
                 await DB.execute({
@@ -88,7 +88,7 @@ router.get('/', async (req, res) => {
         })
         const posts = [];
         let pagination = 0;
-        for(let i = (offset*page)-offset; i<offset*page; i++){
+        for (let i = (offset * page) - offset; i < offset * page; i++) {
             posts[pagination] = postsAll[i];
             pagination++;
         }
@@ -178,6 +178,8 @@ router.patch('/:postId', async (req, res, next) => {
             res.status(403).json(util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
         } else if (postDB.user_id !== userId) {
             res.status(403).json(util.getReturnObject(MSG.NOT_YOUR_POST, 403, {}));
+        } else if (category != 'memory' && category != 'notice' && category != 'study' && category != 'knowhow' && category != 'reference' && category != 'Q&A') {
+            res.status(403).json(util.getReturnObject(MSG.WRONG_CATEGORY, 403, {}));
         } else {
             let sql = 'update POST set';
             const bindings = [];
@@ -236,18 +238,17 @@ router.patch('/:postId/delete', async (req, res, next) => {
             res.status(403).json(util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
         } else if (!userId) {
             res.status(403).json(util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
-        } else if (!userDB.type || userDB.type === 'unknown') {
-            res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
-        } else if (userDB.type === 'admin' || (userDB.type === 'member' && postDB.user_id === userId)) {
+        } else if (userDB.type !== 'admin') {
+            if (postDB.user_id !== userId) {
+                res.status(403).json(util.getReturnObject(MSG.NOT_YOUR_POST, 403, {}));
+            }
+        } else {
             await DB.execute({
                 psmt: `update POST set canceled_at = NOW() where post_id = ?`,
                 binding: [postId]
             });
             res.status(201).json(util.getReturnObject(MSG.POST_DELETE_SUCCESS, 201, {}));
-        } else {
-            res.status(403).json(util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         }
-
     } catch (e) {
         console.error(e);
         res.status(501).json(util.getReturnObject(e.message, 501, {}));

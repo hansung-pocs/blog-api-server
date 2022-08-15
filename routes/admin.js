@@ -79,7 +79,7 @@ router.get('/users', async (req, res) => {
         })
         const users = [];
         let pagination = 0;
-        for(let i = (offset*page)-offset; i<offset*page; i++){
+        for (let i = (offset * page) - offset; i < offset * page; i++) {
             users[pagination] = usersAll[i];
             pagination++;
         }

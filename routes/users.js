@@ -22,8 +22,7 @@ router.get('/', async (req, res) => {
         } else if (sortOption === 'studentId') {
             console.log('sorting by studentId');
             sql += ` order by student_id;`;
-        }
-        else {
+        } else {
             sql += ` order by created_at DESC;`;
         }
 
@@ -72,7 +71,7 @@ router.get('/', async (req, res) => {
         })
         const users = [];
         let pagination = 0;
-        for(let i = (offset*page)-offset; i<offset*page; i++){
+        for (let i = (offset * page) - offset; i < offset * page; i++) {
             users[pagination] = usersAll[i];
             pagination++;
         }
