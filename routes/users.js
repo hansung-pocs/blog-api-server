@@ -236,4 +236,35 @@ router.patch('/:user_id', async (req, res) => {
     }
 });
 
+//비회원 회원가입
+router.post('/', async (req, res) => {
+    const {
+        userName,
+        password,
+    } = req.body
+
+    try {
+        const [checkUserName] = await DB.execute({
+            psmt: `select user_id from USER where username = ?`,
+            binding: [userName]
+        });
+
+        if (!userName || !password) {
+            res.status(403).json(util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
+        } else if (checkUserName != null) {
+            res.status(403).json(util.getReturnObject(MSG.EXIST_USERNAME, 403, {}));
+        } else {
+            await DB.execute({
+                psmt: `insert into USER (username, password, created_at, updated_at) VALUES(?, ?, NOW(), NOW())`,
+                binding: [userName, password]
+            });
+
+            res.status(201).json(util.getReturnObject(MSG.USER_ADDED, 201, {}));
+        }
+    } catch (error) {
+        console.log(error);
+        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
+    }
+});
+
 module.exports = router;
