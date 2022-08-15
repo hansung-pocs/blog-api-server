@@ -49,9 +49,15 @@ router.post('/', async (req, res) => {
 router.get('/', async (req, res) => {
     const offset = req.query.offset;
     const page = req.query.pageNum;
+    const title = decodeURI(req.query.title);
     try {
+        let sql = `select post_id, name, title, content, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL`;
+
+        if(!!title){
+            sql += ` and title like '%${title}%'`
+        }
         const postsDB = await DB.execute({
-            psmt: `select post_id, name, title, content, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL order by created_at DESC`,
+            psmt: sql + ` order by created_at DESC;`,
             binding: []
         });
 
