@@ -84,6 +84,7 @@ router.get('/users', async (req, res) => {
             pagination++;
         }
         res.status(200).json(util.getReturnObject(`관리자 권한으로 ${MSG.READ_USERDATA_SUCCESS}`, 200, {users}));
+        pagination = 0;
     } catch (e) {
         console.error(e);
         res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
@@ -243,15 +244,24 @@ router.patch('/users/:userId/kick', async (req, res) => {
 
 /* GET posts list by admin(included deleted posts) */
 router.get('/posts', async (req, res) => {
+    const offset = req.query.offset;
+    const page = req.query.pageNum;
+    const title = decodeURI(req.query.title);
     try {
+        let sql = `select post_id, name, title, content, p.created_at, p.updated_at, p.canceled_at, category from POST p, USER u WHERE p.user_id = u.user_id`;
+
+        if(!!title){
+            sql += ` and title like '%${title}%'`
+        }
+
         const postsDB = await DB.execute({
-            psmt: `select post_id, name, title, content, p.created_at, p.updated_at, p.canceled_at, category from POST p, USER u WHERE p.user_id = u.user_id order by created_at DESC`,
+            psmt: sql + ` order by created_at DESC;`,
             binding: []
-        })
+        });
 
         console.log('users: %j', postsDB);
 
-        const posts = [];
+        const postsAll = [];
         postsDB.forEach(postsDB => {
             const {
                 post_id,
@@ -284,9 +294,16 @@ router.get('/posts', async (req, res) => {
                 })(canceled_at),
                 category: category
             }
-            posts.push(postsObj);
+            postsAll.push(postsObj);
         })
+        const posts = [];
+        let pagination = 0;
+        for (let i = (offset * page) - offset; i < offset * page; i++) {
+            posts[pagination] = postsAll[i];
+            pagination++;
+        }
         res.status(200).json(util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {posts}));
+        pagination = 0;
     } catch (error) {
         console.log(error);
         res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
@@ -295,13 +312,20 @@ router.get('/posts', async (req, res) => {
 
 /* GET get for posts written by a specific user by admin */
 router.get('/posts/:userId', async (req, res) => {
-
     const userId = req.params.userId;
+    const offset = req.query.offset;
+    const page = req.query.pageNum;
+    const title = decodeURI(req.query.title);
 
     try {
+        let sql = `select post_id, title, content, created_at, updated_at, canceled_at, category from POST WHERE user_id = ?`;
+
+        if(!!title){
+            sql += ` and title like '%${title}%'`
+        }
         const postsDB = await DB.execute({
-            psmt: `select post_id, title, content, created_at, updated_at, canceled_at, category from POST WHERE user_id = ?`,
-            binding: [userId]
+            psmt: sql + ` order by created_at DESC;`,
+            binding: []
         });
 
         console.log('post: %j', postsDB);
@@ -309,7 +333,7 @@ router.get('/posts/:userId', async (req, res) => {
         if (postsDB.length === 0) {
             res.status(404).json(util.getReturnObject(MSG.CANT_READ_POSTDATA, 404, {}));
         } else {
-            const posts = [];
+            const postsAll = [];
             postsDB.forEach(postsDB => {
                 const {
                     post_id,
@@ -341,9 +365,16 @@ router.get('/posts/:userId', async (req, res) => {
                     category: category
                 }
 
-                posts.push(postsObj);
+                postsAll.push(postsObj);
             })
+            const posts = [];
+            let pagination = 0;
+            for (let i = (offset * page) - offset; i < offset * page; i++) {
+                posts[pagination] = postsAll[i];
+                pagination++;
+            }
             res.status(200).json(util.getReturnObject(`관리자 권한으로 userID : ${userId}의 ${MSG.READ_POSTDATA_SUCCESS}`, 200, {posts}));
+            pagination = 0;
         }
     } catch (e) {
         console.error(e);
