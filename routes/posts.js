@@ -5,9 +5,10 @@ const DB = require('../common/database');
 const MSG = require('../common/message');
 const dayjs = require('dayjs');
 const util = require('../common/util');
+const {isLoggedIn} = require("../common/middlewares");
 
 /* POST new post */
-router.post('/', async (req, res) => {
+router.post('/', isLoggedIn, async (req, res) => {
 
     const {
         userId,
@@ -163,7 +164,7 @@ router.get('/:postId', async (req, res) => {
 });
 
 /* PATCH (edit) post info */
-router.patch('/:postId', async (req, res, next) => {
+router.patch('/:postId', isLoggedIn, async (req, res, next) => {
 
     const {
         userId,
@@ -226,7 +227,7 @@ router.patch('/:postId', async (req, res, next) => {
 });
 
 /* PATCH (delete) post */
-router.patch('/:postId/delete', async (req, res, next) => {
+router.patch('/:postId/delete', isLoggedIn, async (req, res, next) => {
     const userId = req.body.userId;
     const postId = req.params.postId;
     try {

@@ -5,9 +5,10 @@ const util = require('../common/util');
 const DB = require('../common/database');
 const dayjs = require('dayjs')
 const MSG = require('../common/message');
+const {isAdmin} = require("../common/middlewares");
 
 /* GET users list by admin */
-router.get('/users', async (req, res) => {
+router.get('/users', isAdmin, async (req, res) => {
 
     const sortOption = req.query.sort;
     const offset = req.query.offset;
@@ -92,7 +93,7 @@ router.get('/users', async (req, res) => {
 });
 
 /* GET user detail by admin */
-router.get('/users/:userId', async (req, res) => {
+router.get('/users/:userId', isAdmin, async (req, res) => {
 
     const userId = req.params.userId;
 
@@ -156,7 +157,7 @@ router.get('/users/:userId', async (req, res) => {
 });
 
 /* POST regist new user by admin */
-router.post('/users', async (req, res) => {
+router.post('/users', isAdmin, async (req, res) => {
     const {
         userName,
         password,
@@ -216,7 +217,7 @@ router.post('/users', async (req, res) => {
 });
 
 /* PATCH (delete) user by admin */
-router.patch('/users/:userId/kick', async (req, res) => {
+router.patch('/users/:userId/kick', isAdmin, async (req, res) => {
     const userId = req.params.userId;
 
     try {
@@ -243,7 +244,7 @@ router.patch('/users/:userId/kick', async (req, res) => {
 });
 
 /* GET posts list by admin(included deleted posts) */
-router.get('/posts', async (req, res) => {
+router.get('/posts', isAdmin, async (req, res) => {
     const offset = req.query.offset;
     const page = req.query.pageNum;
     const title = decodeURI(req.query.title);
@@ -311,7 +312,7 @@ router.get('/posts', async (req, res) => {
 });
 
 /* GET get for posts written by a specific user by admin */
-router.get('/posts/:userId', async (req, res) => {
+router.get('/posts/:userId', isAdmin, async (req, res) => {
     const userId = req.params.userId;
     const offset = req.query.offset;
     const page = req.query.pageNum;
@@ -383,7 +384,7 @@ router.get('/posts/:userId', async (req, res) => {
 });
 
 /* PATCH (delete) post by admin */
-router.patch('/posts/:postId/delete', async (req, res, next) => {
+router.patch('/posts/:postId/delete', isAdmin, async (req, res, next) => {
 
     const postId = req.params.postId;
     try {
