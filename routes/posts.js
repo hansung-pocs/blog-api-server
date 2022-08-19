@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const DB = require('../common/database');
+
 const dayjs = require('dayjs');
 const MSG = require('../common/message');
 const Util = require('../common/util');
@@ -47,9 +48,41 @@ router.post('/', async (req, res) => {
 
 /* GET posts list */
 router.get('/', async (req, res) => {
+
+    const filter = req.query.id;
+
     try {
+        let sql = `select post_id, name, title, content, views, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL`;
+
+        // id값이 없을 때 -> order by p.created_at DESC
+        // id값에 잘못된 값이 들어왔을 때 -> res.status(400)....
+        // 정상적인 id값: best, notice, memory, knowhow, reference, study
+
+        if (!filter) {
+            sql += ` order by p.created_at DESC;`;
+        } else {
+            if (filter === 'best') {
+                sql += ` order by views DESC;`;
+            } else if (filter === 'notice' || filter === 'memory' || filter === 'knowhow' || filter === 'reference' || filter === 'study') {
+                sql += ` and category = '${filter}' order by p.created_at DESC;`;
+            } else {
+                res.status(400).json(Util.getReturnObject('잘못된 id값입니다.', 400, {}));
+            }
+        }
+
+
+        // if (filter === 'best') {
+        //     sql += ` order by views DESC;`;
+        // } else if (filter === 'notice' || 'memory' || 'knowhow' || 'reference' || 'study') {
+        //     sql += ` and category = '${filter}' order by p.created_at DESC;`;
+        // } else if (!filter) {
+        //     sql += ` order by p.created_at DESC;`;
+        // } else {
+        //     res.status(400).json(Util.getReturnObject('잘못된 id값입니다.', 400, {}));
+        // }
+
         const postsDB = await DB.execute({
-            psmt: `select post_id, name, title, content, views, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL order by created_at DESC`,
+            psmt: sql,
             binding: []
         });
 
