@@ -150,7 +150,7 @@ router.get('/:postId', async (req, res) => {
         });
 
         const [postDB] = await DB.execute({
-            psmt: `select * from POST p, USER u where p.canceled_at is null and u.user_id = p.user_id and post_id = ?`,
+            psmt: `select select title, content, views, p.created_at, p.updated_at, category, u.user_id, name, email, type, p.canceled_at from POST p, USER u where p.canceled_at is null and u.user_id = p.user_id and post_id = ?`,
             binding: [postId]
         });
 
@@ -165,7 +165,7 @@ router.get('/:postId', async (req, res) => {
             name,
             email,
             type,
-            canceled_at
+            canceled_at,
         } = postDB;
 
         if (!!canceled_at) {
