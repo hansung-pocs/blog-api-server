@@ -307,7 +307,7 @@ router.get('/posts', isAdmin,async (req, res) => {
 });
 
 /* GET get for posts written by a specific user by admin */
-router.get('/posts/:userId',  async (req, res) => {
+router.get('/posts/:userId', isAdmin, async (req, res) => {
     const userId = req.params.userId;
     const offset = Number(req.query.offset);
     const page = req.query.pageNum;

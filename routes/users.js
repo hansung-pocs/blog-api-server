@@ -8,27 +8,31 @@ const Util = require('../common/util');
 const {isLoggedIn, isNotLoggedIn} = require('../common/middlewares');
 
 /* GET users list. */
-router.get('/', async (req, res) => {
-
+router.get('/', isLoggedIn,async (req, res) => {
     const sortOption = req.query.sort;
-    const searchOption = req.query.search;
+    const searchOption = decodeURI(req.query.search);
+    const offset = Number(req.query.offset);
+    const page = req.query.pageNum;
+    const start = (page - 1) * offset;
 
     try {
         let sql = `select * from USER where canceled_at is NULL`;
 
-        if (sortOption === 'generation') {
-            sql += ` order by generation DESC;`;
-        } else if (sortOption === 'studentId') {
-            sql += ` order by student_id;`;
-        } else if (!!searchOption) {
-            sql += ` and name like '%${searchOption}%';`;
+        if (searchOption != "undefined") {
+            sql += ` and name like '%${searchOption}%'`;
+        }
+
+        if (sortOption == 'generation') {
+            sql += ` order by generation DESC limit ?, ?;`;
+        } else if (sortOption == 'studentId') {
+            sql += ` order by student_id limit ?, ?;`;
         } else {
-            sql += ` order by created_at DESC;`;
+            sql += ` order by created_at DESC limit ?, ?;`;    // default는 생성된 순의 내림차순으로 정렬
         }
 
         const usersDB = await DB.execute({
             psmt: sql,
-            binding: []
+            binding: [start, offset]
         });
 
         const users = [];
@@ -42,7 +46,7 @@ router.get('/', async (req, res) => {
                 company,
                 generation,
                 github,
-                created_at,
+                created_at
             } = usersDB;
 
             const usersObj = {
@@ -71,12 +75,7 @@ router.get('/', async (req, res) => {
         })
 
         const countAllUsers = users.length;
-
-        res.status(200).json(Util.getReturnObject(MSG.READ_USERDATA_SUCCESS, 200, {
-            users,
-            countAllUsers
-        }));
-
+        res.status(200).json(Util.getReturnObject(MSG.READ_USERDATA_SUCCESS, 200, {users, countAllUsers}));
     } catch (e) {
         console.error(e);
         res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
@@ -85,7 +84,6 @@ router.get('/', async (req, res) => {
 
 /* GET user detail */
 router.get('/:userId', isLoggedIn, async (req, res) => {
-
     const user_id = req.params.userId;
 
     try {
@@ -144,7 +142,6 @@ router.get('/:userId', isLoggedIn, async (req, res) => {
 
 /* PATCH (edit) user info */
 router.patch('/:user_id', isLoggedIn, async (req, res) => {
-
     const userId = req.params.user_id;
     const body = req.body;
 
@@ -156,15 +153,10 @@ router.patch('/:user_id', isLoggedIn, async (req, res) => {
     }
 
     try {
-        const [[checkEmail], [userDB]] = await Promise.all([
-            await DB.execute({
-                psmt: `select user_id from USER where email = ?`,
-                binding: [email]
-            }),
-            await DB.execute({
-                psmt: `select * from USER where user_id = ?`,
-                binding: [userId]
-            })]);
+        const [userDB] = await DB.execute({
+            psmt: `select * from USER where user_id = ?`,
+            binding: [userId]
+        });
 
         if (userDB.canceled_at != null) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_USER_DATA, 403, {}));
