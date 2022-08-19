@@ -8,7 +8,8 @@ const Util = require('../common/util');
 const {isAdmin} = require('../common/middlewares');
 
 /* GET users list by admin */
-router.get('/users', isAdmin,async (req, res) => {
+//router.get('/users', isAdmin,async (req, res) => {
+router.get('/users', async (req, res) => {
 
     const sortOption = req.query.sort;
     const searchOption = req.query.search;
@@ -89,7 +90,8 @@ router.get('/users', isAdmin,async (req, res) => {
 });
 
 /* GET user detail by admin */
-router.get('/users/:userId', isAdmin, async (req, res) => {
+//router.get('/users/:userId', isAdmin, async (req, res) => {
+router.get('/users/:userId', async (req, res) => {
 
     const userId = req.params.userId;
 
@@ -151,7 +153,8 @@ router.get('/users/:userId', isAdmin, async (req, res) => {
 });
 
 /* POST regist new user by admin */
-router.post('/users', isAdmin, async (req, res) => {
+//router.post('/users', isAdmin, async (req, res) => {
+router.post('/users', async (req, res) => {
     const {
         userName,
         password,
@@ -218,7 +221,8 @@ router.post('/users', isAdmin, async (req, res) => {
 });
 
 /* PATCH (delete) user by admin */
-router.patch('/users/:userId/kick', isAdmin, async (req, res) => {
+// router.patch('/users/:userId/kick', isAdmin, async (req, res) => {
+router.patch('/users/:userId/kick', async (req, res) => {
     const userId = req.params.userId;
 
     try {
@@ -246,7 +250,9 @@ router.patch('/users/:userId/kick', isAdmin, async (req, res) => {
 });
 
 /* GET posts list by admin(included deleted posts) */
-router.get('/posts', isAdmin,async (req, res) => {
+//router.get('/posts', isAdmin,async (req, res) => {
+router.get('/posts', async (req, res) => {
+
     const offset = Number(req.query.offset);
     const page = req.query.pageNum;
     const title = decodeURI(req.query.title);
@@ -307,7 +313,8 @@ router.get('/posts', isAdmin,async (req, res) => {
 });
 
 /* GET get for posts written by a specific user by admin */
-router.get('/posts/:userId', isAdmin, async (req, res) => {
+//router.get('/posts/:userId', isAdmin, async (req, res) => {
+router.get('/posts/:userId', async (req, res) => {
     const userId = req.params.userId;
     const offset = Number(req.query.offset);
     const page = req.query.pageNum;
@@ -372,7 +379,8 @@ router.get('/posts/:userId', isAdmin, async (req, res) => {
 });
 
 /* PATCH (delete) post by admin */
-router.patch('/posts/:postId/delete', isAdmin, async (req, res, next) => {
+//router.patch('/posts/:postId/delete', isAdmin, async (req, res, next) => {
+router.patch('/posts/:postId/delete', async (req, res, next) => {
     const postId = req.params.postId;
 
     try {

@@ -8,7 +8,8 @@ const Util = require('../common/util');
 const {isLoggedIn, isNotLoggedIn} = require('../common/middlewares');
 
 /* GET users list. */
-router.get('/', isLoggedIn,async (req, res) => {
+//router.get('/', isLoggedIn,async (req, res) => {
+router.get('/', async (req, res) => {
     const sortOption = req.query.sort;
     const searchOption = decodeURI(req.query.search);
     const offset = Number(req.query.offset);
@@ -83,7 +84,8 @@ router.get('/', isLoggedIn,async (req, res) => {
 });
 
 /* GET user detail */
-router.get('/:userId', isLoggedIn, async (req, res) => {
+//router.get('/:userId', isLoggedIn, async (req, res) => {
+router.get('/:userId', async (req, res) => {
     const user_id = req.params.userId;
 
     try {
@@ -141,7 +143,8 @@ router.get('/:userId', isLoggedIn, async (req, res) => {
 });
 
 /* PATCH (edit) user info */
-router.patch('/:user_id', isLoggedIn, async (req, res) => {
+//router.patch('/:user_id', isLoggedIn, async (req, res) => {
+router.patch('/:user_id', async (req, res) => {
     const userId = req.params.user_id;
     const body = req.body;
 
@@ -194,6 +197,7 @@ router.patch('/:user_id', isLoggedIn, async (req, res) => {
 });
 
 //비회원 회원가입
+//router.post('/', async (req, res) => {
 router.post('/', isNotLoggedIn, async (req, res) => {
     const {
         userName,
