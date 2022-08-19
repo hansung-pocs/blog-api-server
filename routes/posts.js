@@ -150,7 +150,7 @@ router.get('/:postId', async (req, res) => {
         });
 
         const [postDB] = await DB.execute({
-            psmt: `select * from POST p, USER u where u.user_id = p.user_id and post_id = ?`,
+            psmt: `select * from POST p, USER u where p.canceled_at is null and u.user_id = p.user_id and post_id = ?`,
             binding: [postId]
         });
 
