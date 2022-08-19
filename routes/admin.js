@@ -4,7 +4,7 @@ const router = express.Router();
 const DB = require('../common/database');
 const dayjs = require('dayjs');
 const MSG = require('../common/message');
-const Util = require('../common/Util');
+const Util = require('../common/util');
 const {isAdmin} = require('../common/middlewares');
 
 /* GET users list by admin */
@@ -183,25 +183,25 @@ router.post('/users', isAdmin, async (req, res) => {
         ]);
 
         if (!userName || !password || !name || !studentId || !email || !generation || !type) {
-            return res.status(403).json(Utill.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
+            return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
         if (!correctEmail.test(email)) {
-            return res.status(403).json(Utill.getReturnObject(MSG.WRONG_EMAIL, 403, {}));
+            return res.status(403).json(Util.getReturnObject(MSG.WRONG_EMAIL, 403, {}));
         }
         if (1000000 >= studentId && studentId >= 9999999) {
-            return res.status(403).json(Utill.getReturnObject(MSG.WRONG_STUDENTID, 403, {}));
+            return res.status(403).json(Util.getReturnObject(MSG.WRONG_STUDENTID, 403, {}));
         }
         if (type != 'admin' && type != 'member') {
-            return res.status(403).json(Utill.getReturnObject(MSG.WRONG_TYPE, 403, {}));
+            return res.status(403).json(Util.getReturnObject(MSG.WRONG_TYPE, 403, {}));
         }
         if (checkUserName != null) {
-            return res.status(403).json(Utill.getReturnObject(MSG.EXIST_USERNAME, 403, {}));
+            return res.status(403).json(Util.getReturnObject(MSG.EXIST_USERNAME, 403, {}));
         }
         if (checkStudentId != null) {
-            return res.status(403).json(Utill.getReturnObject(MSG.EXIST_STUDENTID, 403, {}));
+            return res.status(403).json(Util.getReturnObject(MSG.EXIST_STUDENTID, 403, {}));
         }
         if (checkEmail != null) {
-            return res.status(403).json(Utill.getReturnObject(MSG.EXIST_EMAIL, 403, {}));
+            return res.status(403).json(Util.getReturnObject(MSG.EXIST_EMAIL, 403, {}));
         }
 
         await DB.execute({
