@@ -95,51 +95,50 @@ router.get('/:userId', isLoggedIn, async (req, res) => {
         });
 
         if (!userDB) {
-            res.status(404).json(Util.getReturnObject(MSG.NO_USER_DATA, 404, {}));
+            return res.status(404).json(Util.getReturnObject(MSG.NO_USER_DATA, 404, {}));
+        }
+        const {
+            user_id,
+            name,
+            email,
+            student_id,
+            type,
+            company,
+            generation,
+            github,
+            created_at,
+            canceled_at
+        } = userDB;
+
+        if (!!canceled_at) {
+            return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         } else {
-            const {
-                user_id,
-                name,
-                email,
-                student_id,
-                type,
-                company,
-                generation,
-                github,
-                created_at,
-                canceled_at
-            } = userDB;
+            return res.status(200).json(Util.getReturnObject(`${name} ${MSG.READ_USER_SUCCESS}`, 200, {
+                userId: user_id,
+                name: name,
+                email: email,
+                studentId: student_id,
+                type: ((type) => {
+                    if (!type) return '비회원';
 
-            if (!!canceled_at) {
-                res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
-            } else {
-                res.status(200).json(Util.getReturnObject(`${name} ${MSG.READ_USER_SUCCESS}`, 200, {
-                    userId: user_id,
-                    name: name,
-                    email: email,
-                    studentId: student_id,
-                    type: ((type) => {
-                        if (!type) return '비회원';
-
-                        switch (type) {
-                            case 'admin':
-                                return 'admin';
-                            case 'member':
-                                return 'member';
-                            default:
-                                return 'unknown';
-                        }
-                    })(type),
-                    company: company || null,
-                    generation: generation,
-                    github: github || null,
-                    createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss')
-                }));
-            }
+                    switch (type) {
+                        case 'admin':
+                            return 'admin';
+                        case 'member':
+                            return 'member';
+                        default:
+                            return 'unknown';
+                    }
+                })(type),
+                company: company || null,
+                generation: generation,
+                github: github || null,
+                createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss')
+            }));
         }
     } catch (error) {
         console.error(error);
-        res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
+        return res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
 
@@ -147,80 +146,60 @@ router.get('/:userId', isLoggedIn, async (req, res) => {
 router.patch('/:user_id', isLoggedIn, async (req, res) => {
 
     const userId = req.params.user_id;
-    const {
-        password,
-        name,
-        email,
-        github,
-        company
-    } = req.body;
+    const body = req.body;
+
+    const {email} = body;
 
     const correctEmail = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/;
+    if (!email || !correctEmail.test(email)) {
+        return res.status(403).json(Util.getReturnObject(MSG.WRONG_EMAIL, 403, {}));
+    }
 
     try {
         // 요청한 사람이 본인 또는 관리자인지 검증 필요
-        const [checkEmail] = await DB.execute({
-            psmt: `select user_id from USER where email = ?`,
-            binding: [email]
-        });
-
-        const [userDB] = await DB.execute({
-            psmt: `select * from USER where user_id = ?`,
-            binding: [userId]
-        });
-
-        //  const [[checkEmail], [userDB]] = await Promise.all
+        const [[checkEmail], [userDB]] = await Promise.all([
+            await DB.execute({
+                psmt: `select user_id from USER where email = ?`,
+                binding: [email]
+            }),
+            await DB.execute({
+                psmt: `select * from USER where user_id = ?`,
+                binding: [userId]
+            })]);
 
         if (userDB.canceled_at != null) {
-            res.status(403).json(Util.getReturnObject(MSG.NO_USER_DATA, 403, {}));
-        } else if (!correctEmail.test(email)) {
-            res.status(403).json(Util.getReturnObject(MSG.WRONG_EMAIL, 403, {}));
-        } else if (userDB.type === 'admin' || userDB.type === 'member') {
+            return res.status(403).json(Util.getReturnObject(MSG.NO_USER_DATA, 403, {}));
+        }
+
+        if (!["admin", "member"].includes(userDB.type)) {
+            return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
+        }
+
+        const {sql, bindings} = (() => {
             let sql = `update USER set`;
             const bindings = [];
-            console.log(bindings.length);
-
-            if (userDB.password != password) {
-                sql += ` password = ?,`;
-                bindings.push(password);
-            }
-            if (userDB.name != name) {
-                sql += ` name = ?,`;
-                bindings.push(name);
-            }
-            if (userDB.email != email) {
-                if (checkEmail != null) {
-                    res.status(403).json(Util.getReturnObject(MSG.EXIST_EMAIL, 403, {}));
+            ["password", "name", "email", "github", "company"].forEach(col => {
+                if (userDB[col] != body[col]) {
+                    sql += ` ${col} = ?,`;
+                    bindings.push(body[col]);
                 }
-                sql += ` email = ?,`;
-                bindings.push(email);
-            }
-            if (userDB.github != github) {
-                sql += ` github = ?,`;
-                bindings.push(github);
-            }
-            if (userDB.company != company) {
-                sql += ` company = ?,`;
-                bindings.push(company);
-            }
+            });
 
-            if (bindings.length === 0) {
-                res.status(404).json(Util.getReturnObject(MSG.NO_CHANGED_INFO, 404, {}));
-            } else {
-                sql += ` updated_at = NOW() where user_id = ?;`;
-                bindings.push(userId);
+            sql += ` updated_at = NOW() where user_id = ?;`;
+            bindings.push(userId);
 
-                await DB.execute({
-                    psmt: sql,
-                    binding: bindings
-                });
-                // http status code 204: 요청 수행 완료, 반환 값 없음.
-                res.status(302).json(Util.getReturnObject(MSG.USER_UPDATE_SUCCESS, 302, {}));
-            }
-        }
+            return {bindings, sql};
+        })(body);
+
+        await DB.execute({
+            psmt: sql,
+            binding: bindings
+        });
+        // http status code 204: 요청 수행 완료, 반환 값 없음.
+        return res.status(302).json(Util.getReturnObject(MSG.USER_UPDATE_SUCCESS, 302, {}));
     } catch (e) {
         console.log(e);
-        res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
+        return res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
 
@@ -248,11 +227,11 @@ router.post('/', isNotLoggedIn, async (req, res) => {
             binding: [userName, password]
         });
 
-        res.status(201).json(Util.getReturnObject(MSG.USER_ADDED, 201, {}));
+        return res.status(201).json(Util.getReturnObject(MSG.USER_ADDED, 201, {}));
 
     } catch (error) {
         console.log(error);
-        res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
+        return res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
 

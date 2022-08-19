@@ -27,20 +27,25 @@ router.post('/', isLoggedIn, async (req, res) => {
         const {type} = userDB;
 
         if (!userId || !title || !content || !category) {
-            res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
-        } else if (category != 'memory' && category != 'notice' && category != 'study' && category != 'knowhow' && category != 'reference' && category != 'QNA') {
-            res.status(403).json(Util.getReturnObject(MSG.WRONG_CATEGORY, 403, {}));
-        } else {
-            if ((type === 'member' && category === 'notice') || ((!type) && category != 'QNA')) {
-                res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
-            } else {
-                await DB.execute({
-                    psmt: `insert into POST (title, content, user_id, created_at, category) VALUES(?, ?, ?, NOW(), ?)`,
-                    binding: [title, content, userId, category]
-                });
-                res.status(201).json(Util.getReturnObject(MSG.POST_ADDED, 201, {}));
-            }
+            return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
+
+        if (!["memory", "notice", "study", "knowhow", "reference", "QNA"].includes(category)) {
+            return res.status(403).json(Util.getReturnObject(MSG.WRONG_CATEGORY, 403, {}));
+        }
+
+        // 멤버인 사람이 공지를 남기거나
+        // 비회원이 QNA아닌 글 쓸 경우
+        if ((type === 'member' && category === 'notice') || ((!type) && category != 'QNA')) {
+            return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
+        }
+
+        await DB.execute({
+            psmt: `insert into POST (title, content, user_id, created_at, category) VALUES(?, ?, ?, NOW(), ?)`,
+            binding: [title, content, userId, category]
+        });
+
+        return res.status(201).json(Util.getReturnObject(MSG.POST_ADDED, 201, {}));
     } catch (error) {
         console.error(error);
         res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
@@ -65,22 +70,11 @@ router.get('/', async (req, res) => {
                 sql += ` order by views DESC;`;
             } else if (filter === 'notice' || filter === 'memory' || filter === 'knowhow' || filter === 'reference' || filter === 'study') {
                 sql += ` and category = '${filter}' order by p.created_at DESC;`;
-            } else if (filter != 'best' && filter != 'notice' && filter != 'memory' && filter != 'knowhow' && filter != 'reference' && filter != 'study' && filter != 'null') {
-                res.status(400).json(Util.getReturnObject('잘못된 id값입니다.', 400, {}));
+            } else {
+                return res.status(400).json(Util.getReturnObject('잘못된 id값입니다.', 400, {}));
             }
         }
 
-
-        // if (filter == null) {
-        //     sql += ` order by p.created_at DESC;`;
-        // } else if (filter === 'notice' || 'memory' || 'knowhow' || 'reference' || 'study') {
-        //     sql += ` and category = '${filter}' order by p.created_at DESC;`;
-        // } else if (filter === 'best') {
-        //     sql += ` order by views DESC;`;
-        // } else {
-        //     console.log('agag');
-        //     res.status(400).json(Util.getReturnObject('잘못된 id값입니다.', 400, {}));
-        // }
 
         const postsDB = await DB.execute({
             psmt: sql,
@@ -174,31 +168,31 @@ router.get('/:postId', async (req, res) => {
         } = postDB;
 
         if (!!canceled_at) {
-            res.status(403).json(Util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
-        } else {
-            res.status(200).json(Util.getReturnObject(`${title} ${MSG.READ_POST_SUCCESS}`, 200, {
-                title: title,
-                content: content,
-                views: views,
-                createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss'),
-                updatedAt: ((updated_at) => {
-                    if (!!updated_at) {
-                        return dayjs(updated_at).format('YYYY-MM-DD HH:mm:ss')
-                    }
-                    return null;
-                })(updated_at),
-                category: category,
-                writer: {
-                    userId: user_id,
-                    name: name,
-                    email: email,
-                    type: type
-                }
-            }));
+            return res.status(403).json(Util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
         }
+
+        return res.status(200).json(Util.getReturnObject(`${title} ${MSG.READ_POST_SUCCESS}`, 200, {
+            title: title,
+            content: content,
+            views: views,
+            createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss'),
+            updatedAt: ((updated_at) => {
+                if (!!updated_at) {
+                    return dayjs(updated_at).format('YYYY-MM-DD HH:mm:ss')
+                }
+                return null;
+            })(updated_at),
+            category: category,
+            writer: {
+                userId: user_id,
+                name: name,
+                email: email,
+                type: type
+            }
+        }));
     } catch (e) {
         console.error(e);
-        res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
+        return res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
 
@@ -222,44 +216,42 @@ router.patch('/:postId', isLoggedIn, async (req, res, next) => {
         })
 
         if (postDB.canceled_at != null) {
-            res.status(403).json(Util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
-        } else if (postDB.user_id !== userId) {
-            res.status(403).json(Util.getReturnObject(MSG.NOT_YOUR_POST, 403, {}));
-        } else if (category != 'memory' && category != 'notice' && category != 'study' && category != 'knowhow' && category != 'reference' && category != 'QNA') {
-            res.status(403).json(Util.getReturnObject(MSG.WRONG_CATEGORY, 403, {}));
-        } else {
-            let sql = 'update POST set';
-            const bindings = [];
-
-            if (!!title && postDB.title != title) {
-                sql += ' title = ?,';
-                bindings.push(title);
-            }
-            if (!!content && postDB.content != content) {
-                sql += ' content = ?,';
-                bindings.push(content);
-            }
-            if (!!category && postDB.category != category) {
-                sql += ' category = ?,';
-                bindings.push(category);
-            }
-
-            console.log(bindings.length);
-
-            if (bindings.length === 0) {
-                res.status(404).json(Util.getReturnObject(MSG.NO_CHANGED_INFO, 404, {}));
-            } else {
-                sql += ' updated_at = NOW() where post_id = ?;';
-                bindings.push(postId);
-
-                await DB.execute({
-                    psmt: sql,
-                    binding: bindings
-                });
-
-                res.status(302).json(Util.getReturnObject(MSG.POST_UPDATE_SUCCESS, 302, {}));
-            }
+            return res.status(403).json(Util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
         }
+        if (postDB.user_id !== userId) {
+            return res.status(403).json(Util.getReturnObject(MSG.NOT_YOUR_POST, 403, {}));
+        }
+        if (category != 'memory' && category != 'notice' && category != 'study' && category != 'knowhow' && category != 'reference' && category != 'QNA') {
+            return res.status(403).json(Util.getReturnObject(MSG.WRONG_CATEGORY, 403, {}));
+        }
+
+        let sql = 'update POST set';
+        const bindings = [];
+
+        if (!!title && postDB.title != title) {
+            sql += ' title = ?,';
+            bindings.push(title);
+        }
+        if (!!content && postDB.content != content) {
+            sql += ' content = ?,';
+            bindings.push(content);
+        }
+        if (!!category && postDB.category != category) {
+            sql += ' category = ?,';
+            bindings.push(category);
+        }
+
+        if (bindings.length > 0) {
+            sql += ' updated_at = NOW() where post_id = ?;';
+            bindings.push(postId);
+
+            await DB.execute({
+                psmt: sql,
+                binding: bindings
+            });
+        }
+        return res.status(302).json(Util.getReturnObject(MSG.POST_UPDATE_SUCCESS, 302, {}));
+
     } catch (e) {
         console.error(e);
         res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
@@ -282,23 +274,27 @@ router.patch('/:postId/delete', isLoggedIn, async (req, res, next) => {
             })
         ])
         if (postDB.canceled_at != null) {
-            res.status(403).json(Util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
-        } else if (!userId) {
-            res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
-        } else if (userDB.type !== 'admin') {
-            if (postDB.user_id !== userId) {
-                res.status(403).json(Util.getReturnObject(MSG.NOT_YOUR_POST, 403, {}));
-            }
-        } else {
-            await DB.execute({
-                psmt: `update POST set canceled_at = NOW() where post_id = ?`,
-                binding: [postId]
-            });
-            res.status(201).json(Util.getReturnObject(MSG.POST_DELETE_SUCCESS, 201, {}));
+            return res.status(403).json(Util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
         }
+
+        if (!userId) {
+            return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
+        }
+
+        if (userDB.type !== 'admin' && postDB.user_id !== userId) {
+            return res.status(403).json(Util.getReturnObject(MSG.NOT_YOUR_POST, 403, {}));
+        }
+
+        await DB.execute({
+            psmt: `update POST set canceled_at = NOW() where post_id = ?`,
+            binding: [postId]
+        });
+
+        return res.status(201).json(Util.getReturnObject(MSG.POST_DELETE_SUCCESS, 201, {}));
+
     } catch (e) {
         console.error(e);
-        res.status(501).json(Util.getReturnObject(e.message, 501, {}));
+        return res.status(501).json(Util.getReturnObject(e.message, 501, {}));
     }
 });
 

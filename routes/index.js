@@ -18,8 +18,6 @@ router.get('/best', async (req, res) => {
             binding: []
         });
 
-        console.log('posts: %j', postsDB);
-
         const posts = [];
         postsDB.forEach(postsDB => {
             const {
