@@ -5,7 +5,7 @@ const DB = require('../common/database');
 const MSG = require('../common/message')
 const dayjs = require('dayjs')
 const Util = require('../common/util');
-const {isLoggedIn, isNotLoggedIn} = require("../common/middlewares");
+const {isLoggedIn, isNotLoggedIn} = require('../common/middlewares');
 
 /* GET users list. */
 router.get('/', async (req, res) => {
@@ -156,7 +156,6 @@ router.patch('/:user_id', isLoggedIn, async (req, res) => {
     }
 
     try {
-        // 요청한 사람이 본인 또는 관리자인지 검증 필요
         const [[checkEmail], [userDB]] = await Promise.all([
             await DB.execute({
                 psmt: `select user_id from USER where email = ?`,
@@ -171,14 +170,14 @@ router.patch('/:user_id', isLoggedIn, async (req, res) => {
             return res.status(403).json(Util.getReturnObject(MSG.NO_USER_DATA, 403, {}));
         }
 
-        if (!["admin", "member"].includes(userDB.type)) {
+        if (!['admin', 'member'].includes(userDB.type)) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         }
 
         const {sql, bindings} = (() => {
             let sql = `update USER set`;
             const bindings = [];
-            ["password", "name", "email", "github", "company"].forEach(col => {
+            ['password', 'name', 'email', 'github', 'company'].forEach(col => {
                 if (userDB[col] != body[col]) {
                     sql += ` ${col} = ?,`;
                     bindings.push(body[col]);
@@ -195,8 +194,7 @@ router.patch('/:user_id', isLoggedIn, async (req, res) => {
             psmt: sql,
             binding: bindings
         });
-        // http status code 204: 요청 수행 완료, 반환 값 없음.
-        return res.status(302).json(Util.getReturnObject(MSG.USER_UPDATE_SUCCESS, 302, {}));
+        return res.status(200).json(Util.getReturnObject(MSG.USER_UPDATE_SUCCESS, 200, {}));
     } catch (e) {
         console.log(e);
         return res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));

@@ -4,15 +4,17 @@ const router = express.Router();
 const DB = require('../common/database');
 const dayjs = require('dayjs');
 const MSG = require('../common/message');
-const util = require('../common/util');
-const {isAdmin} = require("../common/middlewares");
+const Util = require('../common/util');
+const {isAdmin} = require('../common/middlewares');
 
 /* GET users list by admin */
 router.get('/users', isAdmin, async (req, res) => {
 
     const sortOption = req.query.sort;
-    const offset = req.query.offset;
-    const page = req.query.pageNum;
+    const searchOption = req.query.search;
+
+    // const offset = req.query.offset;
+    // const page = req.query.pageNum;
 
     try {
         let sql = `select user_id, name, email, student_id, type, company, generation, github, created_at, canceled_at from USER`;
@@ -21,6 +23,8 @@ router.get('/users', isAdmin, async (req, res) => {
             sql += ` order by generation DESC;`;
         } else if (sortOption == 'studentId') {
             sql += ` order by student_id;`;
+        } else if (!!searchOption) {
+            sql += ` and name like '%${searchOption}%';`;
         } else {
             sql += ` order by created_at DESC;`;    // default는 생성된 순의 내림차순으로 정렬
         }
@@ -51,7 +55,6 @@ router.get('/users', isAdmin, async (req, res) => {
                 email: email,
                 studentId: student_id,
                 type: ((type) => {
-                    // 어차피 POST할 때 type은 member or admin으로 주고 default = unknown으로 했는데 꼭 필요?
                     if (!type) return '비회원';
 
                     switch (type) {
@@ -76,18 +79,18 @@ router.get('/users', isAdmin, async (req, res) => {
             }
             usersAll.push(usersObj);
         })
+        //
+        // const users = [];
+        // let pagination = 0;
+        // for (let i = (offset * page) - offset; i < offset * page; i++) {
+        //     users[pagination] = usersAll[i];
+        //     pagination++;
+        // }
 
-        const users = [];
-        let pagination = 0;
-        for (let i = (offset * page) - offset; i < offset * page; i++) {
-            users[pagination] = usersAll[i];
-            pagination++;
-        }
-
-        return res.status(200).json(util.getReturnObject(`관리자 권한으로 ${MSG.READ_USERDATA_SUCCESS}`, 200, {users}));
+        return res.status(200).json(Util.getReturnObject(`관리자 권한으로 ${MSG.READ_USERDATA_SUCCESS}`, 200, {usersAll}));
     } catch (e) {
         console.error(e);
-        return res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
+        return res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
 
@@ -103,7 +106,7 @@ router.get('/users/:userId', isAdmin, async (req, res) => {
         });
 
         if (!userDB) {
-            return res.status(404).json(util.getReturnObject(MSG.NO_USER_DATA, 404, {}));
+            return res.status(404).json(Util.getReturnObject(MSG.NO_USER_DATA, 404, {}));
         }
 
         const {
@@ -119,7 +122,7 @@ router.get('/users/:userId', isAdmin, async (req, res) => {
             canceled_at
         } = userDB;
 
-        return res.status(200).json(util.getReturnObject(`어드민 권한으로 ${name}${MSG.READ_USER_SUCCESS}`, 200, {
+        return res.status(200).json(Util.getReturnObject(`어드민 권한으로 ${name}${MSG.READ_USER_SUCCESS}`, 200, {
             userId: user_id,
             name: name,
             email: email,
@@ -149,7 +152,7 @@ router.get('/users/:userId', isAdmin, async (req, res) => {
         }));
     } catch (error) {
         console.error(error);
-        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
+        res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
 
@@ -186,25 +189,25 @@ router.post('/users', isAdmin, async (req, res) => {
         ]);
 
         if (!userName || !password || !name || !studentId || !email || !generation || !type) {
-            return res.status(403).json(utill.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
+            return res.status(403).json(Utill.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
         if (!correctEmail.test(email)) {
-            return res.status(403).json(utill.getReturnObject(MSG.WRONG_EMAIL, 403, {}));
+            return res.status(403).json(Utill.getReturnObject(MSG.WRONG_EMAIL, 403, {}));
         }
         if (1000000 >= studentId && studentId >= 9999999) {
-            return res.status(403).json(utill.getReturnObject(MSG.WRONG_STUDENTID, 403, {}));
+            return res.status(403).json(Utill.getReturnObject(MSG.WRONG_STUDENTID, 403, {}));
         }
         if (type != 'admin' && type != 'member') {
-            return res.status(403).json(utill.getReturnObject(MSG.WRONG_TYPE, 403, {}));
+            return res.status(403).json(Utill.getReturnObject(MSG.WRONG_TYPE, 403, {}));
         }
         if (checkUserName != null) {
-            return res.status(403).json(utill.getReturnObject(MSG.EXIST_USERNAME, 403, {}));
+            return res.status(403).json(Utill.getReturnObject(MSG.EXIST_USERNAME, 403, {}));
         }
         if (checkStudentId != null) {
-            return res.status(403).json(utill.getReturnObject(MSG.EXIST_STUDENTID, 403, {}));
+            return res.status(403).json(Utill.getReturnObject(MSG.EXIST_STUDENTID, 403, {}));
         }
         if (checkEmail != null) {
-            return res.status(403).json(utill.getReturnObject(MSG.EXIST_EMAIL, 403, {}));
+            return res.status(403).json(Utill.getReturnObject(MSG.EXIST_EMAIL, 403, {}));
         }
 
         await DB.execute({
@@ -212,11 +215,11 @@ router.post('/users', isAdmin, async (req, res) => {
             binding: [userName, password, name, studentId, email, generation, type, company, github]
         });
 
-        return res.status(201).json(util.getReturnObject(MSG.USER_ADDED, 201, {}));
+        return res.status(201).json(Util.getReturnObject(MSG.USER_ADDED, 201, {}));
 
     } catch (error) {
         console.log(error);
-        res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
+        res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
 
@@ -230,10 +233,10 @@ router.patch('/users/:userId/kick', isAdmin, async (req, res) => {
             binding: [userId]
         })
         if (!user) {
-            return res.status(404).json(util.getReturnObject(MSG.NO_USER_DATA, 404, {}));
+            return res.status(404).json(Util.getReturnObject(MSG.NO_USER_DATA, 404, {}));
         }
         if (user.canceled_at != null) {
-            return res.status(403).json(util.getReturnObject(MSG.NO_USER_DATA, 403, {}));
+            return res.status(403).json(Util.getReturnObject(MSG.NO_USER_DATA, 403, {}));
         }
 
         await DB.execute({
@@ -241,10 +244,10 @@ router.patch('/users/:userId/kick', isAdmin, async (req, res) => {
             binding: [userId]
         })
 
-        return res.status(201).json(util.getReturnObject(MSG.USER_KICK_SUCCESS, 201, {}));
+        return res.status(201).json(Util.getReturnObject(MSG.USER_KICK_SUCCESS, 201, {}));
     } catch (error) {
         console.log(error);
-        return res.status(501).json(util.getReturnObject(error.message, 501, {}));
+        return res.status(501).json(Util.getReturnObject(error.message, 501, {}));
     }
 });
 
@@ -300,16 +303,16 @@ router.get('/posts', isAdmin, async (req, res) => {
             }
             postsAll.push(postsObj);
         })
-        const posts = [];
-        let pagination = 0;
-        for (let i = (offset * page) - offset; i < offset * page; i++) {
-            posts[pagination] = postsAll[i];
-            pagination++;
-        }
-        return res.status(200).json(util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {posts}));
+        // const posts = [];
+        // let pagination = 0;
+        // for (let i = (offset * page) - offset; i < offset * page; i++) {
+        //     posts[pagination] = postsAll[i];
+        //     pagination++;
+        // }
+        return res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {postsAll}));
     } catch (error) {
         console.log(error);
-        return res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
+        return res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
 
@@ -348,7 +351,7 @@ router.get('/posts/:userId', isAdmin, async (req, res) => {
         console.log('post: %j', postsDB);
 
         if (postsDB.length === 0) {
-            res.status(404).json(utill.getReturnObject(MSG.CANT_READ_POSTDATA, 404, {}));
+            res.status(404).json(Utill.getReturnObject(MSG.CANT_READ_POSTDATA, 404, {}));
         }
         const postsAll = [];
         postsDB.forEach(postsDB => {
@@ -390,10 +393,10 @@ router.get('/posts/:userId', isAdmin, async (req, res) => {
             posts[pagination] = postsAll[i];
             pagination++;
         }
-        return res.status(200).json(util.getReturnObject(`관리자 권한으로 userID : ${userId}의 ${MSG.READ_POSTDATA_SUCCESS}`, 200, {posts}));
+        return res.status(200).json(Util.getReturnObject(`관리자 권한으로 userID : ${userId}의 ${MSG.READ_POSTDATA_SUCCESS}`, 200, {posts}));
     } catch (e) {
         console.error(e);
-        return res.status(500).json(util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
+        return res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
 
@@ -409,20 +412,20 @@ router.patch('/posts/:postId/delete', isAdmin, async (req, res, next) => {
         });
 
         if (!postDB) {
-            return res.status(403).json(util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
+            return res.status(403).json(Util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
         }
         if (!!postDB.canceled_at) {
-            return res.status(403).json(util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
+            return res.status(403).json(Util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
         }
         await DB.execute({
             psmt: `update POST set canceled_at = NOW() where post_id = ? `,
             binding: [postId]
         });
 
-        return res.status(201).json(util.getReturnObject(`관리자 권한으로 ${MSG.POST_DELETE_SUCCESS}`, 201, {}));
+        return res.status(201).json(Util.getReturnObject(`관리자 권한으로 ${MSG.POST_DELETE_SUCCESS}`, 201, {}));
     } catch (e) {
         console.error(e);
-        return res.status(501).json(util.getReturnObject(e.message, 501, {}));
+        return res.status(501).json(Util.getReturnObject(e.message, 501, {}));
     }
 });
 

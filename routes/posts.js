@@ -6,7 +6,7 @@ const DB = require('../common/database');
 const dayjs = require('dayjs');
 const MSG = require('../common/message');
 const Util = require('../common/util');
-const {isLoggedIn} = require("../common/middlewares");
+const {isLoggedIn} = require('../common/middlewares');
 
 /* POST new post */
 router.post('/', isLoggedIn, async (req, res) => {
@@ -30,7 +30,7 @@ router.post('/', isLoggedIn, async (req, res) => {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
 
-        if (!["memory", "notice", "study", "knowhow", "reference", "QNA"].includes(category)) {
+        if (!['memory', 'notice', 'study', 'knowhow', 'reference', 'QNA'].includes(category)) {
             return res.status(403).json(Util.getReturnObject(MSG.WRONG_CATEGORY, 403, {}));
         }
 
@@ -111,16 +111,17 @@ router.get('/', async (req, res) => {
                 })(updated_at),
                 category: category
             }
-
             postsAll.push(postsObj);
-        })
-        const posts = [];
-        let pagination = 0;
-        for (let i = (offset * page) - offset; i < offset * page; i++) {
-            posts[pagination] = postsAll[i];
-            pagination++;
-        }
-        res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {posts}));
+        });
+
+        // const posts = [];
+        // let pagination = 0;
+        // for (let i = (offset * page) - offset; i < offset * page; i++) {
+        //     posts[pagination] = postsAll[i];
+        //     pagination++;
+        // }
+
+        res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {postsAll}));
     } catch (error) {
         console.log(error);
         res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
@@ -139,7 +140,7 @@ router.get('/:postId', async (req, res) => {
         });
 
         // 데이터에 없는 postId를 입력한 경우
-        if (!!nonePost) {
+        if (!nonePost) {
             return res.status(404).json(Util.getReturnObject(MSG.NO_POST_DATA, 404, {}));
         }
 
