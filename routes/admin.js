@@ -8,29 +8,29 @@ const util = require('../common/util');
 const {isAdmin} = require("../common/middlewares");
 
 /* GET users list by admin */
-router.get('/users', isAdmin, async (req, res) => {
+router.get('/users', isAdmin,async (req, res) => {
 
     const sortOption = req.query.sort;
-    const offset = req.query.offset;
+    const offset = Number(req.query.offset);
     const page = req.query.pageNum;
-
+    const start = (page - 1) * offset;
     try {
         let sql = `select user_id, name, email, student_id, type, company, generation, github, created_at, canceled_at from USER`;
 
         if (sortOption == 'generation') {
-            sql += ` order by generation DESC;`;
+            sql += ` order by generation DESC limit ?, ?;`;
         } else if (sortOption == 'studentId') {
-            sql += ` order by student_id;`;
+            sql += ` order by student_id limit ?, ?;`;
         } else {
-            sql += ` order by created_at DESC;`;    // default는 생성된 순의 내림차순으로 정렬
+            sql += ` order by created_at DESC limit ?, ?;`;    // default는 생성된 순의 내림차순으로 정렬
         }
 
         const usersDB = await DB.execute({
             psmt: sql,
-            binding: []
+            binding: [start, offset]
         });
 
-        const usersAll = [];
+        const users = [];
         usersDB.forEach(usersDB => {
             const {
                 user_id,
@@ -74,16 +74,8 @@ router.get('/users', isAdmin, async (req, res) => {
                     return null;
                 })(canceled_at),
             }
-            usersAll.push(usersObj);
+            users.push(usersObj);
         })
-
-        const users = [];
-        let pagination = 0;
-        for (let i = (offset * page) - offset; i < offset * page; i++) {
-            users[pagination] = usersAll[i];
-            pagination++;
-        }
-
         return res.status(200).json(util.getReturnObject(`관리자 권한으로 ${MSG.READ_USERDATA_SUCCESS}`, 200, {users}));
     } catch (e) {
         console.error(e);
@@ -249,23 +241,25 @@ router.patch('/users/:userId/kick', isAdmin, async (req, res) => {
 });
 
 /* GET posts list by admin(included deleted posts) */
-router.get('/posts', isAdmin, async (req, res) => {
-    const offset = req.query.offset;
+router.get('/posts', isAdmin,async (req, res) => {
+    const offset = Number(req.query.offset);
     const page = req.query.pageNum;
     const title = decodeURI(req.query.title);
+    const start = (page - 1) * offset;
+
     try {
         let sql = `select post_id, name, title, content, p.created_at, p.updated_at, p.canceled_at, category from POST p, USER u WHERE p.user_id = u.user_id`;
 
-        if (!!title) {
-            sql += ` and title like '%${title}%'`
+        if (title != "undefined") {
+            sql += ` and title like '%${title}%'`;
         }
 
         const postsDB = await DB.execute({
-            psmt: sql + ` order by created_at DESC;`,
-            binding: []
+            psmt: sql + ` order by created_at DESC limit ?, ?;`,
+            binding: [start, offset]
         });
 
-        const postsAll = [];
+        const posts = [];
         postsDB.forEach(postsDB => {
             const {
                 post_id,
@@ -298,14 +292,8 @@ router.get('/posts', isAdmin, async (req, res) => {
                 })(canceled_at),
                 category: category
             }
-            postsAll.push(postsObj);
+            posts.push(postsObj);
         })
-        const posts = [];
-        let pagination = 0;
-        for (let i = (offset * page) - offset; i < offset * page; i++) {
-            posts[pagination] = postsAll[i];
-            pagination++;
-        }
         return res.status(200).json(util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {posts}));
     } catch (error) {
         console.log(error);
@@ -314,43 +302,30 @@ router.get('/posts', isAdmin, async (req, res) => {
 });
 
 /* GET get for posts written by a specific user by admin */
-router.get('/posts/:userId', isAdmin, async (req, res) => {
+router.get('/posts/:userId',  async (req, res) => {
     const userId = req.params.userId;
-    const offset = req.query.offset;
+    const offset = Number(req.query.offset);
     const page = req.query.pageNum;
     const title = decodeURI(req.query.title);
+    const start = (page - 1) * offset;
 
     try {
-        let sql = `
-        select
-        post_id, title, content, created_at, updated_at, canceled_at, category
-        from
-        POST
-        WHERE
-        user_id = ? `;
+        let sql = `select post_id, title, content, created_at, updated_at, canceled_at, category from POST WHERE user_id = ? `;
 
-        if (!!title) {
-            sql += ` and
-        title
-        like
-        '%${title}%'`
+        if (title != "undefined") {
+            sql += ` and title like '%${title}%'`
         }
         const postsDB = await DB.execute({
-            psmt: sql + `
-        order
-        by
-        created_at
-        DESC;
-        `,
-            binding: []
+            psmt: sql + ` order by created_at DESC limit ?, ?;`,
+            binding: [userId,start, offset]
         });
 
         console.log('post: %j', postsDB);
 
         if (postsDB.length === 0) {
-            res.status(404).json(utill.getReturnObject(MSG.CANT_READ_POSTDATA, 404, {}));
+            return res.status(404).json(util.getReturnObject(MSG.CANT_READ_POSTDATA, 404, {}));
         }
-        const postsAll = [];
+        const posts = [];
         postsDB.forEach(postsDB => {
             const {
                 post_id,
@@ -382,14 +357,9 @@ router.get('/posts/:userId', isAdmin, async (req, res) => {
                 category: category
             }
 
-            postsAll.push(postsObj);
+            posts.push(postsObj);
         })
-        const posts = [];
-        let pagination = 0;
-        for (let i = (offset * page) - offset; i < offset * page; i++) {
-            posts[pagination] = postsAll[i];
-            pagination++;
-        }
+
         return res.status(200).json(util.getReturnObject(`관리자 권한으로 userID : ${userId}의 ${MSG.READ_POSTDATA_SUCCESS}`, 200, {posts}));
     } catch (e) {
         console.error(e);
@@ -399,8 +369,8 @@ router.get('/posts/:userId', isAdmin, async (req, res) => {
 
 /* PATCH (delete) post by admin */
 router.patch('/posts/:postId/delete', isAdmin, async (req, res, next) => {
-
     const postId = req.params.postId;
+
     try {
 
         const [postDB] = await DB.execute({
