@@ -5,7 +5,7 @@ const DB = require('../common/database');
 
 const dayjs = require('dayjs');
 const MSG = require('../common/message');
-const Util = require('../common/Util');
+const Util = require('../common/util');
 const {isLoggedIn} = require("../common/middlewares");
 
 /* POST new post */
@@ -289,7 +289,6 @@ router.patch('/:postId/delete', isLoggedIn, async (req, res, next) => {
             psmt: `update POST set canceled_at = NOW() where post_id = ?`,
             binding: [postId]
         });
-
         return res.status(201).json(Util.getReturnObject(MSG.POST_DELETE_SUCCESS, 201, {}));
 
     } catch (e) {
