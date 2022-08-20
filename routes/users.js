@@ -198,7 +198,7 @@ router.patch('/:user_id',isLoggedIn, async (req, res) => {
 
 //비회원 회원가입
 //router.post('/', async (req, res) => {
-router.post('/',  async (req, res) => {
+router.post('/', isNotLoggedIn,async (req, res) => {
     const {
         userName,
         password,
