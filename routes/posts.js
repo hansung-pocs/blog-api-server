@@ -199,7 +199,7 @@ router.get('/:postId', async (req, res) => {
 
 /* PATCH (edit) post info */
 // router.patch('/:postId', isLoggedIn, async (req, res, next) => {
-router.patch('/:postId', async (req, res, next) => {
+router.patch('/:postId', isLoggedIn, async (req, res, next) => {
 
     const {
         userId,
@@ -261,7 +261,7 @@ router.patch('/:postId', async (req, res, next) => {
 
 /* PATCH (delete) post */
 //router.patch('/:postId/delete', isLoggedIn, async (req, res, next) => {
-router.patch('/:postId/delete', async (req, res, next) => {
+router.patch('/:postId/delete', isLoggedIn, async (req, res, next) => {
     const userId = req.body.userId;
     const postId = req.params.postId;
     try {
