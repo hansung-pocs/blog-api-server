@@ -20,7 +20,7 @@ router.get('/', isLoggedIn, async (req, res) => {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
 
-        let sql = `select * from USER where canceled_at is NULL`;
+        let sql = `select * from USER where canceled_at is NULL and type is not null`;
         if (searchOption != "undefined") {
             sql += ` and name like '%${searchOption}%'`;
         }
