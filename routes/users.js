@@ -8,17 +8,19 @@ const Util = require('../common/util');
 const {isLoggedIn, isNotLoggedIn} = require('../common/middlewares');
 
 /* GET users list. */
-//router.get('/', isLoggedIn,async (req, res) => {
-router.get('/', async (req, res) => {
+router.get('/', isLoggedIn, async (req, res) => {
     const sortOption = req.query.sort;
     const searchOption = decodeURI(req.query.search);
     const offset = Number(req.query.offset);
-    const page = req.query.pageNum;
+    const page = Number(req.query.pageNum);
     const start = (page - 1) * offset;
 
     try {
-        let sql = `select * from USER where canceled_at is NULL`;
+        if(isNaN(offset) || isNaN(page)){
+            return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
+        }
 
+        let sql = `select * from USER where canceled_at is NULL`;
         if (searchOption != "undefined") {
             sql += ` and name like '%${searchOption}%'`;
         }

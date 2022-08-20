@@ -9,9 +9,7 @@ const Util = require('../common/util');
 const {isLoggedIn} = require('../common/middlewares');
 
 /* POST new post */
-//router.post('/', isLoggedIn, async (req, res) => {
-router.post('/', async (req, res) => {
-
+router.post('/', isLoggedIn, async (req, res) => {
     const {
         userId,
         title,
@@ -56,8 +54,15 @@ router.post('/', async (req, res) => {
 /* GET posts list */
 router.get('/', async (req, res) => {
     const filter = req.query.id;
+    const offset = Number(req.query.offset);
+    const page = Number(req.query.pageNum);
+    const start = (page - 1) * offset;
 
     try {
+        if(isNaN(offset) || isNaN(page)){
+            return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
+        }
+
         let sql = `select post_id, name, title, content, views, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL`;
 
         // id값이 없을 때 -> order by p.created_at DESC
@@ -65,12 +70,12 @@ router.get('/', async (req, res) => {
         // 정상적인 id값: best, notice, memory, knowhow, reference, study
 
         if (filter == null) {
-            sql += ` order by p.created_at DESC;`;
+            sql += ` order by p.created_at DESC limit ?, ?;`;
         } else {
             if (filter === 'best') {
-                sql += ` order by views DESC;`;
+                sql += ` order by views DESC limit ?, ?;`;
             } else if (filter === 'notice' || filter === 'memory' || filter === 'knowhow' || filter === 'reference' || filter === 'study') {
-                sql += ` and category = '${filter}' order by p.created_at DESC;`;
+                sql += ` and category = '${filter}' order by p.created_at DESC limit ?, ?;`;
             } else {
                 return res.status(400).json(Util.getReturnObject('잘못된 id값입니다.', 400, {}));
             }
@@ -79,7 +84,7 @@ router.get('/', async (req, res) => {
 
         const postsDB = await DB.execute({
             psmt: sql,
-            binding: []
+            binding: [start, offset]
         });
 
         console.log('posts: %j', postsDB);
@@ -114,13 +119,6 @@ router.get('/', async (req, res) => {
             }
             postsAll.push(postsObj);
         });
-
-        // const posts = [];
-        // let pagination = 0;
-        // for (let i = (offset * page) - offset; i < offset * page; i++) {
-        //     posts[pagination] = postsAll[i];
-        //     pagination++;
-        // }
 
         res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {postsAll}));
     } catch (error) {

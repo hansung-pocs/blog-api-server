@@ -13,11 +13,15 @@ router.get('/users', async (req, res) => {
 
     const sortOption = req.query.sort;
     const searchOption = req.query.search;
-
     const offset = Number(req.query.offset);
-    const page = req.query.pageNum;
+    const page = Number(req.query.pageNum);
     const start = (page - 1) * offset;
+
     try {
+        if(isNaN(offset) || isNaN(page)){
+            return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
+        }
+
         let sql = `select user_id, name, email, student_id, type, company, generation, github, created_at, canceled_at from USER`;
 
         if (searchOption != "undefined") {
@@ -254,11 +258,16 @@ router.patch('/users/:userId/kick', async (req, res) => {
 router.get('/posts', async (req, res) => {
 
     const offset = Number(req.query.offset);
-    const page = req.query.pageNum;
+    const page = Number(req.query.pageNum);
     const title = decodeURI(req.query.title);
     const start = (page - 1) * offset;
 
     try {
+        if(isNaN(offset) || isNaN(page)){
+            return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
+        }
+
+
         let sql = `select post_id, name, title, content, p.created_at, p.updated_at, p.canceled_at, category from POST p, USER u WHERE p.user_id = u.user_id`;
 
         if (title != "undefined") {
@@ -317,11 +326,15 @@ router.get('/posts', async (req, res) => {
 router.get('/posts/:userId', async (req, res) => {
     const userId = req.params.userId;
     const offset = Number(req.query.offset);
-    const page = req.query.pageNum;
+    const page = Number(req.query.pageNum);
     const title = decodeURI(req.query.title);
     const start = (page - 1) * offset;
 
     try {
+        if(isNaN(offset) || isNaN(page)){
+            return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
+        }
+
         let sql = `select post_id, title, content, created_at, updated_at, canceled_at, category from POST WHERE user_id = ? `;
 
         if (title != "undefined") {
