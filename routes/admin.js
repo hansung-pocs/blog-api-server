@@ -9,7 +9,7 @@ const {isAdmin} = require('../common/middlewares');
 
 /* GET users list by admin */
 //router.get('/users', isAdmin,async (req, res) => {
-router.get('/users', isAdmin,async (req, res) => {
+router.get('/users', isAdmin, async (req, res) => {
 
     const sortOption = req.query.sort;
     const searchOption = req.query.search;
@@ -18,7 +18,7 @@ router.get('/users', isAdmin,async (req, res) => {
     const start = (page - 1) * offset;
 
     try {
-        if(isNaN(offset) || isNaN(page)){
+        if (isNaN(offset) || isNaN(page)) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
 
@@ -156,7 +156,7 @@ router.get('/users/:userId', isAdmin, async (req, res) => {
 });
 
 /* POST regist new user by admin */
-router.post('/users',isAdmin,async (req, res) => {
+router.post('/users', isAdmin, async (req, res) => {
     const {
         userName,
         password,
@@ -259,7 +259,7 @@ router.get('/posts', isAdmin, async (req, res) => {
     const start = (page - 1) * offset;
 
     try {
-        if(isNaN(offset) || isNaN(page)){
+        if (isNaN(offset) || isNaN(page)) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
 
@@ -326,7 +326,7 @@ router.get('/posts/:userId', isAdmin, async (req, res) => {
     const start = (page - 1) * offset;
 
     try {
-        if(isNaN(offset) || isNaN(page)){
+        if (isNaN(offset) || isNaN(page)) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
 
@@ -337,7 +337,7 @@ router.get('/posts/:userId', isAdmin, async (req, res) => {
         }
         const postsDB = await DB.execute({
             psmt: sql + ` order by created_at DESC limit ?, ?;`,
-            binding: [userId,start, offset]
+            binding: [userId, start, offset]
         });
 
         console.log('post: %j', postsDB);

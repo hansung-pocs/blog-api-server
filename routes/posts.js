@@ -9,7 +9,7 @@ const Util = require('../common/util');
 const {isLoggedIn} = require('../common/middlewares');
 
 /* POST new post */
-router.post('/', isLoggedIn,async (req, res) => {
+router.post('/', isLoggedIn, async (req, res) => {
     const {
         userId,
         title,
@@ -59,7 +59,7 @@ router.get('/', async (req, res) => {
     const start = (page - 1) * offset;
 
     try {
-        if(isNaN(offset) || isNaN(page)){
+        if (isNaN(offset) || isNaN(page)) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
 
@@ -199,7 +199,7 @@ router.get('/:postId', async (req, res) => {
 
 /* PATCH (edit) post info */
 // router.patch('/:postId', isLoggedIn, async (req, res, next) => {
-router.patch('/:postId',isLoggedIn, async (req, res, next) => {
+router.patch('/:postId', isLoggedIn, async (req, res, next) => {
 
     const {
         userId,

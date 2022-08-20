@@ -48,6 +48,6 @@ exports.isAdmin = (req, res, next) => {
     if (!!user && user.type === 'admin') {
         next();
     } else {
+        return res.status(403).json(Util.getReturnObject('권한이 없습니다. 필요합니다.', 403, {}));
     }
-    return res.status(403).json(Util.getReturnObject('권한이 없습니다. 필요합니다.', 403, {}));
 }
