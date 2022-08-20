@@ -95,8 +95,7 @@ router.get('/users', isAdmin,async (req, res) => {
 
 /* GET user detail by admin */
 //router.get('/users/:userId', isAdmin, async (req, res) => {
-router.get('/users/:userId', isAdmin,async (req, res) => {
-
+router.get('/users/:userId', isAdmin, async (req, res) => {
     const userId = req.params.userId;
 
     try {
@@ -157,8 +156,7 @@ router.get('/users/:userId', isAdmin,async (req, res) => {
 });
 
 /* POST regist new user by admin */
-//router.post('/users', isAdmin, async (req, res) => {
-router.post('/users', isAdmin,async (req, res) => {
+router.post('/users',isAdmin,async (req, res) => {
     const {
         userName,
         password,
@@ -176,7 +174,7 @@ router.post('/users', isAdmin,async (req, res) => {
     try {
         const [[checkUserName], [checkStudentId], [checkEmail]] = await Promise.all([
             await DB.execute({
-                psmt: `select user_id from USER where name = ?`,
+                psmt: `select user_id from USER where username = ?`,
                 binding: [userName]
             }),
             await DB.execute({
@@ -212,7 +210,7 @@ router.post('/users', isAdmin,async (req, res) => {
         }
 
         await DB.execute({
-            psmt: `insert into USER (name, password, name, student_id, email, generation, type, company, github, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+            psmt: `insert into USER (username, password, name, student_id, email, generation, type, company, github, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
             binding: [userName, password, name, studentId, email, generation, type, company, github]
         });
 
@@ -225,8 +223,7 @@ router.post('/users', isAdmin,async (req, res) => {
 });
 
 /* PATCH (delete) user by admin */
-// router.patch('/users/:userId/kick', isAdmin, async (req, res) => {
-router.patch('/users/:userId/kick', isAdmin,async (req, res) => {
+router.patch('/users/:userId/kick', isAdmin, async (req, res) => {
     const userId = req.params.userId;
 
     try {
@@ -254,8 +251,7 @@ router.patch('/users/:userId/kick', isAdmin,async (req, res) => {
 });
 
 /* GET posts list by admin(included deleted posts) */
-//router.get('/posts', isAdmin,async (req, res) => {
-router.get('/posts', isAdmin,async (req, res) => {
+router.get('/posts', isAdmin, async (req, res) => {
 
     const offset = Number(req.query.offset);
     const page = Number(req.query.pageNum);
@@ -322,8 +318,7 @@ router.get('/posts', isAdmin,async (req, res) => {
 });
 
 /* GET get for posts written by a specific user by admin */
-//router.get('/posts/:userId', isAdmin, async (req, res) => {
-router.get('/posts/:userId', isAdmin,async (req, res) => {
+router.get('/posts/:userId', isAdmin, async (req, res) => {
     const userId = req.params.userId;
     const offset = Number(req.query.offset);
     const page = Number(req.query.pageNum);
@@ -392,8 +387,7 @@ router.get('/posts/:userId', isAdmin,async (req, res) => {
 });
 
 /* PATCH (delete) post by admin */
-//router.patch('/posts/:postId/delete', isAdmin, async (req, res, next) => {
-router.patch('/posts/:postId/delete', isAdmin,async (req, res, next) => {
+router.patch('/posts/:postId/delete', isAdmin, async (req, res, next) => {
     const postId = req.params.postId;
 
     try {
