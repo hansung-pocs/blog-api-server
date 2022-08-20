@@ -9,7 +9,7 @@ const Util = require('../common/util');
 const {isLoggedIn} = require('../common/middlewares');
 
 /* POST new post */
-router.post('/', isLoggedIn, async (req, res) => {
+router.post('/', isLoggedIn,async (req, res) => {
     const {
         userId,
         title,
@@ -89,7 +89,7 @@ router.get('/', async (req, res) => {
 
         console.log('posts: %j', postsDB);
 
-        const postsAll = [];
+        const posts = [];
         postsDB.forEach(postsDB => {
             const {
                 post_id,
@@ -117,10 +117,10 @@ router.get('/', async (req, res) => {
                 })(updated_at),
                 category: category
             }
-            postsAll.push(postsObj);
+            posts.push(postsObj);
         });
 
-        res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {postsAll}));
+        res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {posts}));
     } catch (error) {
         console.log(error);
         res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
@@ -199,7 +199,7 @@ router.get('/:postId', async (req, res) => {
 
 /* PATCH (edit) post info */
 // router.patch('/:postId', isLoggedIn, async (req, res, next) => {
-router.patch('/:postId', isLoggedIn, async (req, res, next) => {
+router.patch('/:postId',isLoggedIn, async (req, res, next) => {
 
     const {
         userId,
