@@ -86,13 +86,13 @@ router.get('/', isLoggedIn, async (req, res) => {
 });
 
 /* GET user detail */
-router.get('/:userId',isLoggedIn, async (req, res) => {
-    const user_id = req.params.userId;
+router.get('/:user_id', isLoggedIn, async (req, res) => {
+    const userId = req.params.user_id;
 
     try {
         const [userDB] = await DB.execute({
             psmt: `select * from USER where user_id = ? and type is NOT NULL`,
-            binding: [user_id]
+            binding: [userId]
         });
 
         if (!userDB) {
