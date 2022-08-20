@@ -144,14 +144,14 @@ router.get('/:user_id', isLoggedIn, async (req, res) => {
 });
 
 /* PATCH (edit) user info */
-router.patch('/:user_id',isLoggedIn, async (req, res) => {
+router.patch('/:user_id', isLoggedIn, async (req, res) => {
     const userId = req.params.user_id;
     const body = req.body;
 
     const {email} = body;
 
     const correctEmail = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/;
-    if (!email || correctEmail.test(email)) {
+    if (!email || !correctEmail.test(email)) {
         return res.status(403).json(Util.getReturnObject(MSG.WRONG_EMAIL, 403, {}));
     }
 
