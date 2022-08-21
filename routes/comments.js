@@ -98,18 +98,45 @@ router.post('/', isLoggedIn, async (req, res) => {
 
 
 /* PATCH (delete) comment */
+router.patch('/:commentId/delete', isLoggedIn, async (req, res) => {
+
+    const user = req.user;
+    const commentId = req.params.commentId;
+
+    try {
+        // 잘못된 commentId를 전송한 경우
+        const [noneComment] = await DB.execute({
+            psmt: `select user_id, canceled_at from COMMENT where comment_id = ?`,
+            binding: [commentId]
+        });
+
+        if (noneComment.canceled_at != null) {
+            return res.status(403).json(Util.getReturnObject('없거나 삭제된 댓글 입니다', 403, {}));
+        }
+
+        // 삭제를 요청한 사람이 댓글을 작성한 사람이 아닌 경우
+        if (noneComment.user_id !== user.user_id) {
+            return res.status(403).json(Util.getReturnObject('본인이 작성한 댓글만 삭제할 수 있습니다.', 403, {}));
+        }
 
 
+        await DB.execute({
+            psmt: `update COMMENT set canceled_at = NOW() where comment_id = ?`,
+            binding: [commentId]
+        });
+        return res.status(201).json(Util.getReturnObject('댓글이 삭제되었습니다.', 201, {}));
+
+    } catch (e) {
+        console.error(e);
+        return res.status(501).json(Util.getReturnObject(e.message, 501, {}));
+    }
+});
 
 
 /* PATCH (edit) comment */
 
 
-
-
 /* GET comments by postId */
-
-
 
 
 module.exports = router;
