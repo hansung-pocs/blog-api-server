@@ -46,6 +46,14 @@ router.post('/', isLoggedIn, async (req, res) => {
             return res.status(400).json(Util.getReturnObject(MSG.NO_AUTHORITY, 400, {}));
         }
 
+        const [antiPasting] = await DB.execute({
+            psmt: `select comment_id from COMMENT where content = ?`,
+            binding: [content]
+        })
+        if (!!antiPasting) {
+            return res.status(400).json(Util.getReturnObject('도배하지 마세요', 400, {}));
+        }
+
 
         // parentId가 DB에 없는 commentId를 입력했을 때 (자기참조외래키 조건을 만족시키기 위한 장치)
         if (!!parentId) {
