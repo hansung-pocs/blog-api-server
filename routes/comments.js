@@ -4,10 +4,12 @@ const router = express.Router();
 const DB = require('../common/database');
 const dayjs = require('dayjs');
 const MSG = require('../common/message');
-const util = require('../common/util');
+const Util = require('../common/util');
+const {isLoggedIn} = require('../common/middlewares');
 
 
-/* POST new comment */
+/* POST add new comment */
+
 
 
 /* PATCH (delete) comment */
