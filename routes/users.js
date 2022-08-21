@@ -64,7 +64,7 @@ router.get('/', isLoggedIn, async (req, res) => {
                 email: email,
                 studentId: student_id,
                 type: ((type) => {
-                    if (!type) return '비회원';
+                    if (!type) return 'anonymous';
 
                     switch (type) {
                         case 'admin':
@@ -126,7 +126,7 @@ router.get('/:user_id', isLoggedIn, async (req, res) => {
                 email: email,
                 studentId: student_id,
                 type: ((type) => {
-                    if (!type) return '비회원';
+                    if (!type) return 'anonymous';
 
                     switch (type) {
                         case 'admin':
@@ -203,7 +203,6 @@ router.patch('/:user_id', isLoggedIn, async (req, res) => {
 });
 
 //비회원 회원가입
-//router.post('/', async (req, res) => {
 router.post('/', isNotLoggedIn,async (req, res) => {
     const {
         userName,
