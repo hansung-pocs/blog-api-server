@@ -221,7 +221,7 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
                     const getCommentCount = async (comment_id, parent_id) => {
                         if (comment_id === parent_id) {
                             const [childrenCount] = await DB.execute({
-                                psmt: `select count(comment_id) as childrenCount from COMMENT where parent_id = ?`,
+                                psmt: `select count(comment_id) as childrenCount from COMMENT where parent_id = ? and canceled_at is null`,
                                 binding: [parent_id]
                             })
                             return childrenCount.childrenCount - 1;
@@ -260,7 +260,7 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
 
         // 삭제된 답글과 답글이 안달린 삭제된 댓글은 보여지지 않도록
         function filterCanceledReply(item) {
-            if (item == undefined || (item.comment_id === item.parent_id && item.childrenCount === 0)) {
+            if (item == undefined || (item.comment_id === item.parent_id && item.childrenCount === -1)) {
                 return false;
             }
             return true;
