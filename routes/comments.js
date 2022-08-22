@@ -161,7 +161,7 @@ router.patch('/:comment_id', isLoggedIn, async (req, res) => {
         const bindings = [];
 
 
-        if (!!content && commentDB.content != content) {
+        if (!!content && noneComment.content != content) {
             sql += ' content = ?,';
             bindings.push(content);
         }
