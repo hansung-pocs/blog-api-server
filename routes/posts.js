@@ -65,7 +65,7 @@ router.get('/', isLoggedIn, async (req, res) => {
         }
 
         let sql = `select post_id, name, title, content, views, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL`;
-        let countsql = `select COUNT(*) from POST where canceled_at is NULL`
+        let countsql = `select COUNT(*) as count from POST where canceled_at is NULL`
 
         if (title != "undefined") {
             sql += ` and title like '%${title}%'`
@@ -90,7 +90,7 @@ router.get('/', isLoggedIn, async (req, res) => {
         }
 
 
-        const [postsDB,count] = await Promise.all([
+        const [postsDB,[countDB]] = await Promise.all([
             await DB.execute({
                 psmt: sql,
                 binding: [start, offset]
@@ -137,7 +137,7 @@ router.get('/', isLoggedIn, async (req, res) => {
         const categories = [];
         const categoriesObj = {
             category : filter,
-            count : count
+            count : countDB.count
         }
         categories.push(categoriesObj)
         res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {categories,posts}));
