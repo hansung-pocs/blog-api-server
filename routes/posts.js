@@ -164,7 +164,7 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
         });
 
         // 데이터에 없는 postId를 입력한 경우
-        if (!nonePost || nonePost.p.canceled_at !== null) {
+        if (!nonePost || nonePost.canceled_at !== null) {
             return res.status(404).json(Util.getReturnObject(MSG.NO_POST_DATA, 404, {}));
         }
 
