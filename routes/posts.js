@@ -53,7 +53,7 @@ router.post('/', isLoggedIn, async (req, res) => {
 
 /* GET posts list */
 router.get('/', isLoggedIn, async (req, res) => {
-    let filter = req.query.id;
+    const filter = req.query.id;
     const offset = Number(req.query.offset);
     const page = Number(req.query.pageNum);
     const title = decodeURI(req.query.title);
@@ -65,7 +65,6 @@ router.get('/', isLoggedIn, async (req, res) => {
         }
 
         let sql = `select post_id, name, title, content, views, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL`;
-        let countsql = `select COUNT(*) as count from POST where canceled_at is NULL`
 
         if (title != "undefined") {
             sql += ` and title like '%${title}%'`
@@ -76,33 +75,31 @@ router.get('/', isLoggedIn, async (req, res) => {
 
         if (filter == null) {
             sql += ` order by p.created_at DESC limit ?, ?;`;
-            filter = 'all'
         } else {
             if (filter === 'best') {
                 sql += ` order by views DESC limit ?, ?;`;
-                countsql += ` category = ?`
             } else if (filter === 'notice' || filter === 'memory' || filter === 'knowhow' || filter === 'reference' || filter === 'study' || filter === 'QNA') {
                 sql += ` and category = '${filter}' order by p.created_at DESC limit ?, ?;`;
-                countsql += ` category = ?`
             } else {
                 return res.status(400).json(Util.getReturnObject('잘못된 id값입니다.', 400, {}));
             }
         }
 
 
-        const [postsDB,[countDB]] = await Promise.all([
+        const [postsDB,countDB] = await Promise.all([
             await DB.execute({
                 psmt: sql,
                 binding: [start, offset]
             }),
             await DB.execute({
-                psmt: countsql,
-                binding: [filter]
+                psmt: `select category, count(category) as count from POST where canceled_at is null group by category`,
+                binding: []
             })
         ])
 
+        countDB.sort();
         console.log('posts: %j', postsDB);
-
+        console.log('countDB %j', countDB);
         const posts = [];
         postsDB.forEach(postsDB => {
             const {
@@ -134,12 +131,20 @@ router.get('/', isLoggedIn, async (req, res) => {
             posts.push(postsObj);
         });
 
-        const categories = [];
-        const categoriesObj = {
-            category : filter,
-            count : countDB.count
-        }
-        categories.push(categoriesObj)
+        const categories = []
+        countDB.forEach(countDB => {
+            const {
+                category,
+                count
+            } = countDB
+
+            const categoriesObj = {
+                category : category,
+                count : count
+            }
+            categories.push(categoriesObj)
+        })
+
         res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {categories,posts}));
     } catch (error) {
         console.log(error);
