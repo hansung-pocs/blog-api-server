@@ -159,12 +159,12 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
 
     try {
         const [nonePost] = await DB.execute({
-            psmt: `select title, canceled_at from POST p, USER u where u.user_id = p.user_id and post_id = ?`,
+            psmt: `select title, canceled_at from POST where post_id = ?`,
             binding: [postId]
         });
 
         // 데이터에 없는 postId를 입력한 경우
-        if (!nonePost || nonePost.canceled_at !== null) {
+        if (!nonePost || nonePost.p.canceled_at !== null) {
             return res.status(404).json(Util.getReturnObject(MSG.NO_POST_DATA, 404, {}));
         }
 

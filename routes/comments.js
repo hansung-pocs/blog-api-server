@@ -196,7 +196,7 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
         }
 
         const commentsDB = await DB.execute({
-            psmt: `select * from COMMENT where post_id = ? and canceled_at is null order by parent_id, created_at`,
+            psmt: `select * from COMMENT where post_id = ? order by parent_id, created_at`,
             binding: [postId]
         });
 
@@ -210,6 +210,7 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
                         content,
                         created_at,
                         updated_at,
+                        canceled_at
                     } = commentsDB;
 
                     const getCommentCount = async (comment_id, parent_id) => {
@@ -240,7 +241,13 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
                                 return dayjs(updated_at).format('YYYY-MM-DD')
                             }
                             return null;
-                        })(updated_at)
+                        })(updated_at),
+                        canceledAt: ((canceled_at) => {
+                            if (!!canceled_at) {
+                                return dayjs(canceled_at).format('YYYY-MM-DD')
+                            }
+                            return null;
+                        })(canceled_at)
                     }
                 }
             )
