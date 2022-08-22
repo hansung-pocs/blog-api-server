@@ -8,10 +8,10 @@ const Util = require('../common/util');
 const {isAdmin} = require('../common/middlewares');
 
 /* GET users list by admin */
-router.get('/users',  async (req, res) => {
+router.get('/users', isAdmin,async (req, res) => {
 
     const sortOption = req.query.sort;
-    const searchOption = req.query.search;
+    const searchOption = decodeURI(req.query.search);
     const offset = Number(req.query.offset);
     const page = Number(req.query.pageNum);
     const start = (page - 1) * offset;
@@ -23,7 +23,7 @@ router.get('/users',  async (req, res) => {
 
         let sql = `select user_id, name, email, student_id, type, company, generation, github, created_at, canceled_at from USER`;
 
-        if (!!searchOption) {
+        if (searchOption != 'undefined') {
             sql += ` where name like '%${searchOption}%'`;
         }
 

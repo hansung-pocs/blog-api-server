@@ -52,10 +52,11 @@ router.post('/', isLoggedIn, async (req, res) => {
 });
 
 /* GET posts list */
-router.get('/', async (req, res) => {
+router.get('/', isLoggedIn, async (req, res) => {
     const filter = req.query.id;
     const offset = Number(req.query.offset);
     const page = Number(req.query.pageNum);
+    const title = decodeURI(req.query.title);
     const start = (page - 1) * offset;
 
     try {
@@ -63,8 +64,11 @@ router.get('/', async (req, res) => {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
 
-        let sql = `select post_id, name, title, content, views, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL`;
+        let sql = `select post_id, name, title, content,  p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL`;
 
+        if (title != "undefined") {
+            sql += ` and title like '%${title}%'`
+        }
         // id값이 없을 때 -> order by p.created_at DESC
         // id값에 잘못된 값이 들어왔을 때 -> res.status(400)....
         // 정상적인 id값: best, notice, memory, knowhow, reference, study
@@ -128,7 +132,7 @@ router.get('/', async (req, res) => {
 });
 
 /* GET post detail */
-router.get('/:postId', async (req, res) => {
+router.get('/:postId', isLoggedIn, async (req, res) => {
 
     const postId = req.params.postId;
 
