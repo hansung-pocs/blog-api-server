@@ -8,7 +8,7 @@ const Util = require('../common/util');
 const {isAdmin} = require('../common/middlewares');
 
 /* GET users list by admin */
-router.get('/users', isAdmin,async (req, res) => {
+router.get('/users', isAdmin, async (req, res) => {
 
     const sortOption = req.query.sort;
     const searchOption = decodeURI(req.query.search);

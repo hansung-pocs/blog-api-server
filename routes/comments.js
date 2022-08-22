@@ -141,7 +141,7 @@ router.patch('/:comment_id', isLoggedIn, async (req, res) => {
     const content = req.body.content;
 
 
-    try{
+    try {
         const [noneComment] = await DB.execute({
             psmt: `select * from COMMENT where comment_id = ?`,
             binding: [commentId]
@@ -153,7 +153,7 @@ router.patch('/:comment_id', isLoggedIn, async (req, res) => {
         if (noneComment.user_id !== user.user_id) {
             return res.status(400).json(Util.getReturnObject('해당 댓글을 수정할 수 없습니다.', 400, {}));
         }
-        if(content === noneComment.content){
+        if (content === noneComment.content) {
             return res.status(400).json(Util.getReturnObject('수정된 내용이 없습니다.', 400, {}));
         }
 
@@ -177,7 +177,7 @@ router.patch('/:comment_id', isLoggedIn, async (req, res) => {
         }
         return res.status(200).json(Util.getReturnObject('댓글이 정상적으로 수정되었습니다.', 200, {}));
 
-    } catch (error){
+    } catch (error) {
         console.error(error);
         return res.status(501).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 501, {}));
     }
@@ -185,6 +185,78 @@ router.patch('/:comment_id', isLoggedIn, async (req, res) => {
 
 
 /* GET comments by postId */
+router.get('/:postId', async (req, res) => {
+
+    const user = req.user;
+    const postId = req.params.postId;
+
+    try {
+        const [nonePost] = await DB.execute({
+            psmt: `select canceled_at from POST where post_id = ?`,
+            binding: [postId]
+        });
+
+        // 데이터에 없는 postId를 입력한 경우
+        if (!nonePost || nonePost.canceled_at !== null) {
+            return res.status(404).json(Util.getReturnObject(MSG.NO_POST_DATA, 404, {}));
+        }
+
+        const commentsDB = await DB.execute({
+            psmt: `select * from COMMENT where post_id = ? order by parent_id, created_at`,
+            binding: [postId]
+        });
+
+
+        const comments = [];
+        commentsDB.forEach(commentsDB => {
+            const {
+                comment_id,
+                parent_id,
+                post_id,
+                content,
+                created_at,
+                updated_at,
+            } = commentsDB;
+
+            const commentsObj = {
+                commentId: comment_id,
+                parentId: parent_id,
+                postId: post_id,
+                childrenCount: 4,
+                //     (async (comment_id, parent_id) => {
+                //     if (comment_id === parent_id) {
+                //         const [childrenCount] = await DB.execute({
+                //             psmt: `select count(comment_id) as childrenCount from COMMENT where parent_id = ?`,
+                //             binding: [parent_id]
+                //         })
+                //         console.log(childrenCount.childrenCount);
+                //         return console.log(childrenCount.childrenCount);
+                //     } else {
+                //         return null;
+                //     }
+                // })(comment_id, parent_id),
+                writer: {
+                    userId: user.user_id,
+                    name: user.name
+                },
+                content: content,
+                createdAt: dayjs(created_at).format('YYYY-MM-DD'),
+                updatedAt: ((updated_at) => {
+                    if (!!updated_at) {
+                        return dayjs(updated_at).format('YYYY-MM-DD')
+                    }
+                    return null;
+                })(updated_at)
+            }
+            comments.push(commentsObj);
+        });
+
+        res.status(200).json(Util.getReturnObject('댓글 목록 조회 성공', 200, {comments}));
+    } catch (error) {
+        console.log(error);
+        res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
+    }
+});
 
 
 module.exports = router;

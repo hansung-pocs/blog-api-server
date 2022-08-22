@@ -16,7 +16,7 @@ router.get('/', isLoggedIn, async (req, res) => {
     const start = (page - 1) * offset;
 
     try {
-        if(isNaN(offset) || isNaN(page)){
+        if (isNaN(offset) || isNaN(page)) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
 
@@ -203,7 +203,7 @@ router.patch('/:user_id', isLoggedIn, async (req, res) => {
 });
 
 //비회원 회원가입
-router.post('/', isNotLoggedIn,async (req, res) => {
+router.post('/', isNotLoggedIn, async (req, res) => {
     const {
         userName,
         password,
