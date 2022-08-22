@@ -202,7 +202,7 @@ router.get('/:postId', async (req, res) => {
         }
 
         const commentsDB = await DB.execute({
-            psmt: `select * from COMMENT where post_id = ? order by parent_id, created_at`,
+            psmt: `select * from COMMENT where post_id = ? and where canceld_at is null order by parent_id, created_at`,
             binding: [postId]
         });
 
