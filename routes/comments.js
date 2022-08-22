@@ -134,6 +134,54 @@ router.patch('/:commentId/delete', isLoggedIn, async (req, res) => {
 
 
 /* PATCH (edit) comment */
+router.patch('/:comment_id', isLoggedIn, async (req, res) => {
+
+    const user = req.user;
+    const commentId = req.params.comment_id;
+    const content = req.body.content;
+
+
+    try{
+        const [noneComment] = await DB.execute({
+            psmt: `select * from COMMENT where comment_id = ?`,
+            binding: [commentId]
+        });
+
+        if (noneComment.canceled_at !== null) {
+            return res.status(400).json(Util.getReturnObject('없거나 삭제된 댓글입니다.', 400, {}));
+        }
+        if (noneComment.user_id !== user.user_id) {
+            return res.status(400).json(Util.getReturnObject('해당 댓글을 수정할 수 없습니다.', 400, {}));
+        }
+        if(content === noneComment.content){
+            return res.status(400).json(Util.getReturnObject('수정된 내용이 없습니다.', 400, {}));
+        }
+
+        let sql = 'update COMMENT set';
+        const bindings = [];
+
+
+        if (!!content && commentDB.content != content) {
+            sql += ' content = ?,';
+            bindings.push(content);
+        }
+
+        if (bindings.length > 0) {
+            sql += ' updated_at = NOW() where comment_id = ?;';
+            bindings.push(commentId);
+
+            await DB.execute({
+                psmt: sql,
+                binding: bindings
+            });
+        }
+        return res.status(200).json(Util.getReturnObject('댓글이 정상적으로 수정되었습니다.', 200, {}));
+
+    } catch (error){
+        console.error(error);
+        return res.status(501).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 501, {}));
+    }
+});
 
 
 /* GET comments by postId */
