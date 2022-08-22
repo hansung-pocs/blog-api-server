@@ -137,18 +137,18 @@ router.patch('/:comment_id', isLoggedIn, async (req, res) => {
 
 
     try {
-        const [noneComment] = await DB.execute({
+        const [commentDB] = await DB.execute({
             psmt: `select * from COMMENT where comment_id = ?`,
             binding: [commentId]
         });
 
-        if (noneComment.canceled_at !== null) {
+        if (commentDB.canceled_at !== null) {
             return res.status(400).json(Util.getReturnObject('없거나 삭제된 댓글입니다.', 400, {}));
         }
-        if (noneComment.user_id !== user.user_id) {
+        if (commentDB.user_id !== user.user_id) {
             return res.status(400).json(Util.getReturnObject('해당 댓글을 수정할 수 없습니다.', 400, {}));
         }
-        if (content === noneComment.content) {
+        if (content === commentDB.content) {
             return res.status(400).json(Util.getReturnObject('수정된 내용이 없습니다.', 400, {}));
         }
 
