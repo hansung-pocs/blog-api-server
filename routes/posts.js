@@ -53,7 +53,7 @@ router.post('/', isLoggedIn, async (req, res) => {
 
 /* GET posts list */
 router.get('/', isLoggedIn, async (req, res) => {
-    const filter = req.query.id;
+    let filter = req.query.id;
     const offset = Number(req.query.offset);
     const page = Number(req.query.pageNum);
     const title = decodeURI(req.query.title);
@@ -65,6 +65,7 @@ router.get('/', isLoggedIn, async (req, res) => {
         }
 
         let sql = `select post_id, name, title, content, views, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL`;
+        let countsql = `select COUNT(*) from POST where canceled_at is NULL`
 
         if (title != "undefined") {
             sql += ` and title like '%${title}%'`
@@ -75,21 +76,30 @@ router.get('/', isLoggedIn, async (req, res) => {
 
         if (filter == null) {
             sql += ` order by p.created_at DESC limit ?, ?;`;
+            filter = 'all'
         } else {
             if (filter === 'best') {
                 sql += ` order by views DESC limit ?, ?;`;
+                countsql += ` category = ?`
             } else if (filter === 'notice' || filter === 'memory' || filter === 'knowhow' || filter === 'reference' || filter === 'study' || filter === 'QNA') {
                 sql += ` and category = '${filter}' order by p.created_at DESC limit ?, ?;`;
+                countsql += ` category = ?`
             } else {
                 return res.status(400).json(Util.getReturnObject('잘못된 id값입니다.', 400, {}));
             }
         }
 
 
-        const postsDB = await DB.execute({
-            psmt: sql,
-            binding: [start, offset]
-        });
+        const [postsDB,count] = await Promise.all([
+            await DB.execute({
+                psmt: sql,
+                binding: [start, offset]
+            }),
+            await DB.execute({
+                psmt: countsql,
+                binding: [filter]
+            })
+        ])
 
         console.log('posts: %j', postsDB);
 
@@ -124,7 +134,13 @@ router.get('/', isLoggedIn, async (req, res) => {
             posts.push(postsObj);
         });
 
-        res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {posts}));
+        const categories = [];
+        const categoriesObj = {
+            category : filter,
+            count : count
+        }
+        categories.push(categoriesObj)
+        res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {categories,posts}));
     } catch (error) {
         console.log(error);
         res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
