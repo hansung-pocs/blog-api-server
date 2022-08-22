@@ -27,19 +27,14 @@ router.post('/', isLoggedIn, async (req, res) => {
 
 
         // postId가 잘못된 경우(DB에 없거나 삭제된 post_id를 전송한 경우), 404 -> 요청 리소스를 찾을 수 없음
-        const [nonePost] = await DB.execute({
-            psmt: `select post_id, canceled_at from POST where post_id = ?`,
+        const [postDB] = await DB.execute({
+            psmt: `select post_id, user_id, canceled_at from POST where post_id = ?`,
             binding: [postId]
         });
 
-        if (!nonePost || nonePost.canceled_at !== null) {
+        if (!postDB || postDB.canceled_at !== null) {
             return res.status(404).json(Util.getReturnObject(MSG.NO_POST_DATA, 404, {}));
         }
-
-        const [postDB] = await DB.execute({
-            psmt: `select user_id from POST where post_id = ?`,
-            binding: [postId]
-        })
 
         // 비회원이 본인이 작성한 게시글이 아닌 것에 댓글을 추가하려고 하는 경우 (QNA에만 해당)
         if (user.type === null && postDB.user_id !== user.user_id) {
@@ -160,8 +155,7 @@ router.patch('/:comment_id', isLoggedIn, async (req, res) => {
         let sql = 'update COMMENT set';
         const bindings = [];
 
-
-        if (!!content && noneComment.content != content) {
+        if (!!content && commentDB.content != content) {
             sql += ' content = ?,';
             bindings.push(content);
         }
@@ -179,13 +173,13 @@ router.patch('/:comment_id', isLoggedIn, async (req, res) => {
 
     } catch (error) {
         console.error(error);
-        return res.status(501).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 501, {}));
+        return res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
 
 
 /* GET comments by postId */
-router.get('/:postId', async (req, res) => {
+router.get('/:postId', isLoggedIn, async (req, res) => {
 
     const user = req.user;
     const postId = req.params.postId;
@@ -202,54 +196,55 @@ router.get('/:postId', async (req, res) => {
         }
 
         const commentsDB = await DB.execute({
-            psmt: `select * from COMMENT where post_id = ? and where canceld_at is null order by parent_id, created_at`,
+            psmt: `select * from COMMENT where post_id = ? and canceled_at is null order by parent_id, created_at`,
             binding: [postId]
         });
 
+        const comments = await Promise.all(
+            commentsDB.map(
+                async commentsDB => {
+                    const {
+                        comment_id,
+                        parent_id,
+                        post_id,
+                        content,
+                        created_at,
+                        updated_at,
+                    } = commentsDB;
 
-        const comments = [];
-        commentsDB.forEach(commentsDB => {
-            const {
-                comment_id,
-                parent_id,
-                post_id,
-                content,
-                created_at,
-                updated_at,
-            } = commentsDB;
+                    const getCommentCount = async (comment_id, parent_id) => {
+                        if (comment_id === parent_id) {
+                            const [childrenCount] = await DB.execute({
+                                psmt: `select count(comment_id) as childrenCount from COMMENT where parent_id = ?`,
+                                binding: [parent_id]
+                            })
+                            return childrenCount.childrenCount - 1;
+                        } else {
+                            return null;
+                        }
+                    };
 
-            const commentsObj = {
-                commentId: comment_id,
-                parentId: parent_id,
-                postId: post_id,
-                childrenCount: 4,
-                //     (async (comment_id, parent_id) => {
-                //     if (comment_id === parent_id) {
-                //         const [childrenCount] = await DB.execute({
-                //             psmt: `select count(comment_id) as childrenCount from COMMENT where parent_id = ?`,
-                //             binding: [parent_id]
-                //         })
-                //         console.log(childrenCount.childrenCount);
-                //         return console.log(childrenCount.childrenCount);
-                //     } else {
-                //         return null;
-                //     }
-                // })(comment_id, parent_id),
-                writer: {
-                    userId: user.user_id,
-                    name: user.name
-                },
-                content: content,
-                createdAt: dayjs(created_at).format('YYYY-MM-DD'),
-                updatedAt: ((updated_at) => {
-                    if (!!updated_at) {
-                        return dayjs(updated_at).format('YYYY-MM-DD')
+                    return {
+                        commentId: comment_id,
+                        parentId: parent_id,
+                        postId: post_id,
+                        childrenCount: await getCommentCount(comment_id, parent_id),
+                        writer: {
+                            userId: user.user_id,
+                            name: user.name
+                        },
+                        content: content,
+                        createdAt: dayjs(created_at).format('YYYY-MM-DD'),
+                        updatedAt: ((updated_at) => {
+                            if (!!updated_at) {
+                                return dayjs(updated_at).format('YYYY-MM-DD')
+                            }
+                            return null;
+                        })(updated_at)
                     }
-                    return null;
-                })(updated_at)
-            }
-            comments.push(commentsObj);
-        });
+                }
+            )
+        );
 
         res.status(200).json(Util.getReturnObject('댓글 목록 조회 성공', 200, {comments}));
     } catch (error) {
