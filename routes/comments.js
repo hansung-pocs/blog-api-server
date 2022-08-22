@@ -213,6 +213,11 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
                         canceled_at
                     } = commentsDB;
 
+                    // 삭제된 답글이면 배열에서 꺼내기
+                    if (comment_id !== parent_id && canceled_at !== null) {
+                        return;
+                    }
+
                     const getCommentCount = async (comment_id, parent_id) => {
                         if (comment_id === parent_id) {
                             const [childrenCount] = await DB.execute({
@@ -253,7 +258,16 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
             )
         );
 
-        res.status(200).json(Util.getReturnObject('댓글 목록 조회 성공', 200, {comments}));
+        // 삭제된 답글은 보여지지 않도록
+        function filterCanceledReply(item) {
+            if (item == undefined) {
+                return false;
+            }
+            return true;
+        }
+        const result = comments.filter(filterCanceledReply);
+
+        res.status(200).json(Util.getReturnObject('댓글 목록 조회 성공', 200, {result}));
     } catch (error) {
         console.log(error);
         res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
