@@ -61,11 +61,11 @@ router.get('/', isLoggedIn, async (req, res) => {
             const usersObj = {
                 userId: user_id,
                 defaultInfo : {
-                    name: name,
-                    email: email,
-                    studentId: student_id,
+                    name: name || null,
+                    email: email || null,
+                    studentId: student_id || null,
                     company: company || null,
-                    generation: generation,
+                    generation: generation || null,
                     github: github || null
                 },
                 type: ((type) => {
@@ -125,11 +125,11 @@ router.get('/:user_id', isLoggedIn, async (req, res) => {
             return res.status(200).json(Util.getReturnObject(`${name} ${MSG.READ_USER_SUCCESS}`, 200, {
                 userId: user_id,
                 defaultInfo : {
-                    name: name,
-                    email: email,
-                    studentId: student_id,
+                    name: name || null,
+                    email: email || null,
+                    studentId: student_id || null,
                     company: company || null,
-                    generation: generation,
+                    generation: generation || null,
                     github: github || null
                 },
                 type: ((type) => {

@@ -58,11 +58,11 @@ router.get('/users', isAdmin, async (req, res) => {
             const usersObj = {
                 userId: user_id,
                 defaultInfo : {
-                    name: name,
-                    email: email,
-                    studentId: student_id,
+                    name: name || null,
+                    email: email || null,
+                    studentId: student_id || null,
                     company: company || null,
-                    generation: generation,
+                    generation: generation || null,
                     github: github || null
                 },
                 type: ((type) => {
@@ -124,11 +124,11 @@ router.get('/users/:userId', isAdmin, async (req, res) => {
         return res.status(200).json(Util.getReturnObject(`어드민 권한으로 ${name}${MSG.READ_USER_SUCCESS}`, 200, {
             userId: user_id,
             defaultInfo : {
-                name: name,
-                email: email,
-                studentId: student_id,
+                name: name || null,
+                email: email || null,
+                studentId: student_id || null,
                 company: company || null,
-                generation: generation,
+                generation: generation || null,
                 github: github || null
             },
             type: ((type) => {
