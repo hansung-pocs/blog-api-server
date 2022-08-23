@@ -109,7 +109,6 @@ const userDetailInfo = user => {
         userId: user_id,
         defaultInfo : {
             name: name || null,
-            username : username || null,
             email: email || null,
             studentId: student_id || null,
             company: company || null,
