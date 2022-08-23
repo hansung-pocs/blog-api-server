@@ -175,7 +175,7 @@ router.get('/users/:userId', isAdmin, async (req, res) => {
                 userId: user_id,
                 defaultInfo : {
                     name: name,
-                    email: emaill,
+                    email: email,
                     studentId: student_id,
                     company: company || null,
                     generation: generation,
