@@ -86,7 +86,7 @@ router.get('/', isLoggedIn, async (req, res) => {
         }
 
 
-        const [postsDB,countDB] = await Promise.all([
+        const [postsDB, countDB] = await Promise.all([
             await DB.execute({
                 psmt: sql,
                 binding: [start, offset]
@@ -139,8 +139,8 @@ router.get('/', isLoggedIn, async (req, res) => {
             } = countDB
 
             const categoriesObj = {
-                category : ((category) => {
-                    if(!category) return 'error';
+                category: ((category) => {
+                    if (!category) return 'error';
 
                     switch (category) {
                         case 'best':
@@ -161,12 +161,12 @@ router.get('/', isLoggedIn, async (req, res) => {
                             return 'error';
                     }
                 })(category),
-                count : count
+                count: count
             }
             categories.push(categoriesObj)
         })
 
-        res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {categories,posts}));
+        res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {categories, posts}));
     } catch (error) {
         console.log(error);
         res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
