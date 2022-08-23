@@ -107,12 +107,17 @@ const userDetailInfo = user => {
 
     return {
         userId: user_id,
-        name: name,
-        userName: username,
-        email: email,
-        studentId: student_id,
+        defaultInfo : {
+            name: name || null,
+            username : username || null,
+            email: email || null,
+            studentId: student_id || null,
+            company: company || null,
+            generation: generation || null,
+            github: github || null
+        },
         type: ((type) => {
-            if (!type) return '비회원';
+            if (!type) return 'anonymous';
 
             switch (type) {
                 case 'admin':
@@ -123,10 +128,7 @@ const userDetailInfo = user => {
                     return 'unknown';
             }
         })(type),
-        company: company || null,
-        generation: generation,
-        github: github || null,
-        createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss')
+        createdAt: dayjs(created_at).format('YYYY-MM-DD')
     }
 }
 
