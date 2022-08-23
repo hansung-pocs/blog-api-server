@@ -265,6 +265,7 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
             }
             return true;
         }
+
         const comments = commentsFilter.filter(filterCanceledReply);
 
         res.status(200).json(Util.getReturnObject('댓글 목록 조회 성공', 200, {comments}));
