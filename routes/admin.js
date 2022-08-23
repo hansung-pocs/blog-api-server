@@ -55,37 +55,63 @@ router.get('/users', isAdmin, async (req, res) => {
                 canceled_at
             } = usersDB;
 
-            const usersObj = {
-                userId: user_id,
-                defaultInfo : {
-                    name: name || null,
-                    email: email || null,
-                    studentId: student_id || null,
-                    company: company || null,
-                    generation: generation || null,
-                    github: github || null
-                },
-                type: ((type) => {
-                    if (!type) return 'anonymous';
+            if (!type) {
+                const usersObj = {
+                    userId: user_id,
+                    type: ((type) => {
+                        if (!type) return 'anonymous';
 
-                    switch (type) {
-                        case 'admin':
-                            return 'admin';
-                        case 'member':
-                            return 'member';
-                        default:
-                            return 'unknown';
-                    }
-                })(type),
-                createdAt: dayjs(created_at).format('YYYY-MM-DD'),
-                canceledAt: ((canceled_at) => {
-                    if (!!canceled_at) {
-                        return dayjs(canceled_at).format('YYYY-MM-DD')
-                    }
-                    return null;
-                })(canceled_at),
+                        switch (type) {
+                            case 'admin':
+                                return 'admin';
+                            case 'member':
+                                return 'member';
+                            default:
+                                return 'unknown';
+                        }
+                    })(type),
+                    createdAt: dayjs(created_at).format('YYYY-MM-DD'),
+                    canceledAt: ((canceled_at) => {
+                        if (!!canceled_at) {
+                            return dayjs(canceled_at).format('YYYY-MM-DD')
+                        }
+                        return null;
+                    })(canceled_at),
+                }
+                users.push(usersObj);
+            } else {
+                const usersObj = {
+                    userId: user_id,
+                    defaultInfo : {
+                        name: name,
+                        email: email,
+                        studentId: student_id,
+                        company: company || null,
+                        generation: generation,
+                        github: github || null
+                    },
+                    type: ((type) => {
+                        if (!type) return 'anonymous';
+
+                        switch (type) {
+                            case 'admin':
+                                return 'admin';
+                            case 'member':
+                                return 'member';
+                            default:
+                                return 'unknown';
+                        }
+                    })(type),
+                    createdAt: dayjs(created_at).format('YYYY-MM-DD'),
+                    canceledAt: ((canceled_at) => {
+                        if (!!canceled_at) {
+                            return dayjs(canceled_at).format('YYYY-MM-DD')
+                        }
+                        return null;
+                    })(canceled_at),
+                }
+                users.push(usersObj);
             }
-            users.push(usersObj);
         })
         return res.status(200).json(Util.getReturnObject(`관리자 권한으로 ${MSG.READ_USERDATA_SUCCESS}`, 200, {users}));
     } catch (e) {
@@ -121,36 +147,64 @@ router.get('/users/:userId', isAdmin, async (req, res) => {
             canceled_at
         } = userDB;
 
-        return res.status(200).json(Util.getReturnObject(`어드민 권한으로 ${name}${MSG.READ_USER_SUCCESS}`, 200, {
-            userId: user_id,
-            defaultInfo : {
-                name: name || null,
-                email: email || null,
-                studentId: student_id || null,
-                company: company || null,
-                generation: generation || null,
-                github: github || null
-            },
-            type: ((type) => {
-                if (!type) return 'anonymous';
+        if (!type) {
+            return res.status(200).json(Util.getReturnObject(`어드민 권한으로 ${name}${MSG.READ_USER_SUCCESS}`, 200, {
+                userId: user_id,
+                type: ((type) => {
+                    if (!type) return 'anonymous';
 
-                switch (type) {
-                    case 'admin':
-                        return 'admin';
-                    case 'member':
-                        return 'member';
-                    default:
-                        return 'unknown';
-                }
-            })(type),
-            createdAt: dayjs(created_at).format('YYYY-MM-DD'),
-            canceledAt: ((canceled_at) => {
-                if (!!canceled_at) {
-                    return dayjs(canceled_at).format('YYYY-MM-DD HH:mm:ss')
-                }
-                return null;
-            })(canceled_at),
-        }));
+                    switch (type) {
+                        case 'admin':
+                            return 'admin';
+                        case 'member':
+                            return 'member';
+                        default:
+                            return 'unknown';
+                    }
+                })(type),
+                createdAt: dayjs(created_at).format('YYYY-MM-DD'),
+                canceledAt: ((canceled_at) => {
+                    if (!!canceled_at) {
+                        return dayjs(canceled_at).format('YYYY-MM-DD HH:mm:ss')
+                    }
+                    return null;
+                })(canceled_at),
+            }));
+        } else {
+            return res.status(200).json(Util.getReturnObject(`어드민 권한으로 ${name}${MSG.READ_USER_SUCCESS}`, 200, {
+                userId: user_id,
+                defaultInfo : {
+                    name: name,
+                    email: emaill,
+                    studentId: student_id,
+                    company: company || null,
+                    generation: generation,
+                    github: github || null
+                },
+                type: ((type) => {
+                    if (!type) return 'anonymous';
+
+                    switch (type) {
+                        case 'admin':
+                            return 'admin';
+                        case 'member':
+                            return 'member';
+                        default:
+                            return 'unknown';
+                    }
+                })(type),
+                createdAt: dayjs(created_at).format('YYYY-MM-DD'),
+                canceledAt: ((canceled_at) => {
+                    if (!!canceled_at) {
+                        return dayjs(canceled_at).format('YYYY-MM-DD HH:mm:ss')
+                    }
+                    return null;
+                })(canceled_at),
+            }));
+        }
+
+
+
     } catch (error) {
         console.error(error);
         res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));

@@ -105,30 +105,51 @@ const userDetailInfo = user => {
         created_at,
     } = user;
 
-    return {
-        userId: user_id,
-        defaultInfo : {
-            name: name || null,
-            email: email || null,
-            studentId: student_id || null,
-            company: company || null,
-            generation: generation || null,
-            github: github || null
-        },
-        type: ((type) => {
-            if (!type) return 'anonymous';
+    if (!type) {
+        return {
+            userId: user_id,
+            type: ((type) => {
+                if (!type) return 'anonymous';
 
-            switch (type) {
-                case 'admin':
-                    return 'admin';
-                case 'member':
-                    return 'member';
-                default:
-                    return 'unknown';
-            }
-        })(type),
-        createdAt: dayjs(created_at).format('YYYY-MM-DD')
+                switch (type) {
+                    case 'admin':
+                        return 'admin';
+                    case 'member':
+                        return 'member';
+                    default:
+                        return 'unknown';
+                }
+            })(type),
+            createdAt: dayjs(created_at).format('YYYY-MM-DD')
+        }
+    } else {
+        return {
+            userId: user_id,
+            defaultInfo : {
+                name: name,
+                email: email,
+                studentId: student_id,
+                company: company || null,
+                generation: generation,
+                github: github || null
+            },
+            type: ((type) => {
+                if (!type) return 'anonymous';
+
+                switch (type) {
+                    case 'admin':
+                        return 'admin';
+                    case 'member':
+                        return 'member';
+                    default:
+                        return 'unknown';
+                }
+            })(type),
+            createdAt: dayjs(created_at).format('YYYY-MM-DD')
+        }
     }
+
+
 }
 
 module.exports = router;
