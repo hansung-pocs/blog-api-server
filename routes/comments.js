@@ -36,7 +36,7 @@ router.post('/', isLoggedIn, async (req, res) => {
             return res.status(404).json(Util.getReturnObject(MSG.NO_POST_DATA, 404, {}));
         }
 
-        // 비회원이 본인이 작성한 게시글이 아닌 것에 댓글을 추가하려고 하는 경우 (QNA에만 해당)
+        // 비회원이 본인이 작성한 게시글이 아닌 것에 댓글을 추가하려고 하는 경우 (qna에만 해당)
         if (user.type === null && postDB.user_id !== user.user_id) {
             return res.status(400).json(Util.getReturnObject(MSG.NO_AUTHORITY, 400, {}));
         }

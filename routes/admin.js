@@ -268,11 +268,18 @@ router.get('/posts', isAdmin, async (req, res) => {
             sql += ` and title like '%${title}%'`;
         }
 
-        const postsDB = await DB.execute({
-            psmt: sql + ` order by created_at DESC limit ?, ?;`,
-            binding: [start, offset]
-        });
+        const [postsDB,countDB] = await Promise.all([
+            await DB.execute({
+                psmt: sql + ` order by created_at DESC limit ?, ?;`,
+                binding: [start, offset]
+            }),
+            await DB.execute({
+                psmt: `select category, count(category) as count from POST where canceled_at is null group by category`,
+                binding: []
+            })
+        ]);
 
+        countDB.sort();
         const posts = [];
         postsDB.forEach(postsDB => {
             const {
@@ -308,7 +315,43 @@ router.get('/posts', isAdmin, async (req, res) => {
             }
             posts.push(postsObj);
         })
-        return res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {posts}));
+
+        const categories = []
+        countDB.forEach(countDB => {
+            const {
+                category,
+                count
+            } = countDB
+
+            const categoriesObj = {
+                category : ((category) => {
+                    if(!category) return 'error';
+
+                    switch (category) {
+                        case 'best':
+                            return '인기글';
+                        case 'notice':
+                            return '공지사항';
+                        case 'knowhow':
+                            return '노하우';
+                        case 'reference':
+                            return '추천';
+                        case 'memory':
+                            return '추억';
+                        case 'study':
+                            return '스터디';
+                        case 'qna':
+                            return 'qna';
+                        default:
+                            return 'error';
+                    }
+                })(category),
+                count : count
+            }
+            categories.push(categoriesObj)
+        })
+
+        return res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {categories,posts}));
     } catch (error) {
         console.log(error);
         return res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
@@ -333,13 +376,19 @@ router.get('/posts/:userId', isAdmin, async (req, res) => {
         if (title != "undefined") {
             sql += ` and title like '%${title}%'`
         }
-        const postsDB = await DB.execute({
-            psmt: sql + ` order by created_at DESC limit ?, ?;`,
-            binding: [userId, start, offset]
-        });
+        const [postsDB,countDB] = await Promise.all([
+            await DB.execute({
+                psmt: sql + ` order by created_at DESC limit ?, ?;`,
+                binding: [userId, start, offset]
+            }),
+            await DB.execute({
+                psmt: `select category, count(category) as count from POST where canceled_at is null group by category`,
+                binding: []
+            })
+        ])
 
         console.log('post: %j', postsDB);
-
+        countDB.sort();
         if (postsDB.length === 0) {
             return res.status(404).json(Util.getReturnObject(MSG.CANT_READ_POSTDATA, 404, {}));
         }
@@ -377,7 +426,43 @@ router.get('/posts/:userId', isAdmin, async (req, res) => {
 
             posts.push(postsObj);
         })
-        return res.status(200).json(Util.getReturnObject(`관리자 권한으로 userID : ${userId}의 ${MSG.READ_POSTDATA_SUCCESS}`, 200, {posts}));
+
+        const categories = []
+        countDB.forEach(countDB => {
+            const {
+                category,
+                count
+            } = countDB
+
+            const categoriesObj = {
+                category : ((category) => {
+                    if(!category) return 'error';
+
+                    switch (category) {
+                        case 'best':
+                            return '인기글';
+                        case 'notice':
+                            return '공지사항';
+                        case 'knowhow':
+                            return '노하우';
+                        case 'reference':
+                            return '추천';
+                        case 'memory':
+                            return '추억';
+                        case 'study':
+                            return '스터디';
+                        case 'qna':
+                            return 'qna';
+                        default:
+                            return 'error';
+                    }
+                })(category),
+                count : count
+            }
+            categories.push(categoriesObj)
+        })
+
+        return res.status(200).json(Util.getReturnObject(`관리자 권한으로 userID : ${userId}의 ${MSG.READ_POSTDATA_SUCCESS}`, 200, {categories,posts}));
     } catch (e) {
         console.error(e);
         return res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));

@@ -29,13 +29,13 @@ router.post('/', isLoggedIn, async (req, res) => {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
 
-        if (!['memory', 'notice', 'study', 'knowhow', 'reference', 'QNA'].includes(category)) {
+        if (!['memory', 'notice', 'study', 'knowhow', 'reference', 'qna'].includes(category)) {
             return res.status(403).json(Util.getReturnObject(MSG.WRONG_CATEGORY, 403, {}));
         }
 
         // 멤버인 사람이 공지를 남기거나
-        // 비회원이 QNA아닌 글 쓸 경우
-        if ((type === 'member' && category === 'notice') || ((!type) && category != 'QNA')) {
+        // 비회원이 qna아닌 글 쓸 경우
+        if ((type === 'member' && category === 'notice') || ((!type) && category != 'qna')) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         }
 
@@ -78,7 +78,7 @@ router.get('/', isLoggedIn, async (req, res) => {
         } else {
             if (filter === 'best') {
                 sql += ` order by views DESC limit ?, ?;`;
-            } else if (filter === 'notice' || filter === 'memory' || filter === 'knowhow' || filter === 'reference' || filter === 'study' || filter === 'QNA') {
+            } else if (filter === 'notice' || filter === 'memory' || filter === 'knowhow' || filter === 'reference' || filter === 'study' || filter === 'qna') {
                 sql += ` and category = '${filter}' order by p.created_at DESC limit ?, ?;`;
             } else {
                 return res.status(400).json(Util.getReturnObject('잘못된 id값입니다.', 400, {}));
@@ -99,7 +99,6 @@ router.get('/', isLoggedIn, async (req, res) => {
 
         countDB.sort();
         console.log('posts: %j', postsDB);
-        console.log('countDB %j', countDB);
         const posts = [];
         postsDB.forEach(postsDB => {
             const {
@@ -155,8 +154,8 @@ router.get('/', isLoggedIn, async (req, res) => {
                             return '추억';
                         case 'study':
                             return '스터디';
-                        case 'QNA':
-                            return '질문';
+                        case 'qna':
+                            return 'qna';
                         default:
                             return 'error';
                     }
@@ -267,7 +266,7 @@ router.patch('/:postId', isLoggedIn, async (req, res, next) => {
         if (postDB.user_id !== userId) {
             return res.status(403).json(Util.getReturnObject(MSG.NOT_YOUR_POST, 403, {}));
         }
-        if (category != 'memory' && category != 'notice' && category != 'study' && category != 'knowhow' && category != 'reference' && category != 'QNA') {
+        if (category != 'memory' && category != 'notice' && category != 'study' && category != 'knowhow' && category != 'reference' && category != 'qna') {
             return res.status(403).json(Util.getReturnObject(MSG.WRONG_CATEGORY, 403, {}));
         }
 
