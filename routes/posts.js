@@ -139,7 +139,28 @@ router.get('/', isLoggedIn, async (req, res) => {
             } = countDB
 
             const categoriesObj = {
-                category : category,
+                category : ((category) => {
+                    if(!category) return 'error';
+
+                    switch (category) {
+                        case 'best':
+                            return '인기글';
+                        case 'notice':
+                            return '공지사항';
+                        case 'knowhow':
+                            return '노하우';
+                        case 'reference':
+                            return '추천';
+                        case 'memory':
+                            return '추억';
+                        case 'study':
+                            return '스터디';
+                        case 'QNA':
+                            return '질문';
+                        default:
+                            return 'error';
+                    }
+                })(category),
                 count : count
             }
             categories.push(categoriesObj)
