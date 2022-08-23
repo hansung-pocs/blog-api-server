@@ -369,28 +369,7 @@ router.get('/posts', isAdmin, async (req, res) => {
                     }
                     return null;
                 })(canceled_at),
-                category: ((category) => {
-                    if (!category) return 'error';
-
-                    switch (category) {
-                        case 'best':
-                            return '인기글';
-                        case 'notice':
-                            return '공지사항';
-                        case 'knowhow':
-                            return '노하우';
-                        case 'reference':
-                            return '추천';
-                        case 'memory':
-                            return '추억';
-                        case 'study':
-                            return '스터디';
-                        case 'qna':
-                            return 'qna';
-                        default:
-                            return 'error';
-                    }
-                })(category)
+                category: (category)
             }
             posts.push(postsObj);
         })
@@ -500,28 +479,7 @@ router.get('/posts/:userId', isAdmin, async (req, res) => {
                     }
                     return null;
                 })(canceled_at),
-                category: ((category) => {
-                    if (!category) return 'error';
-
-                    switch (category) {
-                        case 'best':
-                            return '인기글';
-                        case 'notice':
-                            return '공지사항';
-                        case 'knowhow':
-                            return '노하우';
-                        case 'reference':
-                            return '추천';
-                        case 'memory':
-                            return '추억';
-                        case 'study':
-                            return '스터디';
-                        case 'qna':
-                            return 'qna';
-                        default:
-                            return 'error';
-                    }
-                })(category)
+                category: (category)
             }
 
             posts.push(postsObj);
