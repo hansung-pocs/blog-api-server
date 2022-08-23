@@ -60,9 +60,14 @@ router.get('/', isLoggedIn, async (req, res) => {
 
             const usersObj = {
                 userId: user_id,
-                name: name,
-                email: email,
-                studentId: student_id,
+                defaultInfo : {
+                    name: name,
+                    email: email,
+                    studentId: student_id,
+                    company: company || null,
+                    generation: generation,
+                    github: github || null
+                },
                 type: ((type) => {
                     if (!type) return 'anonymous';
 
@@ -75,9 +80,6 @@ router.get('/', isLoggedIn, async (req, res) => {
                             return 'unknown';
                     }
                 })(type),
-                company: company || null,
-                generation: generation,
-                github: github || null,
                 createdAt: dayjs(created_at).format('YYYY-MM-DD')
             }
             users.push(usersObj);
@@ -122,9 +124,14 @@ router.get('/:user_id', isLoggedIn, async (req, res) => {
         } else {
             return res.status(200).json(Util.getReturnObject(`${name} ${MSG.READ_USER_SUCCESS}`, 200, {
                 userId: user_id,
-                name: name,
-                email: email,
-                studentId: student_id,
+                defaultInfo : {
+                    name: name,
+                    email: email,
+                    studentId: student_id,
+                    company: company || null,
+                    generation: generation,
+                    github: github || null
+                },
                 type: ((type) => {
                     if (!type) return 'anonymous';
 
@@ -137,10 +144,7 @@ router.get('/:user_id', isLoggedIn, async (req, res) => {
                             return 'unknown';
                     }
                 })(type),
-                company: company || null,
-                generation: generation,
-                github: github || null,
-                createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss')
+                createdAt: dayjs(created_at).format('YYYY-MM-DD')
             }));
         }
     } catch (error) {
