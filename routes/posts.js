@@ -51,8 +51,10 @@ router.post('/', isLoggedIn, async (req, res) => {
     }
 });
 
+
 /* GET posts list */
 router.get('/', isLoggedIn, async (req, res) => {
+
     const filter = req.query.id;
     const offset = Number(req.query.offset);
     const page = Number(req.query.pageNum);
