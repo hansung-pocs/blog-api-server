@@ -66,7 +66,7 @@ router.get('/', isLoggedIn, async (req, res) => {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
 
-        let sql = `select post_id, name, title, content, views, p.created_at, p.updated_at, category from POST p, USER u WHERE u.user_id = p.user_id and p.canceled_at is NULL`;
+        let sql = `select post_id, name, title, content, views, p.created_at, p.updated_at, category from POST p, USER u where u.user_id = p.user_id and p.canceled_at is NULL`;
 
         if (title != "undefined") {
             sql += ` and title like '%${title}%'`

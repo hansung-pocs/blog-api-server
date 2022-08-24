@@ -196,7 +196,7 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
         }
 
         const commentsDB = await DB.execute({
-            psmt: `select * from COMMENT where post_id = ? order by parent_id, created_at`,
+            psmt: `select * from COMMENT c, USER u where c.user_id = u.user_id and post_id = ? order by parent_id, c.created_at`,
             binding: [postId]
         });
 
@@ -206,6 +206,8 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
                     const {
                         comment_id,
                         parent_id,
+                        user_id,
+                        name,
                         post_id,
                         content,
                         created_at,
@@ -236,8 +238,8 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
                         postId: post_id,
                         childrenCount: await getCommentCount(comment_id, parent_id),
                         writer: {
-                            userId: user.user_id,
-                            name: user.name
+                            userId: user_id,
+                            name: name
                         },
                         content: content,
                         createdAt: dayjs(created_at).format('YYYY-MM-DD'),
