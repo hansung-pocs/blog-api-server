@@ -20,7 +20,6 @@ router.post('/', isLoggedIn, async (req, res) => {
     } = req.body;
 
     try {
-
         if (!title || !content || !category) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
@@ -50,6 +49,8 @@ router.post('/', isLoggedIn, async (req, res) => {
 /* GET posts list */
 router.get('/', isLoggedIn, async (req, res) => {
 
+    const user = req.user;
+
     const filter = req.query.id;
     const offset = Number(req.query.offset);
     const page = Number(req.query.pageNum);
@@ -61,14 +62,11 @@ router.get('/', isLoggedIn, async (req, res) => {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
 
-        let sql = `select post_id, name, title, content, views, p.created_at, p.updated_at, category from POST p, USER u where u.user_id = p.user_id and p.canceled_at is NULL`;
+        let sql = `select post_id, name, title, content, views, only_member, p.created_at, p.updated_at, category from POST p, USER u where u.user_id = p.user_id and p.canceled_at is NULL`;
 
         if (title != "undefined") {
             sql += ` and title like '%${title}%'`
         }
-        // id값이 없을 때 -> order by p.created_at DESC
-        // id값에 잘못된 값이 들어왔을 때 -> res.status(400)....
-        // 정상적인 id값: best, notice, memory, knowhow, reference, study
 
         if (filter == null) {
             sql += ` order by p.created_at DESC limit ?, ?;`;
@@ -81,7 +79,6 @@ router.get('/', isLoggedIn, async (req, res) => {
                 return res.status(400).json(Util.getReturnObject('잘못된 id값입니다.', 400, {}));
             }
         }
-
 
         const [postsDB, countDB] = await Promise.all([
             await DB.execute({
@@ -104,6 +101,7 @@ router.get('/', isLoggedIn, async (req, res) => {
                 title,
                 content,
                 views,
+                only_member,
                 created_at,
                 updated_at,
                 category
@@ -115,6 +113,7 @@ router.get('/', isLoggedIn, async (req, res) => {
                 title: title,
                 content: content,
                 views: views,
+                onlyMember: !!only_member,
                 createdAt: dayjs(created_at).format('YYYY-MM-DD'),
                 updatedAt: ((updated_at) => {
                     if (!!updated_at) {
