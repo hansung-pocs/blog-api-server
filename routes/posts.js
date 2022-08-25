@@ -10,22 +10,18 @@ const {isLoggedIn} = require('../common/middlewares');
 
 /* POST new post */
 router.post('/', isLoggedIn, async (req, res) => {
+
+    const user = req.user;
     const {
-        userId,
+        onlyMember,
         title,
         content,
         category
     } = req.body;
 
     try {
-        const [userDB] = await DB.execute({
-            psmt: `select type from USER where user_id = ?`,
-            binding: [userId]
-        });
 
-        const {type} = userDB;
-
-        if (!userId || !title || !content || !category) {
+        if (!title || !content || !category) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
 
@@ -33,15 +29,14 @@ router.post('/', isLoggedIn, async (req, res) => {
             return res.status(403).json(Util.getReturnObject(MSG.WRONG_CATEGORY, 403, {}));
         }
 
-        // 멤버인 사람이 공지를 남기거나
-        // 비회원이 qna아닌 글 쓸 경우
-        if ((type === 'member' && category === 'notice') || ((!type) && category != 'qna')) {
+        // 멤버인 사람이 공지를 남기거나 비회원이 qna아닌 글 쓸 경우
+        if ((user.type === 'member' && category === 'notice') || ((!user.type) && category != 'qna')) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         }
 
         await DB.execute({
-            psmt: `insert into POST (title, content, user_id, created_at, category) VALUES(?, ?, ?, NOW(), ?)`,
-            binding: [title, content, userId, category]
+            psmt: `insert into POST (title, content, user_id, only_member, created_at, category) VALUES(?, ?, ?, ?, NOW(), ?)`,
+            binding: [title, content, user.user_id, onlyMember, category]
         });
 
         return res.status(201).json(Util.getReturnObject(MSG.POST_ADDED, 201, {}));
