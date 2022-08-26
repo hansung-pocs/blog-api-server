@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 
 const DB = require('../common/database');
-
 const dayjs = require('dayjs');
 const MSG = require('../common/message');
 const Util = require('../common/util');
@@ -62,7 +61,11 @@ router.get('/', isLoggedIn, async (req, res) => {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
 
-        let sql = `select post_id, name, title, content, views, only_member, p.created_at, p.updated_at, category from POST p, USER u where u.user_id = p.user_id and p.canceled_at is NULL`;
+        if (!user.type) {
+            var sql = `select post_id, name, title, content, views, only_member, p.created_at, p.updated_at, category from POST p, USER u where u.user_id = p.user_id and p.canceled_at is NULL and only_member is false`;
+        } else {
+            var sql = `select post_id, name, title, content, views, only_member, p.created_at, p.updated_at, category from POST p, USER u where u.user_id = p.user_id and p.canceled_at is NULL`;
+        }
 
         if (title != "undefined") {
             sql += ` and title like '%${title}%'`
@@ -92,7 +95,7 @@ router.get('/', isLoggedIn, async (req, res) => {
         ])
 
         countDB.sort();
-        console.log('posts: %j', postsDB);
+
         const posts = [];
         postsDB.forEach(postsDB => {
             const {
@@ -171,17 +174,29 @@ router.get('/', isLoggedIn, async (req, res) => {
 /* GET post detail */
 router.get('/:postId', isLoggedIn, async (req, res) => {
 
+    const user = req.user;
     const postId = req.params.postId;
 
     try {
-        const [nonePost] = await DB.execute({
-            psmt: `select title, canceled_at from POST where post_id = ?`,
-            binding: [postId]
-        });
+
+        const [[nonePost], [postDB]] = await Promise.all([
+            await DB.execute({
+                psmt: `select title, canceled_at from POST where post_id = ?`,
+                binding: [postId]
+            }),
+            await DB.execute({
+                psmt: `select title, content, views, only_member, p.created_at, p.updated_at, category, u.user_id, name, email, type, p.canceled_at from POST p, USER u where p.canceled_at is null and u.user_id = p.user_id and post_id = ?`,
+                binding: [postId]
+            })
+        ])
 
         // 데이터에 없는 postId를 입력한 경우
         if (!nonePost || nonePost.canceled_at !== null) {
             return res.status(404).json(Util.getReturnObject(MSG.NO_POST_DATA, 404, {}));
+        }
+
+        if (user.user_id === null && postDB.only_member) {
+            return res.status(404).json(Util.getReturnObject(MSG.NO_AUTHORITY, 404, {}));
         }
 
         await DB.execute({
@@ -189,15 +204,11 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
             binding: [postId]
         });
 
-        const [postDB] = await DB.execute({
-            psmt: `select title, content, views, p.created_at, p.updated_at, category, u.user_id, name, email, type, p.canceled_at from POST p, USER u where p.canceled_at is null and u.user_id = p.user_id and post_id = ?`,
-            binding: [postId]
-        });
-
         const {
             title,
             content,
             views,
+            only_member,
             created_at,
             updated_at,
             category,
@@ -205,7 +216,7 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
             name,
             email,
             type,
-            canceled_at,
+            canceled_at
         } = postDB;
 
         if (!!canceled_at) {
@@ -216,6 +227,7 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
             title: title,
             content: content,
             views: views,
+            onlyMember: !!only_member,
             createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss'),
             updatedAt: ((updated_at) => {
                 if (!!updated_at) {
@@ -241,8 +253,8 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
 /* PATCH (edit) post info */
 router.patch('/:postId', isLoggedIn, async (req, res, next) => {
 
+    const user = req.user;
     const {
-        userId,
         title,
         content,
         category,
@@ -260,7 +272,7 @@ router.patch('/:postId', isLoggedIn, async (req, res, next) => {
         if (postDB.canceled_at != null) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
         }
-        if (postDB.user_id !== userId) {
+        if (postDB.user_id !== user.user_id) {
             return res.status(403).json(Util.getReturnObject(MSG.NOT_YOUR_POST, 403, {}));
         }
         if (category != 'memory' && category != 'notice' && category != 'study' && category != 'knowhow' && category != 'reference' && category != 'qna') {
@@ -310,28 +322,21 @@ router.patch('/:postId', isLoggedIn, async (req, res, next) => {
 
 /* PATCH (delete) post */
 router.patch('/:postId/delete', isLoggedIn, async (req, res, next) => {
-    const userId = req.body.userId;
+
+    const user = req.user;
     const postId = req.params.postId;
+
     try {
-        const [[userDB], [postDB]] = await Promise.all([
-            await DB.execute({
-                psmt: `select type, user_id from USER where user_id = ?`,
-                binding: [userId]
-            }),
-            await DB.execute({
-                psmt: `select user_id, canceled_at from POST where post_id = ?`,
-                binding: [postId]
-            })
-        ])
-        if (postDB.canceled_at != null) {
+        const [postDB] = await DB.execute({
+            psmt: `select user_id, canceled_at from POST where post_id = ?`,
+            binding: [postId]
+        })
+
+        if (!postDB || postDB.canceled_at !== null) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
         }
 
-        if (!userId) {
-            return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
-        }
-
-        if (userDB.type !== 'admin' && postDB.user_id !== userId) {
+        if (user.type !== 'admin' && postDB.user_id !== user.user_id) {
             return res.status(403).json(Util.getReturnObject(MSG.NOT_YOUR_POST, 403, {}));
         }
 
@@ -339,11 +344,12 @@ router.patch('/:postId/delete', isLoggedIn, async (req, res, next) => {
             psmt: `update POST set canceled_at = NOW() where post_id = ?`,
             binding: [postId]
         });
+
         return res.status(201).json(Util.getReturnObject(MSG.POST_DELETE_SUCCESS, 201, {}));
 
     } catch (e) {
         console.error(e);
-        return res.status(501).json(Util.getReturnObject(e.message, 501, {}));
+        return res.status(501).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 501, {}));
     }
 });
 
