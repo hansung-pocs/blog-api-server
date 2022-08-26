@@ -9,6 +9,7 @@ const {isLoggedIn, isNotLoggedIn} = require('../common/middlewares');
 
 /* GET users list. */
 router.get('/', isLoggedIn, async (req, res) => {
+
     const sortOption = req.query.sort;
     const searchOption = decodeURI(req.query.search);
     const offset = Number(req.query.offset);
@@ -18,7 +19,7 @@ router.get('/', isLoggedIn, async (req, res) => {
 
     try {
         //비회원은 유저 목록 볼 수 없음
-        if(user.type === null){
+        if (user.type === null) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         }
         if (isNaN(offset) || isNaN(page)) {
@@ -84,7 +85,7 @@ router.get('/', isLoggedIn, async (req, res) => {
             } else {
                 const usersObj = {
                     userId: user_id,
-                    defaultInfo : {
+                    defaultInfo: {
                         name: name,
                         email: email,
                         studentId: student_id,
@@ -122,11 +123,13 @@ router.get('/', isLoggedIn, async (req, res) => {
 
 /* GET user detail */
 router.get('/:user_id', isLoggedIn, async (req, res) => {
+
     const userId = req.params.user_id;
     const user = req.user;
+
     try {
         //비회원은 유저 목록 볼 수 없음
-        if(user.type === null){
+        if (user.type === null) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         }
 
@@ -174,7 +177,7 @@ router.get('/:user_id', isLoggedIn, async (req, res) => {
             } else {
                 return res.status(200).json(Util.getReturnObject(`${name} ${MSG.READ_USER_SUCCESS}`, 200, {
                     userId: user_id,
-                    defaultInfo : {
+                    defaultInfo: {
                         name: name,
                         email: email,
                         studentId: student_id,
@@ -206,6 +209,7 @@ router.get('/:user_id', isLoggedIn, async (req, res) => {
 
 /* PATCH (edit) user info */
 router.patch('/:user_id', isLoggedIn, async (req, res) => {
+
     const userId = req.params.user_id;
     const body = req.body;
 
@@ -259,6 +263,7 @@ router.patch('/:user_id', isLoggedIn, async (req, res) => {
 
 //비회원 회원가입
 router.post('/', isNotLoggedIn, async (req, res) => {
+
     const {
         userName,
         password,

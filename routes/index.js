@@ -9,6 +9,7 @@ const Util = require('../common/util');
 router.get('/', async (req, res) => {
 
     try {
+
         const categoryList = ['best', 'notice', 'knowhow', 'reference', 'memory', 'study', 'qna'];
 
         const posts = [];

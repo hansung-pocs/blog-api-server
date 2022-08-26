@@ -12,7 +12,6 @@ const {isLoggedIn} = require('../common/middlewares');
 router.post('/', isLoggedIn, async (req, res) => {
 
     const user = req.user;
-
     const {
         postId,
         content,
@@ -134,7 +133,6 @@ router.patch('/:comment_id', isLoggedIn, async (req, res) => {
     const user = req.user;
     const commentId = req.params.comment_id;
     const content = req.body.content;
-
 
     try {
         const [commentDB] = await DB.execute({

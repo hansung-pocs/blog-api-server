@@ -82,7 +82,7 @@ router.get('/users', isAdmin, async (req, res) => {
             } else {
                 const usersObj = {
                     userId: user_id,
-                    defaultInfo : {
+                    defaultInfo: {
                         name: name,
                         email: email,
                         studentId: student_id,
@@ -122,6 +122,7 @@ router.get('/users', isAdmin, async (req, res) => {
 
 /* GET user detail by admin */
 router.get('/users/:userId', isAdmin, async (req, res) => {
+
     const userId = req.params.userId;
 
     try {
@@ -173,7 +174,7 @@ router.get('/users/:userId', isAdmin, async (req, res) => {
         } else {
             return res.status(200).json(Util.getReturnObject(`어드민 권한으로 ${name}${MSG.READ_USER_SUCCESS}`, 200, {
                 userId: user_id,
-                defaultInfo : {
+                defaultInfo: {
                     name: name,
                     email: email,
                     studentId: student_id,
@@ -204,7 +205,6 @@ router.get('/users/:userId', isAdmin, async (req, res) => {
         }
 
 
-
     } catch (error) {
         console.error(error);
         res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
@@ -213,6 +213,7 @@ router.get('/users/:userId', isAdmin, async (req, res) => {
 
 /* POST regist new user by admin */
 router.post('/users', isAdmin, async (req, res) => {
+
     const {
         userName,
         password,
@@ -280,6 +281,7 @@ router.post('/users', isAdmin, async (req, res) => {
 
 /* PATCH (delete) user by admin */
 router.patch('/users/:userId/kick', isAdmin, async (req, res) => {
+
     const userId = req.params.userId;
 
     try {
@@ -326,7 +328,7 @@ router.get('/posts', isAdmin, async (req, res) => {
             sql += ` and title like '%${title}%'`;
         }
 
-        const [postsDB,countDB] = await Promise.all([
+        const [postsDB, countDB] = await Promise.all([
             await DB.execute({
                 psmt: sql + ` order by created_at DESC limit ?, ?;`,
                 binding: [start, offset]
@@ -382,8 +384,8 @@ router.get('/posts', isAdmin, async (req, res) => {
             } = countDB
 
             const categoriesObj = {
-                category : ((category) => {
-                    if(!category) return 'error';
+                category: ((category) => {
+                    if (!category) return 'error';
 
                     switch (category) {
                         case 'best':
@@ -404,12 +406,12 @@ router.get('/posts', isAdmin, async (req, res) => {
                             return 'error';
                     }
                 })(category),
-                count : count
+                count: count
             }
             categories.push(categoriesObj)
         })
 
-        return res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {categories,posts}));
+        return res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {categories, posts}));
     } catch (error) {
         console.log(error);
         return res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
@@ -418,6 +420,7 @@ router.get('/posts', isAdmin, async (req, res) => {
 
 /* GET get for posts written by a specific user by admin */
 router.get('/posts/:userId', isAdmin, async (req, res) => {
+
     const userId = req.params.userId;
     const offset = Number(req.query.offset);
     const page = Number(req.query.pageNum);
@@ -434,7 +437,7 @@ router.get('/posts/:userId', isAdmin, async (req, res) => {
         if (title != "undefined") {
             sql += ` and title like '%${title}%'`
         }
-        const [postsDB,countDB] = await Promise.all([
+        const [postsDB, countDB] = await Promise.all([
             await DB.execute({
                 psmt: sql + ` order by created_at DESC limit ?, ?;`,
                 binding: [userId, start, offset]
@@ -493,8 +496,8 @@ router.get('/posts/:userId', isAdmin, async (req, res) => {
             } = countDB
 
             const categoriesObj = {
-                category : ((category) => {
-                    if(!category) return 'error';
+                category: ((category) => {
+                    if (!category) return 'error';
 
                     switch (category) {
                         case 'best':
@@ -515,12 +518,15 @@ router.get('/posts/:userId', isAdmin, async (req, res) => {
                             return 'error';
                     }
                 })(category),
-                count : count
+                count: count
             }
             categories.push(categoriesObj)
         })
 
-        return res.status(200).json(Util.getReturnObject(`관리자 권한으로 userID : ${userId}의 ${MSG.READ_POSTDATA_SUCCESS}`, 200, {categories,posts}));
+        return res.status(200).json(Util.getReturnObject(`관리자 권한으로 userID : ${userId}의 ${MSG.READ_POSTDATA_SUCCESS}`, 200, {
+            categories,
+            posts
+        }));
     } catch (e) {
         console.error(e);
         return res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
@@ -529,6 +535,7 @@ router.get('/posts/:userId', isAdmin, async (req, res) => {
 
 /* PATCH (delete) post by admin */
 router.patch('/posts/:postId/delete', isAdmin, async (req, res, next) => {
+
     const postId = req.params.postId;
 
     try {
