@@ -14,8 +14,13 @@ router.get('/', isLoggedIn, async (req, res) => {
     const offset = Number(req.query.offset);
     const page = Number(req.query.pageNum);
     const start = (page - 1) * offset;
+    const user = req.user;
 
     try {
+        //비회원은 유저 목록 볼 수 없음
+        if(user.type === null){
+            return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
+        }
         if (isNaN(offset) || isNaN(page)) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
@@ -118,8 +123,13 @@ router.get('/', isLoggedIn, async (req, res) => {
 /* GET user detail */
 router.get('/:user_id', isLoggedIn, async (req, res) => {
     const userId = req.params.user_id;
-
+    const user = req.user;
     try {
+        //비회원은 유저 목록 볼 수 없음
+        if(user.type === null){
+            return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
+        }
+
         const [userDB] = await DB.execute({
             psmt: `select * from USER where user_id = ? and type is NOT NULL`,
             binding: [userId]

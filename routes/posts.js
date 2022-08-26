@@ -245,7 +245,8 @@ router.patch('/:postId', isLoggedIn, async (req, res, next) => {
         userId,
         title,
         content,
-        category
+        category,
+        onlyMember
     } = req.body
 
     const postId = req.params.postId;
@@ -269,6 +270,9 @@ router.patch('/:postId', isLoggedIn, async (req, res, next) => {
         let sql = 'update POST set';
         const bindings = [];
 
+        console.log(postDB.only_member);
+        console.log(onlyMember);
+        console.log(!!onlyMember);
         if (!!title && postDB.title != title) {
             sql += ' title = ?,';
             bindings.push(title);
@@ -280,6 +284,11 @@ router.patch('/:postId', isLoggedIn, async (req, res, next) => {
         if (!!category && postDB.category != category) {
             sql += ' category = ?,';
             bindings.push(category);
+        }
+        // !!onlyMember라고 하면 onlyMember에 false를 넣었을 때 !!onlyMember가 false가 되어 sql에 문자열이 추가되지 않음
+        if ((onlyMember === true || onlyMember === false) && postDB.only_member !== onlyMember) {
+            sql += ' only_member = ?,';
+            bindings.push(onlyMember);
         }
 
         if (bindings.length > 0) {

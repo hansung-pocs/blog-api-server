@@ -109,8 +109,8 @@ router.patch('/:commentId/delete', isLoggedIn, async (req, res) => {
             return res.status(403).json(Util.getReturnObject('없거나 삭제된 댓글 입니다', 403, {}));
         }
 
-        // 삭제를 요청한 사람이 댓글을 작성한 사람이 아닌 경우
-        if (noneComment.user_id !== user.user_id) {
+        // 삭제를 요청한 사람이 댓글을 작성한 사람이나 관리자가 아닌 경우
+        if (noneComment.user_id !== user.user_id && user.type != 'admin') {
             return res.status(403).json(Util.getReturnObject('본인이 작성한 댓글만 삭제할 수 있습니다.', 403, {}));
         }
 
