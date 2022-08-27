@@ -18,6 +18,7 @@ router.get('/', async (req, res) => {
             })
 
             const bestPosts = [];
+
             bestPostDB.forEach(bestPostDB => {
                 const {
                     post_id,
@@ -50,7 +51,13 @@ router.get('/', async (req, res) => {
                 bestPosts.push(bestPostsObj);
             })
 
-            const posts = [];
+            const noticePosts = [];
+            const knowhowPosts = [];
+            const referencePosts = [];
+            const memoryPosts = [];
+            const studyPosts = [];
+            const qnaPosts = [];
+
             for (const categoryForBinding of categoryList) {
                 const postDB = await DB.execute({
                     psmt: `select * from POST where category = ? and canceled_at is NULL order by created_at DESC limit 0, 3;`,
@@ -86,11 +93,29 @@ router.get('/', async (req, res) => {
                         })(updated_at),
                         category: (category)
                     }
-                    posts.push(postsObj);
+                    if (category === 'notice') {
+                        noticePosts.push(postsObj);
+                    }
+                    if (category === 'knowhow') {
+                        knowhowPosts.push(postsObj);
+                    }
+                    if (category === 'reference') {
+                        referencePosts.push(postsObj);
+                    }
+                    if (category === 'memory') {
+                        memoryPosts.push(postsObj);
+                    }
+                    if (category === 'study') {
+                        studyPosts.push(postsObj);
+                    }
+                    if (category === 'qna') {
+                        qnaPosts.push(postsObj);
+                    }
                 });
             }
 
-            res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {bestPosts, posts}));
+            res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {
+                bestPosts, noticePosts, knowhowPosts, referencePosts, memoryPosts, studyPosts, qnaPosts}));
         } catch (error) {
             console.log(error);
             res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
