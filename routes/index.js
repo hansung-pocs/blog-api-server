@@ -9,55 +9,16 @@ const Util = require('../common/util');
 /* GET home page. */
 router.get('/', async (req, res) => {
 
-    try {
-        const categoryList = ['notice', 'knowhow', 'reference', 'memory', 'study', 'qna'];
+        try {
+            const categoryList = ['notice', 'knowhow', 'reference', 'memory', 'study', 'qna'];
 
-        const bestPostDB = await DB.execute({
-            psmt: `select * from POST where canceled_at is NULL order by views DESC limit 0, 3;`,
-            binding: []
-        })
-
-        const bestPosts = [];
-        bestPostDB.forEach(bestPostDB => {
-            const {
-                post_id,
-                name,
-                title,
-                content,
-                views,
-                only_member,
-                created_at,
-                updated_at,
-                category
-            } = bestPostDB;
-
-            const bestPostsObj = {
-                postId: post_id,
-                writerName: name,
-                title: title,
-                content: content,
-                views: views,
-                onlyMember: !!only_member,
-                createdAt: dayjs(created_at).format('YYYY-MM-DD'),
-                updatedAt: ((updated_at) => {
-                    if (!!updated_at) {
-                        return dayjs(updated_at).format('YYYY-MM-DD')
-                    }
-                    return null;
-                })(updated_at),
-                category: (category)
-            }
-            bestPosts.push(bestPostsObj);
-        })
-
-        const posts = [];
-        for (const categoryForBinding of categoryList) {
-            const postDB = await DB.execute({
-                psmt: `select * from POST where category = ? and canceled_at is NULL order by created_at DESC limit 0, 3;`,
-                binding: [categoryForBinding]
+            const bestPostDB = await DB.execute({
+                psmt: `select * from POST where canceled_at is NULL order by views DESC limit 0, 3;`,
+                binding: []
             })
 
-            postDB.forEach(postDB => {
+            const bestPosts = [];
+            bestPostDB.forEach(bestPostDB => {
                 const {
                     post_id,
                     name,
@@ -68,9 +29,9 @@ router.get('/', async (req, res) => {
                     created_at,
                     updated_at,
                     category
-                } = postDB;
+                } = bestPostDB;
 
-                const postsObj = {
+                const bestPostsObj = {
                     postId: post_id,
                     writerName: name,
                     title: title,
@@ -86,55 +47,56 @@ router.get('/', async (req, res) => {
                     })(updated_at),
                     category: (category)
                 }
-                posts.push(postsObj);
-            });
-        }
-        const categories = []
-        const countDB = await DB.execute({
-            psmt: `select category, count(category) as count from POST where canceled_at is null group by category`,
-            binding: []
-        })
+                bestPosts.push(bestPostsObj);
+            })
 
-        countDB.sort();
-        countDB.forEach(countDB => {
-            const {
-                category,
-                count
-            } = countDB
+            const posts = [];
+            for (const categoryForBinding of categoryList) {
+                const postDB = await DB.execute({
+                    psmt: `select * from POST where category = ? and canceled_at is NULL order by created_at DESC limit 0, 3;`,
+                    binding: [categoryForBinding]
+                })
 
-            const categoriesObj = {
-                category: ((category) => {
-                    if (!category) return 'error';
+                postDB.forEach(postDB => {
+                    const {
+                        post_id,
+                        name,
+                        title,
+                        content,
+                        views,
+                        only_member,
+                        created_at,
+                        updated_at,
+                        category
+                    } = postDB;
 
-                    switch (category) {
-                        case 'notice':
-                            return '공지사항';
-                        case 'knowhow':
-                            return '노하우';
-                        case 'reference':
-                            return '추천';
-                        case 'memory':
-                            return '추억';
-                        case 'study':
-                            return '스터디';
-                        case 'qna':
-                            return 'qna';
-                        default:
-                            return 'error';
+                    const postsObj = {
+                        postId: post_id,
+                        writerName: name,
+                        title: title,
+                        content: content,
+                        views: views,
+                        onlyMember: !!only_member,
+                        createdAt: dayjs(created_at).format('YYYY-MM-DD'),
+                        updatedAt: ((updated_at) => {
+                            if (!!updated_at) {
+                                return dayjs(updated_at).format('YYYY-MM-DD')
+                            }
+                            return null;
+                        })(updated_at),
+                        category: (category)
                     }
-                })(category),
-                count: count
+                    posts.push(postsObj);
+                });
             }
-            categories.push(categoriesObj)
-        })
-        res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {categories, bestPosts, posts}));
-    }
-    catch (error){
+
+            res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {bestPosts, posts}));
+        } catch (error) {
             console.log(error);
             res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
         }
     }
 )
-    ;
+;
 
-    module.exports = router;
+module.exports = router;
