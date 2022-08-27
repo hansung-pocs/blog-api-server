@@ -24,7 +24,6 @@ router.post('/', isLoggedIn, async (req, res) => {
             return res.status(400).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 400, {}));
         }
 
-
         // postId가 잘못된 경우(DB에 없거나 삭제된 post_id를 전송한 경우), 404 -> 요청 리소스를 찾을 수 없음
         const [postDB] = await DB.execute({
             psmt: `select post_id, user_id, canceled_at from POST where post_id = ?`,
@@ -35,7 +34,6 @@ router.post('/', isLoggedIn, async (req, res) => {
             return res.status(404).json(Util.getReturnObject(MSG.NO_POST_DATA, 404, {}));
         }
 
-        // 비회원이 본인이 작성한 게시글이 아닌 것에 댓글을 추가하려고 하는 경우 (qna에만 해당)
         if (user.type === null && postDB.user_id !== user.user_id) {
             return res.status(400).json(Util.getReturnObject(MSG.NO_AUTHORITY, 400, {}));
         }
@@ -99,20 +97,19 @@ router.patch('/:commentId/delete', isLoggedIn, async (req, res) => {
 
     try {
         // 잘못된 commentId를 전송한 경우
-        const [noneComment] = await DB.execute({
+        const [commentDB] = await DB.execute({
             psmt: `select user_id, canceled_at from COMMENT where comment_id = ?`,
             binding: [commentId]
         });
 
-        if (noneComment.canceled_at != null) {
+        if (commentDB.canceled_at !== null) {
             return res.status(403).json(Util.getReturnObject('없거나 삭제된 댓글 입니다', 403, {}));
         }
 
         // 삭제를 요청한 사람이 댓글을 작성한 사람이나 관리자가 아닌 경우
-        if (noneComment.user_id !== user.user_id && user.type != 'admin') {
+        if (commentDB.user_id !== user.user_id && user.type != 'admin') {
             return res.status(403).json(Util.getReturnObject('본인이 작성한 댓글만 삭제할 수 있습니다.', 403, {}));
         }
-
 
         await DB.execute({
             psmt: `update COMMENT set canceled_at = NOW() where comment_id = ?`,
@@ -194,7 +191,7 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
         }
 
         const commentsDB = await DB.execute({
-            psmt: `select * from COMMENT c, USER u where c.user_id = u.user_id and post_id = ? order by parent_id, c.created_at`,
+            psmt: `select comment_id, parent_id, c.user_id as user_id, name, post_id, content, c.created_at as created_at, c.updated_at as updated_at, c.canceled_at as canceled_at from COMMENT c, USER u where c.user_id = u.user_id and post_id = ? order by parent_id, c.created_at`,
             binding: [postId]
         });
 
