@@ -10,23 +10,26 @@ const {isLoggedIn, isNotLoggedIn} = require('../common/middlewares');
 /* GET users list. */
 router.get('/', isLoggedIn, async (req, res) => {
 
+    const user = req.user;
+
     const sortOption = req.query.sort;
     const searchOption = decodeURI(req.query.search);
     const offset = Number(req.query.offset);
     const page = Number(req.query.pageNum);
     const start = (page - 1) * offset;
-    const user = req.user;
 
     try {
-        //비회원은 유저 목록 볼 수 없음
+
         if (user.type === null) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         }
+
         if (isNaN(offset) || isNaN(page)) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
 
         let sql = `select * from USER where canceled_at is NULL and type is not null`;
+
         if (searchOption != "undefined") {
             sql += ` and name like '%${searchOption}%'`;
         }
@@ -210,9 +213,9 @@ router.get('/:user_id', isLoggedIn, async (req, res) => {
 /* PATCH (edit) user info */
 router.patch('/:user_id', isLoggedIn, async (req, res) => {
 
+    const user = req.user;
     const userId = req.params.user_id;
     const body = req.body;
-
     const {email} = body;
 
     const correctEmail = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/;
@@ -226,11 +229,15 @@ router.patch('/:user_id', isLoggedIn, async (req, res) => {
             binding: [userId]
         });
 
-        if (userDB.canceled_at != null) {
+        if (!user.user_id !== userDB.user_id) {
+            return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
+        }
+
+        if (userDB.canceled_at !== null) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_USER_DATA, 403, {}));
         }
 
-        if (!['admin', 'member'].includes(userDB.type)) {
+        if (!['admin', 'member'].includes(user.type)) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         }
 
@@ -254,35 +261,37 @@ router.patch('/:user_id', isLoggedIn, async (req, res) => {
             psmt: sql,
             binding: bindings
         });
+
         return res.status(200).json(Util.getReturnObject(MSG.USER_UPDATE_SUCCESS, 200, {}));
     } catch (e) {
-        console.log(e);
         return res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
+
 
 //비회원 회원가입
 router.post('/', isNotLoggedIn, async (req, res) => {
 
     const {
         userName,
-        password,
+        password
     } = req.body
 
     try {
+        if (!userName || !password) {
+            return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
+        }
+
         const [checkUserName] = await DB.execute({
             psmt: `select user_id from USER where username = ?`,
             binding: [userName]
         });
 
-        if (!userName || !password) {
-            return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
-        }
-        if (checkUserName != null) {
+        if (checkUserName !== null) {
             return res.status(403).json(Util.getReturnObject(MSG.EXIST_USERNAME, 403, {}));
         }
         await DB.execute({
-            psmt: `insert into USER (username, password, created_at, updated_at) VALUES(?, ?, NOW(), NOW())`,
+            psmt: `insert into USER (username, password, created_at) VALUES(?, ?, NOW())`,
             binding: [userName, password]
         });
 
