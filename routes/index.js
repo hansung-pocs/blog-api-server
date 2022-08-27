@@ -10,8 +10,45 @@ const Util = require('../common/util');
 router.get('/', async (req, res) => {
 
     try {
+        const categoryList = ['notice', 'knowhow', 'reference', 'memory', 'study', 'qna'];
 
-        const categoryList = ['best', 'notice', 'knowhow', 'reference', 'memory', 'study', 'qna'];
+        const bestPostDB = await DB.execute({
+            psmt: `select * from POST where canceled_at is NULL order by views DESC limit 0, 3;`,
+            binding: []
+        })
+
+        const bestPosts = [];
+        bestPostDB.forEach(bestPostDB => {
+            const {
+                post_id,
+                name,
+                title,
+                content,
+                views,
+                only_member,
+                created_at,
+                updated_at,
+                category
+            } = bestPostDB;
+
+            const bestPostsObj = {
+                postId: post_id,
+                writerName: name,
+                title: title,
+                content: content,
+                views: views,
+                onlyMember: !!only_member,
+                createdAt: dayjs(created_at).format('YYYY-MM-DD'),
+                updatedAt: ((updated_at) => {
+                    if (!!updated_at) {
+                        return dayjs(updated_at).format('YYYY-MM-DD')
+                    }
+                    return null;
+                })(updated_at),
+                category: (category)
+            }
+            bestPosts.push(bestPostsObj);
+        })
 
         const posts = [];
         for (const categoryForBinding of categoryList) {
@@ -70,8 +107,6 @@ router.get('/', async (req, res) => {
                     if (!category) return 'error';
 
                     switch (category) {
-                        case 'best':
-                            return '인기글';
                         case 'notice':
                             return '공지사항';
                         case 'knowhow':
@@ -92,7 +127,7 @@ router.get('/', async (req, res) => {
             }
             categories.push(categoriesObj)
         })
-        res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {categories, posts}));
+        res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {categories, bestPosts, posts}));
     }
     catch (error){
             console.log(error);
