@@ -265,10 +265,6 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
 
         const comments = commentsFilter.filter(filterCanceledReply);
 
-        if (comments.length === 0) {
-            return res.status(200).json(Util.getReturnObject('해당 게시글에 등록된 댓글이 없습니다.', 200, {}));
-        }
-
         res.status(200).json(Util.getReturnObject('댓글 목록 조회 성공', 200, {comments}));
     } catch (error) {
         console.log(error);
