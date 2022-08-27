@@ -264,6 +264,10 @@ router.patch('/:postId', isLoggedIn, async (req, res, next) => {
     const postId = req.params.postId;
 
     try {
+        if (!title || !content | !cagtegory) {
+            return res.json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 400, {}));
+        }
+
         const [postDB] = await DB.execute({
             psmt: `select * from POST where post_id = ?`,
             binding: [postId]
@@ -282,18 +286,15 @@ router.patch('/:postId', isLoggedIn, async (req, res, next) => {
         let sql = 'update POST set';
         const bindings = [];
 
-        console.log(postDB.only_member);
-        console.log(onlyMember);
-        console.log(!!onlyMember);
-        if (!!title && postDB.title != title) {
+        if (postDB.title != title) {
             sql += ' title = ?,';
             bindings.push(title);
         }
-        if (!!content && postDB.content != content) {
+        if (postDB.content != content) {
             sql += ' content = ?,';
             bindings.push(content);
         }
-        if (!!category && postDB.category != category) {
+        if (postDB.category != category) {
             sql += ' category = ?,';
             bindings.push(category);
         }
