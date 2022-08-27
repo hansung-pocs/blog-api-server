@@ -7,6 +7,7 @@ const MSG = require('../common/message');
 const Util = require('../common/util');
 const {isAdmin} = require('../common/middlewares');
 
+
 /* GET users list by admin */
 router.get('/users', isAdmin, async (req, res) => {
 
@@ -289,11 +290,8 @@ router.patch('/users/:userId/kick', isAdmin, async (req, res) => {
             psmt: `select canceled_at from USER where user_id = ?`,
             binding: [userId]
         })
-        if (!user) {
+        if (!user || user.canceled_at != null) {
             return res.status(404).json(Util.getReturnObject(MSG.NO_USER_DATA, 404, {}));
-        }
-        if (user.canceled_at != null) {
-            return res.status(403).json(Util.getReturnObject(MSG.NO_USER_DATA, 403, {}));
         }
 
         await DB.execute({
@@ -321,8 +319,7 @@ router.get('/posts', isAdmin, async (req, res) => {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
 
-
-        let sql = `select post_id, name, title, content, p.created_at, p.updated_at, p.canceled_at, category from POST p, USER u WHERE p.user_id = u.user_id`;
+        let sql = `select post_id, name, title, content, view, only_member, p.created_at, p.updated_at, p.canceled_at, category from POST p, USER u WHERE p.user_id = u.user_id`;
 
         if (title != "undefined") {
             sql += ` and title like '%${title}%'`;
@@ -347,6 +344,8 @@ router.get('/posts', isAdmin, async (req, res) => {
                 name,
                 title,
                 content,
+                views,
+                only_member,
                 created_at,
                 updated_at,
                 canceled_at,
@@ -358,6 +357,8 @@ router.get('/posts', isAdmin, async (req, res) => {
                 writerName: name,
                 title: title,
                 content: content,
+                views: views,
+                onlyMember: !!only_member,
                 createdAt: dayjs(created_at).format('YYYY-MM-DD'),
                 updatedAt: ((updated_at) => {
                     if (!!updated_at) {
@@ -432,7 +433,7 @@ router.get('/posts/:userId', isAdmin, async (req, res) => {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
 
-        let sql = `select post_id, title, content, created_at, updated_at, canceled_at, category from POST WHERE user_id = ? `;
+        let sql = `select post_id, title, content, views, only_member, created_at, updated_at, canceled_at, category from POST WHERE user_id = ? `;
 
         if (title != "undefined") {
             sql += ` and title like '%${title}%'`
@@ -459,6 +460,8 @@ router.get('/posts/:userId', isAdmin, async (req, res) => {
                 post_id,
                 title,
                 content,
+                views,
+                only_member,
                 created_at,
                 updated_at,
                 canceled_at,
@@ -469,6 +472,8 @@ router.get('/posts/:userId', isAdmin, async (req, res) => {
                 postId: post_id,
                 title: title,
                 content: content,
+                views: views,
+                onlyMember: !!only_member,
                 createdAt: dayjs(created_at).format('YYYY-MM-DD HH:mm:ss'),
                 updatedAt: ((updated_at) => {
                     if (!!updated_at) {
@@ -545,12 +550,10 @@ router.patch('/posts/:postId/delete', isAdmin, async (req, res, next) => {
             binding: [postId]
         });
 
-        if (!postDB) {
+        if (!postDB || postDB.canceled_at) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
         }
-        if (!!postDB.canceled_at) {
-            return res.status(403).json(Util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
-        }
+
         await DB.execute({
             psmt: `update POST set canceled_at = NOW() where post_id = ? `,
             binding: [postId]
