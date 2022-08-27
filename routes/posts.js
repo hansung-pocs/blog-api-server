@@ -28,7 +28,7 @@ router.post('/', isLoggedIn, async (req, res) => {
         }
 
         // 멤버인 사람이 공지를 남기거나 비회원이 qna아닌 글 쓸 경우
-        if ((user.type === 'member' && category === 'notice') || ((!user.type) && category != 'qna')) {
+        if ((user.type === 'member' && category === 'notice') || ((!user.type) && category !== 'qna')) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         }
 
@@ -264,7 +264,7 @@ router.patch('/:postId', isLoggedIn, async (req, res, next) => {
     const postId = req.params.postId;
 
     try {
-        if (!title || !content | !cagtegory) {
+        if (!title || !content || !category) {
             return res.json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 400, {}));
         }
 
@@ -273,28 +273,28 @@ router.patch('/:postId', isLoggedIn, async (req, res, next) => {
             binding: [postId]
         })
 
-        if (postDB.canceled_at != null) {
+        if (postDB.canceled_at !== null) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
         }
         if (postDB.user_id !== user.user_id) {
             return res.status(403).json(Util.getReturnObject(MSG.NOT_YOUR_POST, 403, {}));
         }
-        if (category != 'memory' && category != 'notice' && category != 'study' && category != 'knowhow' && category != 'reference' && category != 'qna') {
+        if (category !== 'memory' && category !== 'notice' && category !== 'study' && category !== 'knowhow' && category !== 'reference' && category !== 'qna') {
             return res.status(403).json(Util.getReturnObject(MSG.WRONG_CATEGORY, 403, {}));
         }
 
         let sql = 'update POST set';
         const bindings = [];
 
-        if (postDB.title != title) {
+        if (postDB.title !== title) {
             sql += ' title = ?,';
             bindings.push(title);
         }
-        if (postDB.content != content) {
+        if (postDB.content !== content) {
             sql += ' content = ?,';
             bindings.push(content);
         }
-        if (postDB.category != category) {
+        if (postDB.category !== category) {
             sql += ' category = ?,';
             bindings.push(category);
         }
