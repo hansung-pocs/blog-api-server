@@ -112,8 +112,6 @@ router.get('/', isLoggedIn, async (req, res) => {
                 }
                 users.push(usersObj);
             }
-
-
         })
 
         const countAllUsers = userCount.count;

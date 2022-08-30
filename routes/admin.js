@@ -36,10 +36,16 @@ router.get('/users', isAdmin, async (req, res) => {
             sql += ` order by created_at DESC limit ?, ?;`;    // default는 생성된 순의 내림차순으로 정렬
         }
 
-        const usersDB = await DB.execute({
-            psmt: sql,
-            binding: [start, offset]
-        });
+        const [[userCount], usersDB] = await Promise.all([
+            await DB.execute({
+                psmt: `select count(user_id) as count from USER where type is not null`,
+                binding: []
+            }),
+            await DB.execute({
+                psmt: sql,
+                binding: [start, offset]
+            })
+        ]);
 
         const users = [];
         usersDB.forEach(usersDB => {
@@ -114,7 +120,10 @@ router.get('/users', isAdmin, async (req, res) => {
                 users.push(usersObj);
             }
         })
-        return res.status(200).json(Util.getReturnObject(`관리자 권한으로 ${MSG.READ_USERDATA_SUCCESS}`, 200, {users}));
+
+        const countAllUsers = userCount.count;
+
+        return res.status(200).json(Util.getReturnObject(`관리자 권한으로 ${MSG.READ_USERDATA_SUCCESS}`, 200, {users, countAllUsers}));
     } catch (e) {
         console.error(e);
         return res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
