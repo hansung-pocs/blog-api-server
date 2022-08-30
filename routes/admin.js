@@ -401,7 +401,7 @@ router.get('/posts', isAdmin, async (req, res) => {
                             return '추억';
                         case 'study':
                             return '스터디';
-                        case 'qna':
+                        case 'qna' || 'QNA' :
                             return 'qna';
                         default:
                             return 'error';
@@ -517,7 +517,7 @@ router.get('/posts/:userId', isAdmin, async (req, res) => {
                             return '추억';
                         case 'study':
                             return '스터디';
-                        case 'qna':
+                        case 'qna' || 'QNA' :
                             return 'qna';
                         default:
                             return 'error';
