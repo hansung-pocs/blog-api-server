@@ -339,7 +339,7 @@ router.get('/posts', isAdmin, async (req, res) => {
                 binding: [start, offset]
             }),
             await DB.execute({
-                psmt: `select category, count(category) as count from POST where group by category`,
+                psmt: `select category, count(category) as count from POST group by category`,
                 binding: []
             })
         ]);
