@@ -205,7 +205,6 @@ router.get('/users/:userId', isAdmin, async (req, res) => {
             }));
         }
 
-
     } catch (error) {
         console.error(error);
         res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
