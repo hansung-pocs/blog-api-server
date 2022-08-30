@@ -17,9 +17,9 @@ router.get('/', isLoggedIn, async (req, res) => {
         const categoryList = ['notice', 'knowhow', 'reference', 'memory', 'study', 'qna'];
 
         if (user.type === null) {
-            var sql1 = `select * from POST where canceled_at is NULL and only_member is false order by views DESC limit 0, 3`;
+            var sql1 = `select post_id, name, title, content, views, only_member, p.created_at as created_at, p.updated_at as updated_at, category from POST p, USER u where p.user_id = u.user_id and p.canceled_at is NULL and only_member is false order by views DESC limit 0, 3`;
         } else if (user.type === 'admin' || user.type === 'member') {
-            var sql1 = `select * from POST where canceled_at is NULL order by views DESC limit 0, 3`;
+            var sql1 = `select post_id, name, title, content, views, only_member, p.created_at as created_at, p.updated_at as updated_at, category from POST p, USER u where p.user_id = u.user_id and p.canceled_at is NULL order by views DESC limit 0, 3`;
         }
 
         const bestPostDB = await DB.execute({
@@ -69,9 +69,9 @@ router.get('/', isLoggedIn, async (req, res) => {
         const qnaPosts = [];
 
         if (user.type === null) {
-            var sql2 = `select * from POST where category = ? and canceled_at is NULL and only_member is false order by created_at DESC limit 0, 3;`;
+            var sql2 = `select post_id, name, title, content, views, only_member, p.created_at as created_at, p.updated_at as updated_at, category from POST p, USER u where category = ? and p.canceled_at is NULL and only_member is false order by created_at DESC limit 0, 3;`;
         } else if (user.type === 'admin' || user.type === 'member') {
-            var sql2 = `select * from POST where category = ? and canceled_at is NULL order by created_at DESC limit 0, 3;`;
+            var sql2 = `select post_id, name, title, content, views, only_member, p.created_at as created_at, p.updated_at as updated_at, category from POST p, USER u where category = ? and p.canceled_at is NULL order by created_at DESC limit 0, 3;`;
         }
 
         for (const categoryForBinding of categoryList) {
