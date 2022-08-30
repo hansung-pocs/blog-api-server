@@ -38,15 +38,6 @@ router.post('/', isLoggedIn, async (req, res) => {
             return res.status(400).json(Util.getReturnObject(MSG.NO_AUTHORITY, 400, {}));
         }
 
-        const [antiPasting] = await DB.execute({
-            psmt: `select comment_id from COMMENT where content = ?`,
-            binding: [content]
-        })
-        if (!!antiPasting) {
-            return res.status(400).json(Util.getReturnObject('도배하지 마세요', 400, {}));
-        }
-
-
         // parentId가 DB에 없는 commentId를 입력했을 때 (자기참조외래키 조건을 만족시키기 위한 장치)
         if (!!parentId) {
             const [invalidParentId] = await DB.execute({
@@ -64,19 +55,15 @@ router.post('/', isLoggedIn, async (req, res) => {
                 return res.status(201).json(Util.getReturnObject('대댓글이 작성되었습니다', 201, {}));
             }
         } else {
-            await DB.execute({
+            // insert하면서 추가된 키 값 가져오기! (insertId)
+            const newComment = await DB.execute({
                 psmt: `insert into COMMENT (post_id, user_id, content, created_at) VALUES(?, ?, ?, NOW())`,
                 binding: [postId, user.user_id, content]
             });
 
-            const [updateParentId] = await DB.execute({
-                psmt: `select comment_id from COMMENT where content = ?`,
-                binding: [content]
-            })
-
             await DB.execute({
-                psmt: `update COMMENT set parent_id = ? where content = ?`,
-                binding: [updateParentId.comment_id, content]
+                psmt: `update COMMENT set parent_id = ? where comment_id = ?`,
+                binding: [newComment.insertId, newComment.insertId]
             });
 
             return res.status(201).json(Util.getReturnObject('댓글이 추가되었습니다.', 201, {}));
