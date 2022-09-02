@@ -227,7 +227,7 @@ router.patch('/:user_id', isLoggedIn, async (req, res) => {
             binding: [userId]
         });
 
-        if (!user.user_id !== userDB.user_id) {
+        if (user.user_id !== userDB.user_id) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         }
 
