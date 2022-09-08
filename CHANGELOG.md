@@ -1,5 +1,12 @@
-## 2022--9-05
+## 2022-09-08
+- 회원 추가 및 회원 정보 수정 시 password가 null이면 비밀번호 유지
+- 회원 추가 및 회원 정보 수정 시 password는 6자 이상
+- multer module install (이미지 기능, npm install multer)
+
+
+## 2022-09-05
 - GET /comments/{postId} 요청 시 답글이 없는 댓글이 보여지는 문제 해결 (#26)
+
 
 ## 2022-09-02
 - PATCH /users/{user_id} 요청시 403, 권한이 없습니다. 응답 발생 문제 해결 (#25)

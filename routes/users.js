@@ -215,6 +215,7 @@ router.patch('/:user_id', isLoggedIn, async (req, res) => {
     const userId = req.params.user_id;
     const body = req.body;
     const {email} = body;
+    const {password} = body;
 
     const correctEmail = /^[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*@[0-9a-zA-Z]([-_\.]?[0-9a-zA-Z])*\.[a-zA-Z]{2,3}$/;
     if (!email || !correctEmail.test(email)) {
@@ -239,21 +240,43 @@ router.patch('/:user_id', isLoggedIn, async (req, res) => {
             return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         }
 
-        const {sql, bindings} = (() => {
-            let sql = `update USER set`;
-            const bindings = [];
-            ['password', 'name', 'email', 'github', 'company'].forEach(col => {
-                if (userDB[col] != body[col]) {
-                    sql += ` ${col} = ?,`;
-                    bindings.push(body[col]);
-                }
-            });
+        if (!!password && password.length < 6) {
+            return res.status(403).json(Util.getReturnObject('비밀번호는 최소 6자 이상이어야 합니다.', 403, {}));
+        }
 
-            sql += ` updated_at = NOW() where user_id = ?;`;
-            bindings.push(userId);
+        if (!password) {
+            var {sql, bindings} = (() => {
+                let sql = `update USER set`;
+                const bindings = [];
+                ['name', 'email', 'github', 'company'].forEach(col => {
+                    if (userDB[col] != body[col]) {
+                        sql += ` ${col} = ?,`;
+                        bindings.push(body[col]);
+                    }
+                });
 
-            return {bindings, sql};
-        })(body);
+                sql += ` updated_at = NOW() where user_id = ?;`;
+                bindings.push(userId);
+
+                return {bindings, sql};
+            })(body);
+        } else {
+            var {sql, bindings} = (() => {
+                let sql = `update USER set`;
+                const bindings = [];
+                ['password', 'name', 'email', 'github', 'company'].forEach(col => {
+                    if (userDB[col] != body[col]) {
+                        sql += ` ${col} = ?,`;
+                        bindings.push(body[col]);
+                    }
+                });
+
+                sql += ` updated_at = NOW() where user_id = ?;`;
+                bindings.push(userId);
+
+                return {bindings, sql};
+            })(body);
+        }
 
         await DB.execute({
             psmt: sql,
@@ -278,6 +301,10 @@ router.post('/', isNotLoggedIn, async (req, res) => {
     try {
         if (!userName || !password) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
+        }
+
+        if (password.length < 6) {
+            return res.status(403).json(Util.getReturnObject('비밀번호는 최소 6자 이상이어야 합니다.', 403, {}));
         }
 
         const [checkUserName] = await DB.execute({
