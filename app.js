@@ -26,12 +26,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 app.use(middlewares.deserializeUser);
 
-app.use('/', require('./routes/index'));
-app.use('/users', require('./routes/users'));
-app.use('/posts', require('./routes/posts'));
-app.use('/comments', require('./routes/comments'));
-app.use('/admin', require('./routes/admin'));
-app.use('/auth', require('./routes/auth'));
+app.use('/api', require('./routes/index'));
+app.use('/api/users', require('./routes/users'));
+app.use('/api/posts', require('./routes/posts'));
+app.use('/api/comments', require('./routes/comments'));
+app.use('/api/admin', require('./routes/admin'));
+app.use('/api/auth', require('./routes/auth'));
 
 
 // catch 404 and forward to error handler
