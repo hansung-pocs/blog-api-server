@@ -24,4 +24,5 @@ jobs:
         uses: docker/build-push-action@v3
         with:
           push: true
+          file: ./docker/Dockerfile
           tags: ipocs92/api-server-${{ github.ref_name }}:latest
