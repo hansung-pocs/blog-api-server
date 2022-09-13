@@ -1,10 +1,10 @@
-name: Docker building script
+name: Docker CI/CD script
 
 on:
   push:
-    branches: [ "master", "develop" ]
+    branches: [ "develop" ]
   pull_request:
-    branches: [ "master", "develop" ]
+    branches: [ "master" ]
 
 jobs:
   docker:
@@ -26,3 +26,15 @@ jobs:
           push: true
           file: ./docker/Dockerfile
           tags: ipocs92/api-server-${{ github.ref_name }}:latest
+      -
+        name: run docker-componse by ssh connection
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP_ADDRESS }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            cd ~/pocs-blog
+            ls -alsh
+            docker-compose up
