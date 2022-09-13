@@ -37,4 +37,5 @@ jobs:
           script: |
             cd ~/pocs-blog
             ls -alsh
-            docker-compose up
+            docker-compose kill
+            docker-compose up -d
