@@ -1,11 +1,80 @@
 const express = require('express');
 const router = express.Router();
+const {v4: uuidv4} = require('uuid');
+const fs = require("fs");
+const multer = require("multer");
+const path = require("path");
+const sharp = require("sharp");
 
 const DB = require('../common/database');
 const MSG = require('../common/message')
 const dayjs = require('dayjs')
 const Util = require('../common/util');
 const {isLoggedIn, isNotLoggedIn} = require('../common/middlewares');
+
+
+const uploadProfile = multer({
+    storage: multer.diskStorage({
+        destination(req, file, cb) {
+            cb(null, "public" + "/uploads/user/profile/")
+        },
+        filename(req, file, cb) {
+            const ext = path.extname(file.originalname);
+            cb(null, uuidv4() + ext); //v4 is uuid
+        }
+    })
+});
+
+router.patch('/:user_id/profile', isLoggedIn, uploadProfile.single("image"), async (req, res, next) => {
+
+    const user = req.user;
+    const userId = req.params.user_id;
+
+    try {
+        const [userDB] = await DB.execute({
+            psmt: `select * from USER where user_id = ?`,
+            binding: [userId]
+        });
+
+        if (user.user_id !== userDB.user_id) {
+            return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
+        }
+
+        const file = req.file;
+
+        if (!file) {
+            return res.status(403).json(Util.getReturnObject('등록할 이미지가 없습니다.', 403, {}));
+        }
+
+        console.log(file);
+
+        const image = sharp(file.path);
+        const {format} = await image.metadata();
+        const compressedImage = await image[format]({quality: 70}).toBuffer();
+        fs.writeFileSync(file.path, compressedImage);
+
+        const location = file.path.split("/")
+        console.log("location: " + location);
+        const uuid = location[location.length - 1].split(".")[0];
+        console.log("uuid: " + uuid);
+        console.log("uuid type: " + typeof(uuid));
+        const mediaUrl = `http://34.64.161.55:8001/${file.destination}` + location.at(-1);
+        console.log("mediaUrl: " + mediaUrl);
+
+        await DB.execute({
+            psmt: "update user set profile_image_url = ? where user_id = ?",
+            binding: [mediaUrl, user.user_id]
+        });
+
+        res.json({
+            ok: true,
+            userProfileId: uuid
+        });
+    } catch (error) {
+        console.log(error);
+        next();
+    }
+});
 
 /* GET users list. */
 router.get('/', isLoggedIn, async (req, res) => {
@@ -209,7 +278,7 @@ router.get('/:user_id', isLoggedIn, async (req, res) => {
 });
 
 /* PATCH (edit) user info */
-router.patch('/:user_id', isLoggedIn, async (req, res) => {
+router.patch('/:user_id', isLoggedIn, uploadProfile.single("image"), async (req, res) => {
 
     const user = req.user;
     const userId = req.params.user_id;
