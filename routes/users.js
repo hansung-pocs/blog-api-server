@@ -62,7 +62,7 @@ router.patch('/:user_id/profile', isLoggedIn, uploadProfile.single("image"), asy
         console.log("mediaUrl: " + mediaUrl);
 
         await DB.execute({
-            psmt: "update user set profile_image_url = ? where user_id = ?",
+            psmt: "update USER set profile_image_url = ? where user_id = ?",
             binding: [mediaUrl, user.user_id]
         });
 
