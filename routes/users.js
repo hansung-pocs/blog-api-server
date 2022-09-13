@@ -43,7 +43,12 @@ router.patch('/:user_id/profile', isLoggedIn, uploadProfile.single("image"), asy
         const file = req.file;
 
         if (!file) {
-            return res.status(200).json(Util.getReturnObject('등록할 이미지가 없습니다.', 200, {
+            await DB.execute({
+                psmt: "update USER set profile_image_url = NULL where user_id = ?",
+                binding: [user.user_id]
+            });
+
+            return res.status(200).json(Util.getReturnObject('기본 이미지로 변경되었습니다.', 200, {
                 ok: true,
                 userProfileId: null
             }));
