@@ -43,7 +43,10 @@ router.patch('/:user_id/profile', isLoggedIn, uploadProfile.single("image"), asy
         const file = req.file;
 
         if (!file) {
-            return res.status(403).json(Util.getReturnObject('등록할 이미지가 없습니다.', 403, {}));
+            return res.status(200).json(Util.getReturnObject('등록할 이미지가 없습니다.', 200, {
+                ok: true,
+                userProfileId: null
+            }));
         }
 
         console.log(file);
@@ -129,7 +132,8 @@ router.get('/', isLoggedIn, async (req, res) => {
                 company,
                 generation,
                 github,
-                created_at
+                created_at,
+                // 1 profile_image_url
             } = usersDB;
 
             if (!type) {
