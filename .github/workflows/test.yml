@@ -1,0 +1,23 @@
+name: server runing script
+
+on:
+  push:
+    branches: [ "*" ] 
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      -
+        name: executing remote ssh commands using ssh key
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SERVER_IP_ADDRESS }}
+          username: ${{ secrets.USERNAME }}
+          key: ${{ secrets.KEY }}
+          port: ${{ secrets.PORT }}
+          script: |
+            cd ~
+            cd pocs-blog
+            ls -aspl
+            docker-compose up
