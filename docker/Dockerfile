@@ -8,4 +8,4 @@ RUN npm install
 
 COPY ./ ./
 
-CMD ["nohup", "node", "app.js", "&" ">", "log"]
+CMD ["node", "app.js", ">", "log", "&"]
