@@ -54,12 +54,8 @@ router.patch('/:user_id/profile', isLoggedIn, uploadProfile.single("image"), asy
         fs.writeFileSync(file.path, compressedImage);
 
         const location = file.path.split("/")
-        console.log("location: " + location);
         const uuid = location[location.length - 1].split(".")[0];
-        console.log("uuid: " + uuid);
-        console.log("uuid type: " + typeof(uuid));
         const mediaUrl = `http://34.64.161.55:8001/${file.destination}` + location.at(-1);
-        console.log("mediaUrl: " + mediaUrl);
 
         await DB.execute({
             psmt: "update USER set profile_image_url = ? where user_id = ?",
