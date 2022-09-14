@@ -37,5 +37,6 @@ jobs:
           script: |
             cd ~/pocs-blog
             ls -alsh
-            docker-compose kill
+            docker-compose down --rmi all
+            docker-compose pull --parallel
             docker-compose up -d
