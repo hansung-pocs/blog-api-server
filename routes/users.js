@@ -176,7 +176,7 @@ router.get('/', isLoggedIn, async (req, res) => {
                         company: company || null,
                         generation: generation,
                         github: github || null,
-                        profileImageUUID: profile_image_url || null
+                        userProfilePath: profile_image_url || null
                     },
                     type: ((type) => {
                         if (!type) return 'anonymous';
