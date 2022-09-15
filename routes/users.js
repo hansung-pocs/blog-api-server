@@ -50,7 +50,7 @@ router.patch('/:user_id/profile', isLoggedIn, uploadProfile.single("image"), asy
 
             return res.status(200).json(Util.getReturnObject('기본 이미지로 변경되었습니다.', 200, {
                 ok: true,
-                userProfileId: null
+                userProfilePath: null
             }));
         }
 
@@ -63,17 +63,24 @@ router.patch('/:user_id/profile', isLoggedIn, uploadProfile.single("image"), asy
 
         const location = file.path.split("/")
         const uuid = location[location.length - 1].split(".")[0];
-        const mediaUrl = `http://34.64.161.55:8001/${file.destination}` + location.at(-1);
+        console.log(uuid);
+        const mediaUrl = `${file.destination}` + location.at(-1);
+        console.log(mediaUrl);
+
+        // 하드코딩 느낌이 좀 느껴지는 문자열 분리...
+        const userProfilePath = `${mediaUrl.substr(14, 14)}${uuid}`;
+        console.log(userProfilePath);
+
 
         await DB.execute({
             psmt: "update USER set profile_image_url = ? where user_id = ?",
-            binding: [mediaUrl, user.user_id]
+            binding: [userProfilePath, user.user_id]
         });
 
-        res.json({
+        return res.status(200).json(Util.getReturnObject('프로필 이미지가 변경되었습니다.', 200, {
             ok: true,
-            userProfileId: uuid
-        });
+            userProfilePath: userProfilePath
+        }));
     } catch (error) {
         console.log(error);
         next();
@@ -138,7 +145,7 @@ router.get('/', isLoggedIn, async (req, res) => {
                 generation,
                 github,
                 created_at,
-                // 1 profile_image_url
+                profile_image_url
             } = usersDB;
 
             if (!type) {
@@ -168,7 +175,8 @@ router.get('/', isLoggedIn, async (req, res) => {
                         studentId: student_id,
                         company: company || null,
                         generation: generation,
-                        github: github || null
+                        github: github || null,
+                        profileImageUUID: profile_image_url || null
                     },
                     type: ((type) => {
                         if (!type) return 'anonymous';
@@ -209,7 +217,7 @@ router.get('/:user_id', isLoggedIn, async (req, res) => {
         }
 
         const [userDB] = await DB.execute({
-            psmt: `select * from USER where user_id = ? and type is NOT NULL`,
+            psmt: `select * from USER where user_id = ?`,
             binding: [userId]
         });
 
@@ -233,7 +241,7 @@ router.get('/:user_id', isLoggedIn, async (req, res) => {
             return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         } else {
             if (!type) {
-                return res.status(200).json(Util.getReturnObject(`${name} ${MSG.READ_USER_SUCCESS}`, 200, {
+                return res.status(200).json(Util.getReturnObject(`비회원 유저 ${user_id}번${MSG.READ_USER_SUCCESS}`, 200, {
                     userId: user_id,
                     type: ((type) => {
                         if (!type) return 'anonymous';
@@ -250,7 +258,7 @@ router.get('/:user_id', isLoggedIn, async (req, res) => {
                     createdAt: dayjs(created_at).format('YYYY-MM-DD')
                 }))
             } else {
-                return res.status(200).json(Util.getReturnObject(`${name} ${MSG.READ_USER_SUCCESS}`, 200, {
+                return res.status(200).json(Util.getReturnObject(`${name}${MSG.READ_USER_SUCCESS}`, 200, {
                     userId: user_id,
                     defaultInfo: {
                         name: name,
