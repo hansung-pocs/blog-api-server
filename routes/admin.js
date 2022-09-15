@@ -58,6 +58,7 @@ router.get('/users', isAdmin, async (req, res) => {
                 company,
                 generation,
                 github,
+                profile_image_url,
                 created_at,
                 canceled_at
             } = usersDB;
@@ -95,7 +96,8 @@ router.get('/users', isAdmin, async (req, res) => {
                         studentId: student_id,
                         company: company || null,
                         generation: generation,
-                        github: github || null
+                        github: github || null,
+                        userProfilePath: profile_image_url || null,
                     },
                     type: ((type) => {
                         if (!type) return 'anonymous';
@@ -154,6 +156,7 @@ router.get('/users/:userId', isAdmin, async (req, res) => {
             company,
             generation,
             github,
+            profile_image_url,
             created_at,
             canceled_at
         } = userDB;
@@ -190,7 +193,8 @@ router.get('/users/:userId', isAdmin, async (req, res) => {
                     studentId: student_id,
                     company: company || null,
                     generation: generation,
-                    github: github || null
+                    github: github || null,
+                    userProfilePath: profile_image_url || null
                 },
                 type: ((type) => {
                     if (!type) return 'anonymous';
