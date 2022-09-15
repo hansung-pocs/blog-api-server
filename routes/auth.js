@@ -102,6 +102,7 @@ const userDetailInfo = user => {
         company,
         generation,
         github,
+        profile_image_url,
         created_at,
     } = user;
 
@@ -131,7 +132,8 @@ const userDetailInfo = user => {
                 studentId: student_id,
                 company: company || null,
                 generation: generation,
-                github: github || null
+                github: github || null,
+                userProfilePath: profile_image_url || null
             },
             type: ((type) => {
                 if (!type) return 'anonymous';

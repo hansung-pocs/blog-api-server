@@ -11,7 +11,7 @@ exports.deserializeUser = (async (req, res, next) => {
 
     try {
         const [user] = await DB.execute({
-            psmt: 'select u.user_id, u.username, u.company, u.email, u.created_at, u.github, u.name, u.student_id, u.type' +
+            psmt: 'select u.user_id, u.username, u.company, u.email, u.created_at, u.github, u.name, u.student_id, u.type, u.profile_image_url' +
                 ' from USER u left join SESSION s on u.user_id = s.user_id' +
                 ' where s.token = ? and s.expiredAt > ?;',
             binding: [sessionToken, new Date()]
