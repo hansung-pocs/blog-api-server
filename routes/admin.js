@@ -22,7 +22,7 @@ router.get('/users', isAdmin, async (req, res) => {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
 
-        let sql = `select user_id, name, email, student_id, type, company, generation, github, created_at, canceled_at from USER`;
+        let sql = `select user_id, name, email, student_id, type, company, generation, github, profile_image_url, created_at, canceled_at from USER`;
 
         if (searchOption != 'undefined') {
             sql += ` where name like '%${searchOption}%'`;
