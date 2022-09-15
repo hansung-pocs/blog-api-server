@@ -233,7 +233,7 @@ router.get('/:user_id', isLoggedIn, async (req, res) => {
             company,
             generation,
             github,
-            image_profile_url,
+            profile_image_url,
             created_at,
             canceled_at
         } = userDB;
@@ -268,7 +268,7 @@ router.get('/:user_id', isLoggedIn, async (req, res) => {
                         company: company || null,
                         generation: generation,
                         github: github || null,
-                        userProfilePath: image_profile_url || null
+                        userProfilePath: profile_image_url || null
                     },
                     type: ((type) => {
                         if (!type) return 'anonymous';
