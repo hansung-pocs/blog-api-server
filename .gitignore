@@ -2,3 +2,5 @@
 *.sh
 package-lock.json
 node_modules/
+foo.js
+public/uploads/**
