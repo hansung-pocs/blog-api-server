@@ -62,11 +62,11 @@ router.patch('/:user_id/profile', isLoggedIn, uploadProfile.single("image"), asy
         fs.writeFileSync(file.path, compressedImage);
 
         const location = file.path.split("/")
-        const uuid = location[location.length - 1].split(".")[0];
-        const mediaUrl = `${file.destination}` + location.at(-1);
+        // const uuid = location[location.length - 1].split(".")[0];
+        // const mediaUrl = `${file.destination}` + location.at(-1);
 
         // 하드코딩 느낌이 좀 느껴지는 문자열 분리...
-        const userProfilePath = `${mediaUrl.substr(14, 14)}${uuid}`;
+        const userProfilePath = file.path.substr(14);
 
         await DB.execute({
             psmt: "update USER set profile_image_url = ? where user_id = ?",
