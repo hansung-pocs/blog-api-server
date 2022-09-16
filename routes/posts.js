@@ -19,8 +19,8 @@ router.post('/', isLoggedIn, async (req, res) => {
     } = req.body;
 
     try {
-        if (!title || !content || !category) {
-            return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
+        if (!title || !content || !category || !onlyMember) {
+            return res.status(400).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 400, {}));
         }
 
         if (!['memory', 'notice', 'study', 'knowhow', 'reference', 'qna'].includes(category)) {
@@ -188,6 +188,12 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
                 psmt: `select title, content, views, only_member, p.created_at, p.updated_at, category, u.user_id, name, email, type, p.canceled_at from POST p, USER u where p.canceled_at is null and u.user_id = p.user_id and post_id = ?`,
                 binding: [postId]
             })
+            // await DB.execute({
+            //     psmt: ' select title, content, views, only_member, p.created_at as created_at, p.updated_at as updated_at, ' +
+            //         'category, u.user_id as user_id, name, email, type, p.canceled_at as canceled_at ' +
+            //         'from POST p, USER u where p.canceled_at is null and u.user_id = p.user_id and post_id = ?;',
+            //     binding: [postId]
+            // })
         ])
 
         // 데이터에 없는 postId를 입력한 경우
@@ -195,8 +201,8 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
             return res.status(404).json(Util.getReturnObject(MSG.NO_POST_DATA, 404, {}));
         }
 
-        if (user.user_id === null && postDB.only_member) {
-            return res.status(404).json(Util.getReturnObject(MSG.NO_AUTHORITY, 404, {}));
+        if (user.type === null && postDB.only_member) {
+            return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         }
 
         await DB.execute({
