@@ -10,17 +10,17 @@ const {isNotLoggedIn, isLoggedIn} = require('../common/middlewares');
 const router = express.Router();
 
 router.post('/login', isNotLoggedIn, async (req, res) => {
-    const {username, password} = req.body;
+    const {userName, password} = req.body;
     const deviceType = req.header('x-pocs-device-type')
 
-    if (!username || !password || !deviceType) {
+    if (!userName || !password || !deviceType) {
         return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
     }
 
     try {
         const [user] = await DB.execute({
-            psmt: `select * from USER where username = ?`,
-            binding: [username]
+            psmt: `select * from USER where username = ? and canceled_at is null`,
+            binding: [userName]
         });
 
         if (!user) {
@@ -32,6 +32,7 @@ router.post('/login', isNotLoggedIn, async (req, res) => {
         }
 
         const sessionToken = uuidv4();
+
         await DB.execute({
             psmt: `insert into SESSION (user_id, token, device_type, expiredAt ,created_at) VALUES(?, ?, ?, ?,NOW())`,
             binding: [user.user_id, sessionToken, deviceType, dayjs().add(90, 'day').toDate()]
@@ -67,7 +68,7 @@ router.post('/logout', isLoggedIn, async (req, res, next) => {
         }
 
         if (dayjs().isAfter(dayjs(session.expiredAt || '1900-01-01'))) {
-            return res.status(403).json(Util.getReturnObject('만료된 세션입니다.', 200, {}));
+            return res.status(403).json(Util.getReturnObject('만료된 세션입니다.', 403, {}));
         }
 
         await DB.execute({
@@ -82,9 +83,12 @@ router.post('/logout', isLoggedIn, async (req, res, next) => {
     }
 });
 
+
 router.post('/validation', (req, res) => {
+
     const user = req.user;
-    if (!!user) {
+
+    if (!!user && user.canceled_at == null) {
         return res.status(200).json(Util.getReturnObject('유효한 세션입니다.', 200, {user: userDetailInfo(user)}));
     } else {
         return res.status(403).json(Util.getReturnObject('유효하지 않은 세션입니다.', 403, {}));
@@ -104,6 +108,7 @@ const userDetailInfo = user => {
         github,
         profile_image_url,
         created_at,
+        canceled_at
     } = user;
 
     if (!type) {
@@ -121,7 +126,8 @@ const userDetailInfo = user => {
                         return 'unknown';
                 }
             })(type),
-            createdAt: dayjs(created_at).format('YYYY-MM-DD')
+            createdAt: dayjs(created_at).format('YYYY-MM-DD'),
+            canceledAt: dayjs(canceled_at).format('YYYY-MM-DD')
         }
     } else {
         return {
@@ -147,11 +153,10 @@ const userDetailInfo = user => {
                         return 'unknown';
                 }
             })(type),
-            createdAt: dayjs(created_at).format('YYYY-MM-DD')
+            createdAt: dayjs(created_at).format('YYYY-MM-DD'),
+            canceledAt: dayjs(canceled_at).format('YYYY-MM-DD')
         }
     }
-
-
 }
 
 module.exports = router;

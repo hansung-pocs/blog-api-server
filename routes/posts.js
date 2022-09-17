@@ -19,15 +19,15 @@ router.post('/', isLoggedIn, async (req, res) => {
     } = req.body;
 
     try {
-        if (!title || !content || !category || !onlyMember) {
-            return res.status(400).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 400, {}));
+        if (!title || !content || !category || onlyMember == undefined) {
+            return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
 
         if (!['memory', 'notice', 'study', 'knowhow', 'reference', 'qna'].includes(category)) {
             return res.status(403).json(Util.getReturnObject(MSG.WRONG_CATEGORY, 403, {}));
         }
 
-        // 멤버인 사람이 공지를 남기거나 비회원이 qna아닌 글 쓸 경우
+        // 일반 회원이 카테고리가 notice인 게시글의 추가를 요청하거나 비회원 유저가 카테고리가 qna가 아닌 게시글의 추가를 요청한 경우
         if ((user.type === 'member' && category === 'notice') || ((!user.type) && category !== 'qna')) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         }
@@ -270,8 +270,8 @@ router.patch('/:postId', isLoggedIn, async (req, res, next) => {
     const postId = req.params.postId;
 
     try {
-        if (!title || !content || !category) {
-            return res.json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 400, {}));
+        if (!title || !content || !category || onlyMember == undefined) {
+            return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
 
         const [postDB] = await DB.execute({
@@ -279,13 +279,13 @@ router.patch('/:postId', isLoggedIn, async (req, res, next) => {
             binding: [postId]
         })
 
-        if (postDB.canceled_at !== null) {
+        if (!postDB || postDB.canceled_at !== null) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
         }
         if (postDB.user_id !== user.user_id) {
             return res.status(403).json(Util.getReturnObject(MSG.NOT_YOUR_POST, 403, {}));
         }
-        if (category !== 'memory' && category !== 'notice' && category !== 'study' && category !== 'knowhow' && category !== 'reference' && category !== 'qna') {
+        if (!['memory', 'notice', 'study', 'knowhow', 'reference', 'qna'].includes(category)) {
             return res.status(403).json(Util.getReturnObject(MSG.WRONG_CATEGORY, 403, {}));
         }
 
@@ -352,7 +352,7 @@ router.patch('/:postId/delete', isLoggedIn, async (req, res, next) => {
             binding: [postId]
         });
 
-        return res.status(201).json(Util.getReturnObject(MSG.POST_DELETE_SUCCESS, 201, {}));
+        return res.status(200).json(Util.getReturnObject(MSG.POST_DELETE_SUCCESS, 200, {}));
 
     } catch (e) {
         console.error(e);

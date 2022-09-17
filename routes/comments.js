@@ -12,6 +12,7 @@ const {isLoggedIn} = require('../common/middlewares');
 router.post('/', isLoggedIn, async (req, res) => {
 
     const user = req.user;
+
     const {
         postId,
         content,

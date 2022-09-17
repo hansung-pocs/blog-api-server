@@ -5,7 +5,7 @@ const DB = require('../common/database');
 const dayjs = require('dayjs');
 const MSG = require('../common/message');
 const Util = require('../common/util');
-const {isAdmin} = require('../common/middlewares');
+const {isAdmin, isLoggedIn} = require('../common/middlewares');
 
 
 /* GET users list by admin */
@@ -38,7 +38,7 @@ router.get('/users', isAdmin, async (req, res) => {
 
         const [[userCount], usersDB] = await Promise.all([
             await DB.execute({
-                psmt: `select count(user_id) as count from USER where type is not null`,
+                psmt: `select count(user_id) as count from USER`,
                 binding: []
             }),
             await DB.execute({
@@ -144,7 +144,7 @@ router.get('/users/:userId', isAdmin, async (req, res) => {
         });
 
         if (!userDB) {
-            return res.status(404).json(Util.getReturnObject(MSG.NO_USER_DATA, 404, {}));
+            return res.status(404).json(Util.getReturnObject("요청하신 자원을 찾을 수 없습니다.", 404, {}));
         }
 
         const {
@@ -164,18 +164,7 @@ router.get('/users/:userId', isAdmin, async (req, res) => {
         if (!type) {
             return res.status(200).json(Util.getReturnObject(`어드민 권한으로 ${name}${MSG.READ_USER_SUCCESS}`, 200, {
                 userId: user_id,
-                type: ((type) => {
-                    if (!type) return 'anonymous';
-
-                    switch (type) {
-                        case 'admin':
-                            return 'admin';
-                        case 'member':
-                            return 'member';
-                        default:
-                            return 'unknown';
-                    }
-                })(type),
+                type: 'anonymous',
                 createdAt: dayjs(created_at).format('YYYY-MM-DD'),
                 canceledAt: ((canceled_at) => {
                     if (!!canceled_at) {
@@ -217,7 +206,6 @@ router.get('/users/:userId', isAdmin, async (req, res) => {
                 })(canceled_at),
             }));
         }
-
     } catch (error) {
         console.error(error);
         res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
@@ -283,7 +271,7 @@ router.post('/users', isAdmin, async (req, res) => {
         }
 
         await DB.execute({
-            psmt: `insert into USER (username, password, name, student_id, email, generation, type, company, github, created_at, updated_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())`,
+            psmt: `insert into USER (username, password, name, student_id, email, generation, type, company, github, created_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
             binding: [userName, password, name, studentId, email, generation, type, company, github]
         });
 
@@ -298,23 +286,35 @@ router.post('/users', isAdmin, async (req, res) => {
 /* PATCH (delete) user by admin */
 router.patch('/users/:userId/kick', isAdmin, async (req, res) => {
 
+    const user = req.user;
     const userId = req.params.userId;
 
     try {
-        const [user] = await DB.execute({
+
+        console.log(user);
+
+        if (user.type !== 'admin') {
+            return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
+        }
+
+        const [userDB] = await DB.execute({
             psmt: `select canceled_at from USER where user_id = ?`,
             binding: [userId]
         })
-        if (!user || user.canceled_at != null) {
-            return res.status(404).json(Util.getReturnObject(MSG.NO_USER_DATA, 404, {}));
+        if (!userDB || userDB.canceled_at != null) {
+            return res.status(403).json(Util.getReturnObject(MSG.NO_USER_DATA, 403, {}));
         }
 
         await DB.execute({
             psmt: `update USER SET canceled_at = NOW() where user_id = ?`,
             binding: [userId]
         })
+        await DB.execute({
+            psmt: `delete from SESSION where user_id = ?`,
+            binding: [userId]
+        })
 
-        return res.status(201).json(Util.getReturnObject(MSG.USER_KICK_SUCCESS, 201, {}));
+        return res.status(200).json(Util.getReturnObject(MSG.USER_KICK_SUCCESS, 200, {}));
     } catch (error) {
         console.log(error);
         return res.status(501).json(Util.getReturnObject(error.message, 501, {}));
@@ -324,6 +324,9 @@ router.patch('/users/:userId/kick', isAdmin, async (req, res) => {
 /* GET posts list by admin(included deleted posts) */
 router.get('/posts', isAdmin, async (req, res) => {
 
+    const user = req.user;
+
+    const filter = req.query.id;
     const offset = Number(req.query.offset);
     const page = Number(req.query.pageNum);
     const title = decodeURI(req.query.title);
@@ -334,24 +337,37 @@ router.get('/posts', isAdmin, async (req, res) => {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
 
-        let sql = `select post_id, name, title, content, views, only_member, p.created_at, p.updated_at, p.canceled_at, category from POST p, USER u WHERE p.user_id = u.user_id`;
+        let sql = `select post_id, name, title, content, views, only_member, p.created_at, p.updated_at, p.canceled_at category from POST p, USER u where u.user_id = p.user_id`;
 
         if (title != "undefined") {
-            sql += ` and title like '%${title}%'`;
+            sql += ` and title like '%${title}%'`
+        }
+
+        if (filter == null) {
+            sql += ` order by p.created_at DESC limit ?, ?;`;
+        } else {
+            if (filter === 'best') {
+                sql += ` order by views DESC limit ?, ?;`;
+            } else if (filter === 'notice' || filter === 'memory' || filter === 'knowhow' || filter === 'reference' || filter === 'study' || filter === 'qna') {
+                sql += ` and category = '${filter}' order by p.created_at DESC limit ?, ?;`;
+            } else {
+                return res.status(400).json(Util.getReturnObject('잘못된 id값입니다.', 400, {}));
+            }
         }
 
         const [postsDB, countDB] = await Promise.all([
             await DB.execute({
-                psmt: sql + ` order by created_at DESC limit ?, ?;`,
+                psmt: sql,
                 binding: [start, offset]
             }),
             await DB.execute({
                 psmt: `select category, count(category) as count from POST group by category`,
                 binding: []
             })
-        ]);
+        ])
 
         countDB.sort();
+
         const posts = [];
         postsDB.forEach(postsDB => {
             const {
@@ -381,16 +397,11 @@ router.get('/posts', isAdmin, async (req, res) => {
                     }
                     return null;
                 })(updated_at),
-                canceledAt: ((canceled_at) => {
-                    if (!!canceled_at) {
-                        return dayjs(canceled_at).format('YYYY-MM-DD')
-                    }
-                    return null;
-                })(canceled_at),
+                canceledAt: dayjs(canceled_at).format('YYYY-MM-DD'),
                 category: (category)
             }
             posts.push(postsObj);
-        })
+        });
 
         const categories = []
         countDB.forEach(countDB => {
@@ -427,12 +438,13 @@ router.get('/posts', isAdmin, async (req, res) => {
             categories.push(categoriesObj)
         })
 
-        return res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {categories, posts}));
+        res.status(200).json(Util.getReturnObject(MSG.READ_POSTDATA_SUCCESS, 200, {categories, posts}));
     } catch (error) {
         console.log(error);
-        return res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
+        res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
+
 
 /* GET get for posts written by a specific user by admin */
 router.get('/posts/:userId', isAdmin, async (req, res) => {
@@ -448,7 +460,7 @@ router.get('/posts/:userId', isAdmin, async (req, res) => {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
 
-        let sql = `select post_id, title, content, views, only_member, created_at, updated_at, canceled_at, category from POST WHERE user_id = ? `;
+        let sql = `select post_id, name, title, content, views, only_member, p.created_at as created_at, p.updated_at as updated_at, p.canceled_at as canceled_at, category from POST p, USER u WHERE p.user_id = u.user_id and p.user_id = ? `;
 
         if (title != "undefined") {
             sql += ` and title like '%${title}%'`
@@ -459,12 +471,11 @@ router.get('/posts/:userId', isAdmin, async (req, res) => {
                 binding: [userId, start, offset]
             }),
             await DB.execute({
-                psmt: `select category, count(category) as count from POST where canceled_at is null group by category`,
-                binding: []
+                psmt: `select category, count(category) as count from POST where user_id = ? group by category`,
+                binding: [userId]
             })
         ])
 
-        console.log('post: %j', postsDB);
         countDB.sort();
         if (postsDB.length === 0) {
             return res.status(404).json(Util.getReturnObject(MSG.CANT_READ_POSTDATA, 404, {}));
@@ -473,6 +484,7 @@ router.get('/posts/:userId', isAdmin, async (req, res) => {
         postsDB.forEach(postsDB => {
             const {
                 post_id,
+                name,
                 title,
                 content,
                 views,
@@ -485,6 +497,7 @@ router.get('/posts/:userId', isAdmin, async (req, res) => {
 
             const postsObj = {
                 postId: post_id,
+                writerName: name,
                 title: title,
                 content: content,
                 views: views,
@@ -574,10 +587,10 @@ router.patch('/posts/:postId/delete', isAdmin, async (req, res, next) => {
             binding: [postId]
         });
 
-        return res.status(201).json(Util.getReturnObject(`관리자 권한으로 ${MSG.POST_DELETE_SUCCESS}`, 201, {}));
+        return res.status(200).json(Util.getReturnObject(`관리자 권한으로 ${MSG.POST_DELETE_SUCCESS}`, 200, {}));
     } catch (e) {
         console.error(e);
-        return res.status(501).json(Util.getReturnObject(e.message, 501, {}));
+        return res.status(500).json(Util.getReturnObject(e.message, 500, {}));
     }
 });
 
