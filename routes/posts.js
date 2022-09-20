@@ -76,7 +76,7 @@ router.get('/', isLoggedIn, async (req, res) => {
         } else {
             if (filter === 'best') {
                 sql += ` order by views DESC limit ?, ?;`;
-            } else if (filter === 'notice' || filter === 'memory' || filter === 'knowhow' || filter === 'reference' || filter === 'study' || filter === 'qna') {
+            } else if (!['memory', 'notice', 'study', 'knowhow', 'reference', 'qna'].includes(filter)) {
                 sql += ` and category = '${filter}' order by p.created_at DESC limit ?, ?;`;
             } else {
                 return res.status(400).json(Util.getReturnObject('잘못된 id값입니다.', 400, {}));
@@ -179,25 +179,26 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
 
     try {
 
-        const [[nonePost], [postDB]] = await Promise.all([
-            await DB.execute({
-                psmt: `select title, canceled_at from POST where post_id = ?`,
-                binding: [postId]
-            }),
-            await DB.execute({
-                psmt: `select title, content, views, only_member, p.created_at, p.updated_at, category, u.user_id, name, email, type, p.canceled_at from POST p, USER u where p.canceled_at is null and u.user_id = p.user_id and post_id = ?`,
-                binding: [postId]
-            })
-            // await DB.execute({
-            //     psmt: ' select title, content, views, only_member, p.created_at as created_at, p.updated_at as updated_at, ' +
-            //         'category, u.user_id as user_id, name, email, type, p.canceled_at as canceled_at ' +
-            //         'from POST p, USER u where p.canceled_at is null and u.user_id = p.user_id and post_id = ?;',
-            //     binding: [postId]
-            // })
-        ])
+        // const [[nonePost], [postDB]] = await Promise.all([
+        //     await DB.execute({
+        //         psmt: `select title, canceled_at from POST where post_id = ?`,
+        //         binding: [postId]
+        //     }),
+        //     await DB.execute({
+        //         psmt: `select title, content, views, only_member, p.created_at, p.updated_at, category, u.user_id, name, email, type, p.canceled_at from POST p, USER u where p.canceled_at is null and u.user_id = p.user_id and post_id = ?`,
+        //         binding: [postId]
+        //     })
+        // ])
+
+        const [postDB] = await DB.execute({
+            psmt: ' select title, content, views, only_member, p.created_at as created_at, p.updated_at as updated_at, ' +
+                'category, u.user_id as user_id, name, email, type, p.canceled_at as canceled_at ' +
+                'from POST p, USER u where p.canceled_at is null and u.user_id = p.user_id and post_id = ?;',
+            binding: [postId]
+        })
 
         // 데이터에 없는 postId를 입력한 경우
-        if (!nonePost || nonePost.canceled_at !== null) {
+        if (!postDB || postDB.canceled_at !== null) {
             return res.status(404).json(Util.getReturnObject(MSG.NO_POST_DATA, 404, {}));
         }
 
@@ -221,13 +222,8 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
             user_id,
             name,
             email,
-            type,
-            canceled_at
+            type
         } = postDB;
-
-        if (!!canceled_at) {
-            return res.status(403).json(Util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
-        }
 
         return res.status(200).json(Util.getReturnObject(`${title} ${MSG.READ_POST_SUCCESS}`, 200, {
             title: title,
@@ -279,11 +275,11 @@ router.patch('/:postId', isLoggedIn, async (req, res, next) => {
             binding: [postId]
         })
 
-        if (!postDB || postDB.canceled_at !== null) {
-            return res.status(403).json(Util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
-        }
         if (postDB.user_id !== user.user_id) {
             return res.status(403).json(Util.getReturnObject(MSG.NOT_YOUR_POST, 403, {}));
+        }
+        if (!postDB || postDB.canceled_at !== null) {
+            return res.status(403).json(Util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
         }
         if (!['memory', 'notice', 'study', 'knowhow', 'reference', 'qna'].includes(category)) {
             return res.status(403).json(Util.getReturnObject(MSG.WRONG_CATEGORY, 403, {}));
@@ -304,8 +300,9 @@ router.patch('/:postId', isLoggedIn, async (req, res, next) => {
             sql += ' category = ?,';
             bindings.push(category);
         }
-        // !!onlyMember라고 하면 onlyMember에 false를 넣었을 때 !!onlyMember가 false가 되어 sql에 문자열이 추가되지 않음
-        if ((onlyMember === true || onlyMember === false) && postDB.only_member !== onlyMember) {
+
+        //if ((onlyMember === true || onlyMember === false) && postDB.only_member !== onlyMember) {
+        if (postDB.only_member !== onlyMember) {
             sql += ' only_member = ?,';
             bindings.push(onlyMember);
         }
@@ -319,13 +316,14 @@ router.patch('/:postId', isLoggedIn, async (req, res, next) => {
                 binding: bindings
             });
         }
-        return res.status(302).json(Util.getReturnObject(MSG.POST_UPDATE_SUCCESS, 302, {}));
+        return res.status(200).json(Util.getReturnObject(MSG.POST_UPDATE_SUCCESS, 200, {}));
 
     } catch (e) {
         console.error(e);
         res.status(500).json(Util.getReturnObject(MSG.UNKNOWN_ERROR, 500, {}));
     }
 });
+
 
 /* PATCH (delete) post */
 router.patch('/:postId/delete', isLoggedIn, async (req, res, next) => {
