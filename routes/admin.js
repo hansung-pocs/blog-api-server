@@ -397,7 +397,12 @@ router.get('/posts', isAdmin, async (req, res) => {
                     }
                     return null;
                 })(updated_at),
-                canceledAt: dayjs(canceled_at).format('YYYY-MM-DD'),
+                canceledAt: ((canceled_at) => {
+                    if (!!canceled_at) {
+                        return dayjs(canceled_at).format('YYYY-MM-DD')
+                    }
+                    return null;
+                })(canceled_at),
                 category: (category)
             }
             posts.push(postsObj);
