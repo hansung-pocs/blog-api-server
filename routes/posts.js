@@ -7,6 +7,8 @@ const MSG = require('../common/message');
 const Util = require('../common/util');
 const {isLoggedIn} = require('../common/middlewares');
 
+const categoryList = ['memory', 'notice', 'study', 'knowhow', 'reference', 'qna'];
+
 /* POST new post */
 router.post('/', isLoggedIn, async (req, res) => {
 
@@ -23,7 +25,7 @@ router.post('/', isLoggedIn, async (req, res) => {
             return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
         }
 
-        if (!['memory', 'notice', 'study', 'knowhow', 'reference', 'qna'].includes(category)) {
+        if (!categoryList.includes(category)) {
             return res.status(403).json(Util.getReturnObject(MSG.WRONG_CATEGORY, 403, {}));
         }
 
@@ -76,7 +78,7 @@ router.get('/', isLoggedIn, async (req, res) => {
         } else {
             if (filter === 'best') {
                 sql += ` order by views DESC limit ?, ?;`;
-            } else if (['memory', 'notice', 'study', 'knowhow', 'reference', 'qna'].includes(filter)) {
+            } else if (categoryList.includes(filter)) {
                 sql += ` and category = '${filter}' order by p.created_at DESC limit ?, ?;`;
             } else {
                 return res.status(400).json(Util.getReturnObject('잘못된 id값입니다.', 400, {}));
@@ -281,7 +283,7 @@ router.patch('/:postId', isLoggedIn, async (req, res, next) => {
         if (!postDB || postDB.canceled_at !== null) {
             return res.status(403).json(Util.getReturnObject(MSG.NO_POST_DATA, 403, {}));
         }
-        if (!['memory', 'notice', 'study', 'knowhow', 'reference', 'qna'].includes(category)) {
+        if (!categoryList.includes(category)) {
             return res.status(403).json(Util.getReturnObject(MSG.WRONG_CATEGORY, 403, {}));
         }
 

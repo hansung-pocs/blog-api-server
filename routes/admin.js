@@ -7,6 +7,7 @@ const MSG = require('../common/message');
 const Util = require('../common/util');
 const {isAdmin, isLoggedIn} = require('../common/middlewares');
 
+const categoryList = ['memory', 'notice', 'study', 'knowhow', 'reference', 'qna'];
 
 /* GET users list by admin */
 router.get('/users', isAdmin, async (req, res) => {
@@ -348,7 +349,7 @@ router.get('/posts', isAdmin, async (req, res) => {
         } else {
             if (filter === 'best') {
                 sql += ` order by views DESC limit ?, ?;`;
-            } else if (['memory', 'notice', 'study', 'knowhow', 'reference', 'qna'].includes(filter)) {
+            } else if (categoryList.includes(filter)) {
                 sql += ` and category = '${filter}' order by p.created_at DESC limit ?, ?;`;
             } else {
                 return res.status(400).json(Util.getReturnObject('잘못된 id값입니다.', 400, {}));
