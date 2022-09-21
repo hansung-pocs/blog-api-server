@@ -292,8 +292,6 @@ router.patch('/users/:userId/kick', isAdmin, async (req, res) => {
 
     try {
 
-        console.log(user);
-
         if (user.type !== 'admin') {
             return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         }

@@ -181,37 +181,12 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
 
     try {
 
-        // const [[nonePost], [postDB]] = await Promise.all([
-        //     await DB.execute({
-        //         psmt: `select title, canceled_at from POST where post_id = ?`,
-        //         binding: [postId]
-        //     }),
-        //     await DB.execute({
-        //         psmt: `select title, content, views, only_member, p.created_at, p.updated_at, category, u.user_id, name, email, type, p.canceled_at from POST p, USER u where p.canceled_at is null and u.user_id = p.user_id and post_id = ?`,
-        //         binding: [postId]
-        //     })
-        // ])
-
         const [postDB] = await DB.execute({
             psmt: ' select title, content, views, only_member, p.created_at as created_at, p.updated_at as updated_at, ' +
                 'category, u.user_id as user_id, name, email, type, p.canceled_at as canceled_at ' +
                 'from POST p, USER u where p.canceled_at is null and u.user_id = p.user_id and post_id = ?;',
             binding: [postId]
         })
-
-        // 데이터에 없는 postId를 입력한 경우
-        if (!postDB || postDB.canceled_at !== null) {
-            return res.status(404).json(Util.getReturnObject(MSG.NO_POST_DATA, 404, {}));
-        }
-
-        if (user.type === null && postDB.only_member) {
-            return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
-        }
-
-        await DB.execute({
-            psmt: `update POST set views = views + 1 where post_id = ?`,
-            binding: [postId]
-        });
 
         const {
             title,
@@ -226,6 +201,20 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
             email,
             type
         } = postDB;
+
+        // 데이터에 없는 postId를 입력한 경우
+        if (!postDB || canceled_at !== null) {
+            return res.status(404).json(Util.getReturnObject(MSG.NO_POST_DATA, 404, {}));
+        }
+
+        if (user.type === null && only_member) {
+            return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
+        }
+
+        await DB.execute({
+            psmt: `update POST set views = views + 1 where post_id = ?`,
+            binding: [postId]
+        });
 
         return res.status(200).json(Util.getReturnObject(`${title} ${MSG.READ_POST_SUCCESS}`, 200, {
             title: title,
@@ -303,7 +292,6 @@ router.patch('/:postId', isLoggedIn, async (req, res, next) => {
             bindings.push(category);
         }
 
-        //if ((onlyMember === true || onlyMember === false) && postDB.only_member !== onlyMember) {
         if (postDB.only_member !== onlyMember) {
             sql += ' only_member = ?,';
             bindings.push(onlyMember);
@@ -318,6 +306,7 @@ router.patch('/:postId', isLoggedIn, async (req, res, next) => {
                 binding: bindings
             });
         }
+
         return res.status(200).json(Util.getReturnObject(MSG.POST_UPDATE_SUCCESS, 200, {}));
 
     } catch (e) {
