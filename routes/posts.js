@@ -76,7 +76,7 @@ router.get('/', isLoggedIn, async (req, res) => {
         } else {
             if (filter === 'best') {
                 sql += ` order by views DESC limit ?, ?;`;
-            } else if (!['memory', 'notice', 'study', 'knowhow', 'reference', 'qna'].includes(filter)) {
+            } else if (['memory', 'notice', 'study', 'knowhow', 'reference', 'qna'].includes(filter)) {
                 sql += ` and category = '${filter}' order by p.created_at DESC limit ?, ?;`;
             } else {
                 return res.status(400).json(Util.getReturnObject('잘못된 id값입니다.', 400, {}));
