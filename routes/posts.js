@@ -195,6 +195,7 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
             only_member,
             created_at,
             updated_at,
+            canceled_at,
             category,
             user_id,
             name,
