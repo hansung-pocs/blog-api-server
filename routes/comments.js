@@ -67,7 +67,7 @@ router.post('/', isLoggedIn, async (req, res) => {
                 binding: [newComment.insertId, newComment.insertId]
             });
 
-            return res.status(201).json(Util.getReturnObject('댓글이 추가되었습니다.', 201, {}));
+            return res.status(201).json(Util.getReturnObject('댓글이 작성되었습니다.', 201, {}));
         }
 
     } catch (error) {
@@ -81,17 +81,17 @@ router.post('/', isLoggedIn, async (req, res) => {
 router.patch('/:commentId/delete', isLoggedIn, async (req, res) => {
 
     const user = req.user;
+
     const commentId = req.params.commentId;
 
     try {
-        // 잘못된 commentId를 전송한 경우
         const [commentDB] = await DB.execute({
             psmt: `select user_id, canceled_at from COMMENT where comment_id = ?`,
             binding: [commentId]
         });
 
         if (commentDB.canceled_at !== null) {
-            return res.status(403).json(Util.getReturnObject('없거나 삭제된 댓글 입니다', 403, {}));
+            return res.status(403).json(Util.getReturnObject('없거나 삭제된 댓글입니다.', 403, {}));
         }
 
         // 삭제를 요청한 사람이 댓글을 작성한 사람이나 관리자가 아닌 경우
@@ -103,23 +103,28 @@ router.patch('/:commentId/delete', isLoggedIn, async (req, res) => {
             psmt: `update COMMENT set canceled_at = NOW() where comment_id = ?`,
             binding: [commentId]
         });
-        return res.status(201).json(Util.getReturnObject('댓글이 삭제되었습니다.', 201, {}));
+
+        return res.status(200).json(Util.getReturnObject('댓글이 삭제되었습니다.', 200, {}));
 
     } catch (e) {
         console.error(e);
-        return res.status(501).json(Util.getReturnObject(e.message, 501, {}));
+        return res.status(500).json(Util.getReturnObject(e.message, 500, {}));
     }
 });
 
 
 /* PATCH (edit) comment */
-router.patch('/:comment_id', isLoggedIn, async (req, res) => {
+router.patch('/:commentId', isLoggedIn, async (req, res) => {
 
     const user = req.user;
-    const commentId = req.params.comment_id;
-    const content = req.body.content;
+    const commentId = req.params.commentId;
+    const {content} = req.body;
 
     try {
+        if (!content) {
+            return res.status(400).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 400, {}));
+        }
+
         const [commentDB] = await DB.execute({
             psmt: `select * from COMMENT where comment_id = ?`,
             binding: [commentId]
@@ -129,10 +134,10 @@ router.patch('/:comment_id', isLoggedIn, async (req, res) => {
             return res.status(400).json(Util.getReturnObject('없거나 삭제된 댓글입니다.', 400, {}));
         }
         if (commentDB.user_id !== user.user_id) {
-            return res.status(400).json(Util.getReturnObject('해당 댓글을 수정할 수 없습니다.', 400, {}));
+            return res.status(400).json(Util.getReturnObject(MSG.NO_AUTHORITY, 400, {}));
         }
         if (content === commentDB.content) {
-            return res.status(400).json(Util.getReturnObject('수정된 내용이 없습니다.', 400, {}));
+            return res.status(400).json(Util.getReturnObject('수정할 내용이 없습니다.', 400, {}));
         }
 
         let sql = 'update COMMENT set';
@@ -152,7 +157,7 @@ router.patch('/:comment_id', isLoggedIn, async (req, res) => {
                 binding: bindings
             });
         }
-        return res.status(200).json(Util.getReturnObject('댓글이 정상적으로 수정되었습니다.', 200, {}));
+        return res.status(200).json(Util.getReturnObject('댓글이 수정되었습니다.', 200, {}));
 
     } catch (error) {
         console.error(error);
@@ -165,17 +170,22 @@ router.patch('/:comment_id', isLoggedIn, async (req, res) => {
 router.get('/:postId', isLoggedIn, async (req, res) => {
 
     const user = req.user;
+
     const postId = req.params.postId;
 
     try {
-        const [nonePost] = await DB.execute({
-            psmt: `select canceled_at from POST where post_id = ?`,
+        const [postDB] = await DB.execute({
+            psmt: `select only_member, canceled_at from POST where post_id = ?`,
             binding: [postId]
         });
 
         // 데이터에 없는 postId를 입력한 경우
-        if (!nonePost || nonePost.canceled_at !== null) {
+        if (!postDB || postDB.canceled_at !== null) {
             return res.status(404).json(Util.getReturnObject(MSG.NO_POST_DATA, 404, {}));
+        }
+
+        if (user.type === null && postDB.only_member == true) {
+            return res.status(403).json(Util.getReturnObject(MSG.NO_AUTHORITY, 403, {}));
         }
 
         const commentsDB = await DB.execute({
@@ -245,11 +255,13 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
 
         // 삭제된 답글과 답글이 안달린 삭제된 댓글은 보여지지 않도록
         function filterCanceledReply(item) {
-            if (item == undefined || (item.comment_id === item.parent_id && item.childrenCount === 0 && item.canceled_at !== null)) {
+            if (item == undefined || (item.comment_id === item.parent_id && item.childrenCount === 0 && item.canceled_at != null)) {
                 return false;
             }
             return true;
         }
+
+        console.log(commentsFilter);
 
         const comments = commentsFilter.filter(filterCanceledReply);
 

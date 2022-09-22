@@ -392,7 +392,7 @@ router.post('/', isNotLoggedIn, async (req, res) => {
             binding: [userName]
         });
 
-        if (checkUserName !== null) {
+        if (checkUserName != null) {
             return res.status(403).json(Util.getReturnObject(MSG.EXIST_USERNAME, 403, {}));
         }
         await DB.execute({
