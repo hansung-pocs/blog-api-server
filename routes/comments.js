@@ -255,13 +255,11 @@ router.get('/:postId', isLoggedIn, async (req, res) => {
 
         // 삭제된 답글과 답글이 안달린 삭제된 댓글은 보여지지 않도록
         function filterCanceledReply(item) {
-            if (item == undefined || (item.comment_id === item.parent_id && item.childrenCount === 0 && item.canceled_at != null)) {
+            if (item == undefined || (item.commentId === item.parentId && item.childrenCount === 0 && item.canceledAt != null)) {
                 return false;
             }
             return true;
         }
-
-        console.log(commentsFilter);
 
         const comments = commentsFilter.filter(filterCanceledReply);
 
