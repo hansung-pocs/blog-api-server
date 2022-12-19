@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
+const encrypt = require('../common/encrypt');
 const DB = require('../common/database');
 const dayjs = require('dayjs');
 const MSG = require('../common/message');
@@ -271,9 +272,10 @@ router.post('/users', isAdmin, async (req, res) => {
             return res.status(403).json(Util.getReturnObject('비밀번호는 최소 6자 이상이어야 합니다.', 403, {}));
         }
 
+        const encrypted_password = await encrypt.getHash(password);
         await DB.execute({
             psmt: `insert into USER (username, password, name, student_id, email, generation, type, company, github, created_at) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-            binding: [userName, password, name, studentId, email, generation, type, company, github]
+            binding: [userName, encrypted_password, name, studentId, email, generation, type, company, github]
         });
 
         return res.status(201).json(Util.getReturnObject(MSG.USER_ADDED, 201, {}));

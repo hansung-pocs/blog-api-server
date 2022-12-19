@@ -6,6 +6,7 @@ const multer = require("multer");
 const path = require("path");
 const sharp = require("sharp");
 
+const encrypt = require('../common/encrypt')
 const DB = require('../common/database');
 const MSG = require('../common/message')
 const dayjs = require('dayjs')
@@ -341,6 +342,8 @@ router.patch('/:user_id', isLoggedIn, uploadProfile.single("image"), async (req,
                 return {bindings, sql};
             })(body);
         } else {
+            body.password = await encrypt.getHash(password);
+
             var {sql, bindings} = (() => {
                 let sql = `update USER set`;
                 const bindings = [];
@@ -395,9 +398,11 @@ router.post('/', isNotLoggedIn, async (req, res) => {
         if (checkUserName != null) {
             return res.status(403).json(Util.getReturnObject(MSG.EXIST_USERNAME, 403, {}));
         }
+
+        const encrypted_password = await encrypt.getHash(password);
         await DB.execute({
             psmt: `insert into USER (username, password, created_at) VALUES(?, ?, NOW())`,
-            binding: [userName, password]
+            binding: [userName, encrypted_password]
         });
 
         return res.status(201).json(Util.getReturnObject(MSG.USER_ADDED, 201, {}));

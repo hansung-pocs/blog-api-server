@@ -1,6 +1,7 @@
 const express = require('express');
 const {v4: uuidv4} = require('uuid');
 
+const encrypt = require('../common/encrypt');
 const DB = require('../common/database');
 const dayjs = require('dayjs');
 const MSG = require('../common/message');
@@ -11,7 +12,7 @@ const router = express.Router();
 
 router.post('/login', isNotLoggedIn, async (req, res) => {
     const {userName, password} = req.body;
-    const deviceType = req.header('x-pocs-device-type')
+    const deviceType = req.header('x-pocs-device-type');
 
     if (!userName || !password || !deviceType) {
         return res.status(403).json(Util.getReturnObject(MSG.NO_REQUIRED_INFO, 403, {}));
@@ -27,7 +28,7 @@ router.post('/login', isNotLoggedIn, async (req, res) => {
             return res.status(403).json(Util.getReturnObject(MSG.NO_USER_DATA, 403, {}));
         }
 
-        if (user.password !== password) {
+        if (!encrypt.compare(password, user.password)) {
             return res.status(403).json(Util.getReturnObject('비밀번호가 틀렸습니다.', 403, {}));
         }
 
